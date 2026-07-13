@@ -9,38 +9,134 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TimelineRouteImport } from './routes/timeline'
+import { Route as StoriesRouteImport } from './routes/stories'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as JourneysRouteImport } from './routes/journeys'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as StoriesSlugRouteImport } from './routes/stories.$slug'
 
+const TimelineRoute = TimelineRouteImport.update({
+  id: '/timeline',
+  path: '/timeline',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StoriesRoute = StoriesRouteImport.update({
+  id: '/stories',
+  path: '/stories',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const JourneysRoute = JourneysRouteImport.update({
+  id: '/journeys',
+  path: '/journeys',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StoriesSlugRoute = StoriesSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => StoriesRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/journeys': typeof JourneysRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/stories': typeof StoriesRouteWithChildren
+  '/timeline': typeof TimelineRoute
+  '/stories/$slug': typeof StoriesSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/journeys': typeof JourneysRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/stories': typeof StoriesRouteWithChildren
+  '/timeline': typeof TimelineRoute
+  '/stories/$slug': typeof StoriesSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/journeys': typeof JourneysRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/stories': typeof StoriesRouteWithChildren
+  '/timeline': typeof TimelineRoute
+  '/stories/$slug': typeof StoriesSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/journeys'
+    | '/sitemap.xml'
+    | '/stories'
+    | '/timeline'
+    | '/stories/$slug'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/journeys'
+    | '/sitemap.xml'
+    | '/stories'
+    | '/timeline'
+    | '/stories/$slug'
+  id:
+    | '__root__'
+    | '/'
+    | '/journeys'
+    | '/sitemap.xml'
+    | '/stories'
+    | '/timeline'
+    | '/stories/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  JourneysRoute: typeof JourneysRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  StoriesRoute: typeof StoriesRouteWithChildren
+  TimelineRoute: typeof TimelineRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/timeline': {
+      id: '/timeline'
+      path: '/timeline'
+      fullPath: '/timeline'
+      preLoaderRoute: typeof TimelineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stories': {
+      id: '/stories'
+      path: '/stories'
+      fullPath: '/stories'
+      preLoaderRoute: typeof StoriesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/journeys': {
+      id: '/journeys'
+      path: '/journeys'
+      fullPath: '/journeys'
+      preLoaderRoute: typeof JourneysRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +144,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/stories/$slug': {
+      id: '/stories/$slug'
+      path: '/$slug'
+      fullPath: '/stories/$slug'
+      preLoaderRoute: typeof StoriesSlugRouteImport
+      parentRoute: typeof StoriesRoute
+    }
   }
 }
 
+interface StoriesRouteChildren {
+  StoriesSlugRoute: typeof StoriesSlugRoute
+}
+
+const StoriesRouteChildren: StoriesRouteChildren = {
+  StoriesSlugRoute: StoriesSlugRoute,
+}
+
+const StoriesRouteWithChildren =
+  StoriesRoute._addFileChildren(StoriesRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  JourneysRoute: JourneysRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
+  StoriesRoute: StoriesRouteWithChildren,
+  TimelineRoute: TimelineRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -110,7 +110,7 @@ function StoryDetail() {
           </div>
 
           <div className="mt-4 flex flex-wrap gap-1.5">
-            {story.tags.map((t) => (
+            {story.tags.map((t: string) => (
               <Tag key={t} label={t} />
             ))}
           </div>
