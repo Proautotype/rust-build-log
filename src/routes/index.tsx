@@ -28,9 +28,7 @@ export const Route = createFileRoute("/")({
 function HomePage() {
   const featured = journeys[0];
   const featuredStories = getStoriesForJourney(featured);
-  const latest = [...stories]
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-    .slice(0, 6);
+  const latest = [...stories].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 6);
   const popularTags = allTags.slice(0, 12);
 
   return (
@@ -57,8 +55,8 @@ function HomePage() {
             </div>
 
             <h1 className="mt-6 text-4xl md:text-6xl font-display tracking-tight text-foreground leading-[1.05]">
-              Documenting my journey learning{" "}
-              <span className="italic text-primary">Rust</span>, one experiment at a time.
+              Documenting my journey learning <span className="italic text-primary">Rust</span>, one
+              experiment at a time.
             </h1>
 
             <p className="mt-6 max-w-2xl text-base md:text-lg text-muted-foreground leading-relaxed">
@@ -179,7 +177,11 @@ function HomePage() {
       <section className="container-page py-16">
         <div className="grid gap-10 md:grid-cols-2">
           <div>
-            <SectionHeader eyebrow="Topics" title="Popular tags" icon={<Sparkles className="h-4 w-4" />} />
+            <SectionHeader
+              eyebrow="Topics"
+              title="Popular tags"
+              icon={<Sparkles className="h-4 w-4" />}
+            />
             <div className="mt-6 flex flex-wrap gap-2">
               {popularTags.map((t) => (
                 <span
@@ -206,9 +208,7 @@ function HomePage() {
                   className="rounded-lg border border-border bg-surface p-3 hover:border-primary/40 transition"
                 >
                   <div className="text-mono text-sm font-semibold text-foreground">{t.name}</div>
-                  <div className="text-mono text-[11px] text-muted-foreground mt-0.5">
-                    {t.note}
-                  </div>
+                  <div className="text-mono text-[11px] text-muted-foreground mt-0.5">{t.note}</div>
                 </div>
               ))}
             </div>
@@ -271,9 +271,7 @@ function SectionHeader({
         {eyebrow}
       </div>
       <h2 className="mt-2 text-3xl md:text-4xl font-display tracking-tight">{title}</h2>
-      {description ? (
-        <p className="mt-2 max-w-2xl text-muted-foreground">{description}</p>
-      ) : null}
+      {description ? <p className="mt-2 max-w-2xl text-muted-foreground">{description}</p> : null}
     </div>
   );
 }

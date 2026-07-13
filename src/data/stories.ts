@@ -16,19 +16,12 @@ export type Category =
   | "Meta";
 
 export type CodeLanguage =
-  | "rust"
-  | "typescript"
-  | "java"
-  | "kotlin"
-  | "python"
-  | "bash"
-  | "toml"
-  | "text";
+  "rust" | "typescript" | "java" | "kotlin" | "python" | "bash" | "toml" | "text";
 
 export type ContentBlock =
   | { type: "heading"; level: 2 | 3; text: string; id: string }
   | { type: "paragraph"; text: string }
-  | { type: "list"; ordered?: boolean; items: string[] }
+  | { type: "list"; ordered?: boolean; items: string[]; delimiter?: string }
   | { type: "quote"; text: string; cite?: string }
   | { type: "code"; language: CodeLanguage; filename?: string; code: string }
   | { type: "image"; src: string; alt: string; caption?: string }
@@ -73,7 +66,15 @@ export const journeys: Journey[] = [
     description:
       "From zero to shipping. Ownership, lifetimes, async, systems programming, and everything I break along the way.",
     cover: heroRust,
-    storyIds: ["s-beginners", "s-why", "s-first-project", "s-ownership", "s-cli", "s-http", "s-ffmpeg"],
+    storyIds: [
+      "s-beginners",
+      "s-why",
+      "s-first-project",
+      "s-ownership",
+      "s-cli",
+      "s-http",
+      "s-ffmpeg",
+    ],
     startedAt: "2026-01-14",
   },
 ];
@@ -86,8 +87,8 @@ export const stories: Story[] = [
     shortDescription:
       "The internet says Rust is hard. After a month with the borrow checker, here's what I actually think.",
     cover: storyBeginners,
-    createdAt: "2026-02-03",
-    updatedAt: "2026-02-05",
+    createdAt: "2026-07-13",
+    updatedAt: "2026-07-13",
     category: "Meta",
     tags: ["rust", "learning", "beginners"],
     difficulty: "Beginner",
@@ -97,14 +98,134 @@ export const stories: Story[] = [
     content: [
       {
         type: "paragraph",
-        text:
-          "Every time I mentioned I was picking up Rust, someone warned me it wasn't a first language. The compiler will yell at you. Ownership will hurt. You'll fight lifetimes. So — is any of that true?",
+        text: `
+          As a beginner Rust developer, I am okay telling you this: Rust can be a little out of your depth if you are completely new to software development.
+        `,
       },
+      { type: "paragraph", text: "Maybe my opinion will change in the future." },
       { type: "heading", level: 2, text: "The short answer", id: "the-short-answer" },
       {
         type: "paragraph",
-        text:
-          "Yes, and no. Rust is unusual because it forces you to think about memory before your program runs. That's uncomfortable if you're coming from Python or JavaScript, but it's not gatekeeping — it's honesty. The compiler is a pair programmer that refuses to let you ship a segfault.",
+        text: "Yes, and no. Rust is unusual because it forces you to think about memory before your program runs. That's uncomfortable if you're coming from Python or JavaScript, but it's not gatekeeping — it's honesty. The compiler is a pair programmer that refuses to let you ship a segfault.",
+      },
+      {
+        type: "paragraph",
+        text: "Rust is not impossible to learn. It is very possible to start, continue, and accomplish your goals using Rust. If you stick with it, you are choosing one of the most powerful, robust, and versatile programming languages available today.",
+      },
+      {
+        type: "heading",
+        text: "Rust is used in many domains, including:",
+        level: 2,
+        id: "domains",
+      },
+      {
+        type: "list",
+        items: [
+          "Embedded development",
+          "Backend API development",
+          "Systems programming",
+          "WebAssembly",
+          "Game development",
+          "Desktop and mobile apps through frameworks like Tauri",
+        ],
+      },
+      {
+        type: "heading",
+        level: 2,
+        text: "Why Rust Is Not Very Beginner Friendly",
+        id: "why-rust-is-not-beginners-friendly",
+      },
+      {
+        type: "paragraph",
+        text: `
+          Rust was created to solve some of the hardest problems in software development.
+          To appreciate why Rust feels difficult, you first need to understand the problems it was designed to solve.
+          
+        `,
+      },
+      {
+        type: "paragraph",
+        text: `
+          For decades, developers have faced a difficult trade-off:
+        `,
+      },
+      {
+        type: "paragraph",
+        text: "Do you want maximum performance and control? Languages like `C and C++` give you that power, but they also give you responsibility for memory management",
+      },
+      {
+        type: "paragraph",
+        text: `
+          Do you want safety and productivity?
+          Languages with garbage collectors make development easier, but you sacrifice some control over how memory is managed.
+        `,
+      },
+      {
+        type: "paragraph",
+        text: `
+          Rust was created with a different goal:
+          Can we build software with the performance and control of systems languages while providing strong safety guarantees?
+          The answer is Rust.
+        `,
+      },
+      {
+        type: "heading",
+        level: 2,
+        text: "Here Is Why Rust Is Rust",
+        id: "here-is-why-rust-is-rust",
+      },
+      {
+        type: "paragraph",
+        text: "Rust's power comes from several ideas working together",
+      },
+      {
+        type: "list",
+        items: [
+          "Ownership",
+          "Borrowing",
+          "Lifetimes",
+          "Strong type systems",
+          "Zero-cost abstractions",
+          "Memory safety without garbage collection",
+        ],
+      },
+      {
+        type: "heading",
+        level: 2,
+        text: "One of Rust's biggest innovations is its ownership system.",
+        id: "what-helped",
+      },
+      {
+        type: "paragraph",
+        text: "Instead of using a garbage collector, Rust uses compile-time rules to understand:",
+      },
+      {
+        type: "list",
+        items: [
+          "Who owns a piece of data?",
+          "How long should that data live?",
+          "Who is allowed to access or modify it?",
+        ],
+      },
+      {
+        type: "paragraph",
+        text: `
+          The borrow checker is the part of the compiler responsible for enforcing these rules.
+
+          At first, these rules feel restrictive. The compiler will reject code that looks perfectly reasonable to someone coming from another language.
+
+          But the reason is simple:
+
+          Rust is preventing problems before your program ever runs.
+
+          Instead of discovering memory bugs in production, Rust tries to eliminate entire categories of bugs during compilation.
+
+          This philosophy is what makes Rust different.
+
+          Rust does not try to make programming easier by removing complexity.
+
+          Instead, it moves complexity earlier, into the development process, so that the final software is safer, faster, and more reliable.
+        `,
       },
       { type: "heading", level: 2, text: "What actually helped me", id: "what-helped" },
       {
@@ -118,8 +239,7 @@ export const stories: Story[] = [
       },
       {
         type: "quote",
-        text:
-          "Rust doesn't make hard things easy. It makes the hard things you were already doing visible.",
+        text: "Rust doesn't make hard things easy. It makes the hard things you were already doing visible.",
       },
       { type: "heading", level: 2, text: "A first program", id: "first-program" },
       {
@@ -152,8 +272,7 @@ fn main() {
       { type: "heading", level: 2, text: "So, should you?", id: "should-you" },
       {
         type: "paragraph",
-        text:
-          "If you've written code before, yes. If you're brand new to programming, learn Python for six months first — then come back. Rust rewards patience, not raw hours.",
+        text: "If you've written code before, yes. If you're brand new to programming, learn Python for six months first — then come back. Rust rewards patience, not raw hours.",
       },
     ],
   },
@@ -175,14 +294,12 @@ fn main() {
     content: [
       {
         type: "paragraph",
-        text:
-          "You can't really understand Rust without understanding what it was reacting to. Every design decision is a scar tissue from decades of C and C++ bugs.",
+        text: "You can't really understand Rust without understanding what it was reacting to. Every design decision is a scar tissue from decades of C and C++ bugs.",
       },
       { type: "heading", level: 2, text: "The problem", id: "problem" },
       {
         type: "paragraph",
-        text:
-          "Roughly 70% of security vulnerabilities in large C/C++ codebases (Chrome, Windows, Linux) come from memory safety issues: use-after-free, buffer overflows, data races. Not logic bugs. Memory bugs.",
+        text: "Roughly 70% of security vulnerabilities in large C/C++ codebases (Chrome, Windows, Linux) come from memory safety issues: use-after-free, buffer overflows, data races. Not logic bugs. Memory bugs.",
       },
       {
         type: "video",
@@ -192,8 +309,7 @@ fn main() {
       { type: "heading", level: 2, text: "The bet", id: "bet" },
       {
         type: "paragraph",
-        text:
-          "Rust bets that you can eliminate that entire class of bugs at compile time — without a garbage collector, without runtime overhead — if you're willing to teach the compiler about ownership.",
+        text: "Rust bets that you can eliminate that entire class of bugs at compile time — without a garbage collector, without runtime overhead — if you're willing to teach the compiler about ownership.",
       },
       { type: "heading", level: 3, text: "Two rules that changed everything", id: "two-rules" },
       {
@@ -206,8 +322,7 @@ fn main() {
       },
       {
         type: "paragraph",
-        text:
-          "Those two constraints, enforced by the compiler, remove data races and dangling pointers by construction. It's less magic than it sounds.",
+        text: "Those two constraints, enforced by the compiler, remove data races and dangling pointers by construction. It's less magic than it sounds.",
       },
       {
         type: "pdf",
@@ -236,8 +351,7 @@ fn main() {
     content: [
       {
         type: "paragraph",
-        text:
-          "After two weeks of reading, I needed to build something. Not a toy — something I'd actually use. I settled on a markdown-to-HTML converter for my own notes.",
+        text: "After two weeks of reading, I needed to build something. Not a toy — something I'd actually use. I settled on a markdown-to-HTML converter for my own notes.",
       },
       { type: "heading", level: 2, text: "Setting up the project", id: "setup" },
       {
@@ -333,8 +447,7 @@ fn main() -> anyhow::Result<()> {
     content: [
       {
         type: "paragraph",
-        text:
-          "Ownership is the one thing you cannot skip. Everything else in Rust — lifetimes, borrowing, Send/Sync — is a consequence of it.",
+        text: "Ownership is the one thing you cannot skip. Everything else in Rust — lifetimes, borrowing, Send/Sync — is a consequence of it.",
       },
       { type: "heading", level: 2, text: "Move semantics", id: "move" },
       {
@@ -350,8 +463,7 @@ fn main() -> anyhow::Result<()> {
       { type: "heading", level: 2, text: "Borrowing", id: "borrowing" },
       {
         type: "paragraph",
-        text:
-          "If you don't want to give ownership away, you borrow. A reference lets someone read (or write) without taking the value.",
+        text: "If you don't want to give ownership away, you borrow. A reference lets someone read (or write) without taking the value.",
       },
       {
         type: "code",
@@ -383,8 +495,7 @@ fn main() {
     content: [
       {
         type: "paragraph",
-        text:
-          "Once I understood ownership, I wanted a real tool — one I'd install with cargo install and use every day.",
+        text: "Once I understood ownership, I wanted a real tool — one I'd install with cargo install and use every day.",
       },
     ],
   },
@@ -392,7 +503,8 @@ fn main() {
     id: "s-http",
     title: "Building an HTTP Server in Rust",
     slug: "http-server-in-rust",
-    shortDescription: "Axum, tokio, and a small JSON API. What async actually feels like in practice.",
+    shortDescription:
+      "Axum, tokio, and a small JSON API. What async actually feels like in practice.",
     cover: storyOwnership,
     createdAt: "2026-04-11",
     updatedAt: "2026-04-11",
@@ -413,7 +525,8 @@ fn main() {
     id: "s-ffmpeg",
     title: "Rust + FFmpeg Video Processing",
     slug: "rust-ffmpeg",
-    shortDescription: "Wrapping FFmpeg to build a batch video transcoder. Bindings, unsafe, and pipelines.",
+    shortDescription:
+      "Wrapping FFmpeg to build a batch video transcoder. Bindings, unsafe, and pipelines.",
     cover: heroRust,
     createdAt: "2026-05-02",
     updatedAt: "2026-05-02",
