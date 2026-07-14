@@ -12,6 +12,7 @@ import { TableOfContents } from "@/components/story/TableOfContents";
 import { DifficultyBadge } from "@/components/story/DifficultyBadge";
 import { StoryCard } from "@/components/story/StoryCard";
 import { Tag } from "@/components/story/Tag";
+import { Comments } from "@/components/story/Comments";
 import { formatDateLong } from "@/lib/format";
 
 export const Route = createFileRoute("/stories/$slug")({
@@ -207,6 +208,9 @@ function StoryDetail() {
             </div>
           </aside>
         </div>
+
+        {/* Comments */}
+        <Comments storySlug={story.slug} />
 
         {/* Related */}
         {related.length > 0 ? (

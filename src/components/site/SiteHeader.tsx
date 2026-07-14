@@ -1,5 +1,7 @@
-import { Link } from "@tanstack/react-router";
-import { Terminal, Github } from "lucide-react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { Terminal, Github, LogOut, User as UserIcon } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 type NavItem = {
   to: "/" | "/stories" | "/journeys" | "/timeline" | "/studio";
@@ -15,6 +17,14 @@ const nav: NavItem[] = [
 ];
 
 export function SiteHeader() {
+  const { user, profile, loading } = useAuth();
+  const navigate = useNavigate();
+
+  async function signOut() {
+    await supabase.auth.signOut();
+    navigate({ to: "/", replace: true });
+  }
+
   return (
     <header className="sticky top-0 z-40 border-b border-border/70 bg-background/80 backdrop-blur-xl">
       <div className="container-page flex h-14 items-center justify-between gap-4">
@@ -51,6 +61,42 @@ export function SiteHeader() {
           >
             <Github className="h-4 w-4" />
           </a>
+
+          {!loading && (
+            user ? (
+              <div className="flex items-center gap-2">
+                <div className="hidden sm:flex items-center gap-2 rounded-md border border-border/70 bg-card/40 px-2 py-1">
+                  {profile?.avatar_url ? (
+                    <img
+                      src={profile.avatar_url}
+                      alt=""
+                      className="h-5 w-5 rounded-full object-cover"
+                    />
+                  ) : (
+                    <UserIcon className="h-3.5 w-3.5 text-primary" />
+                  )}
+                  <span className="text-xs font-medium">
+                    {profile?.display_name ?? user.email?.split("@")[0]}
+                  </span>
+                </div>
+                <button
+                  onClick={signOut}
+                  aria-label="Sign out"
+                  className="inline-flex h-8 items-center gap-1.5 rounded-md px-2 text-xs text-muted-foreground hover:text-foreground hover:bg-accent/60"
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Sign out</span>
+                </button>
+              </div>
+            ) : (
+              <Link
+                to="/auth"
+                className="inline-flex h-8 items-center rounded-md bg-primary px-3 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+              >
+                Sign in
+              </Link>
+            )
+          )}
         </div>
       </div>
 
