@@ -24,7 +24,7 @@ import type { ContentBlock, CodeLanguage, Category, Difficulty } from "@/data/st
 import { allCategories, allDifficulties } from "@/data/stories";
 import { ContentRenderer } from "@/components/story/ContentRenderer";
 
-export const Route = createFileRoute("/studio")({
+export const Route = createFileRoute("/_authenticated/studio")({
   head: () => ({
     meta: [
       { title: "Creator Studio — Rust Journey" },
