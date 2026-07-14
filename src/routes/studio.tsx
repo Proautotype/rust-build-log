@@ -20,12 +20,7 @@ import {
   Copy,
   RotateCcw,
 } from "lucide-react";
-import type {
-  ContentBlock,
-  CodeLanguage,
-  Category,
-  Difficulty,
-} from "@/data/stories";
+import type { ContentBlock, CodeLanguage, Category, Difficulty } from "@/data/stories";
 import { allCategories, allDifficulties } from "@/data/stories";
 import { ContentRenderer } from "@/components/story/ContentRenderer";
 
@@ -162,7 +157,11 @@ function makeBlock(kind: PaletteKind): EditorBlock {
   }
 }
 
-const PALETTE: { kind: PaletteKind; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+const PALETTE: {
+  kind: PaletteKind;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+}[] = [
   { kind: "h2", label: "Heading 2", icon: Heading1 },
   { kind: "h3", label: "Heading 3", icon: Heading2 },
   { kind: "paragraph", label: "Paragraph", icon: Type },
@@ -251,7 +250,10 @@ function StudioPage() {
   const exportJson = () => {
     const clean = {
       ...draft,
-      tags: draft.tags.split(",").map((t) => t.trim()).filter(Boolean),
+      tags: draft.tags
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean),
       blocks: draft.blocks.map(({ _uid: _u, ...rest }) => rest),
     };
     const blob = new Blob([JSON.stringify(clean, null, 2)], { type: "application/json" });
@@ -272,16 +274,16 @@ function StudioPage() {
             <div className="text-mono text-[11px] uppercase tracking-widest text-primary">
               Creator Studio
             </div>
-            <h1 className="mt-1 text-2xl font-display tracking-tight">
-              Compose a story
-            </h1>
+            <h1 className="mt-1 text-2xl font-display tracking-tight">Compose a story</h1>
           </div>
           <div className="flex items-center gap-2">
             <div className="inline-flex rounded-md border border-border bg-background p-0.5 text-mono text-xs">
               <button
                 onClick={() => setMode("edit")}
                 className={`inline-flex items-center gap-1.5 rounded px-3 py-1.5 transition ${
-                  mode === "edit" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"
+                  mode === "edit"
+                    ? "bg-accent text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <Pencil className="h-3.5 w-3.5" /> Edit
@@ -289,7 +291,9 @@ function StudioPage() {
               <button
                 onClick={() => setMode("preview")}
                 className={`inline-flex items-center gap-1.5 rounded px-3 py-1.5 transition ${
-                  mode === "preview" ? "bg-accent text-foreground" : "text-muted-foreground hover:text-foreground"
+                  mode === "preview"
+                    ? "bg-accent text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <Eye className="h-3.5 w-3.5" /> Preview
@@ -381,14 +385,7 @@ interface CanvasProps {
   onChangeBlock: (uid: string, patch: Partial<EditorBlock>) => void;
 }
 
-function Canvas({
-  draft,
-  onInsertAt,
-  onMove,
-  onRemove,
-  onDuplicate,
-  onChangeBlock,
-}: CanvasProps) {
+function Canvas({ draft, onInsertAt, onMove, onRemove, onDuplicate, onChangeBlock }: CanvasProps) {
   const [dropIndex, setDropIndex] = useState<number | null>(null);
   const dragUid = useRef<string | null>(null);
 
@@ -409,7 +406,14 @@ function Canvas({
     <div className="min-w-0">
       <div className="rounded-lg border border-dashed border-border bg-surface/30 p-4">
         {draft.blocks.length === 0 ? (
-          <DropSlot active={dropIndex === 0} onDropAt={(e) => handleDropAt(0, e)} onEnter={() => setDropIndex(0)} onLeave={() => setDropIndex(null)} label="Drop your first block here" empty />
+          <DropSlot
+            active={dropIndex === 0}
+            onDropAt={(e) => handleDropAt(0, e)}
+            onEnter={() => setDropIndex(0)}
+            onLeave={() => setDropIndex(null)}
+            label="Drop your first block here"
+            empty
+          />
         ) : (
           <>
             <DropSlot
@@ -473,7 +477,9 @@ function DropSlot({
       className={`transition-all ${
         empty
           ? `flex items-center justify-center rounded-md border border-dashed py-16 text-mono text-xs ${
-              active ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"
+              active
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-border text-muted-foreground"
             }`
           : `my-1 rounded-full ${active ? "h-8 bg-primary/10 border border-dashed border-primary" : "h-2"}`
       }`}
@@ -581,7 +587,7 @@ function BlockFields({
           <Select
             label="Level"
             value={String(block.level)}
-            onChange={(v) => onChange({ level: (v === "3" ? 3 : 2) } as Partial<EditorBlock>)}
+            onChange={(v) => onChange({ level: v === "3" ? 3 : 2 } as Partial<EditorBlock>)}
             options={[
               { value: "2", label: "H2" },
               { value: "3", label: "H3" },
@@ -791,9 +797,7 @@ function MetaPanel({
         label="Title"
         value={draft.title}
         placeholder="A story worth telling"
-        onChange={(v) =>
-          onChange({ title: v, slug: draft.slug || slugify(v) })
-        }
+        onChange={(v) => onChange({ title: v, slug: draft.slug || slugify(v) })}
       />
       <Input
         label="Slug"
@@ -807,11 +811,7 @@ function MetaPanel({
         value={draft.shortDescription}
         onChange={(v) => onChange({ shortDescription: v })}
       />
-      <Input
-        label="Cover image URL"
-        value={draft.cover}
-        onChange={(v) => onChange({ cover: v })}
-      />
+      <Input label="Cover image URL" value={draft.cover} onChange={(v) => onChange({ cover: v })} />
       <Select
         label="Category"
         value={draft.category}
