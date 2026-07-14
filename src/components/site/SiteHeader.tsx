@@ -1,12 +1,17 @@
 import { Link } from "@tanstack/react-router";
 import { Terminal, Github } from "lucide-react";
 
-type NavItem = { to: "/" | "/stories" | "/journeys" | "/timeline"; label: string; exact?: boolean };
+type NavItem = {
+  to: "/" | "/stories" | "/journeys" | "/timeline" | "/studio";
+  label: string;
+  exact?: boolean;
+};
 const nav: NavItem[] = [
   { to: "/", label: "Home", exact: true },
   { to: "/stories", label: "Stories" },
   { to: "/journeys", label: "Journeys" },
   { to: "/timeline", label: "Timeline" },
+  { to: "/studio", label: "Studio" },
 ];
 
 export function SiteHeader() {
