@@ -51,7 +51,8 @@ function StoriesList() {
     });
   }, [q, category, difficulty, tag]);
 
-  const activeFilters = (category !== "All" ? 1 : 0) + (difficulty !== "All" ? 1 : 0) + (tag ? 1 : 0);
+  const activeFilters =
+    (category !== "All" ? 1 : 0) + (difficulty !== "All" ? 1 : 0) + (tag ? 1 : 0);
 
   return (
     <div className="container-page py-10 md:py-14">
@@ -88,7 +89,9 @@ function StoriesList() {
       {/* Filters */}
       <div className="mt-6 space-y-4">
         <FilterRow label="Category">
-          <Chip active={category === "All"} onClick={() => setCategory("All")}>All</Chip>
+          <Chip active={category === "All"} onClick={() => setCategory("All")}>
+            All
+          </Chip>
           {allCategories.map((c) => (
             <Chip key={c} active={category === c} onClick={() => setCategory(c)}>
               {c}
@@ -96,7 +99,9 @@ function StoriesList() {
           ))}
         </FilterRow>
         <FilterRow label="Difficulty">
-          <Chip active={difficulty === "All"} onClick={() => setDifficulty("All")}>All</Chip>
+          <Chip active={difficulty === "All"} onClick={() => setDifficulty("All")}>
+            All
+          </Chip>
           {allDifficulties.map((d) => (
             <Chip key={d} active={difficulty === d} onClick={() => setDifficulty(d)}>
               {d}
@@ -105,12 +110,7 @@ function StoriesList() {
         </FilterRow>
         <FilterRow label="Tags">
           {allTags.map((t) => (
-            <Chip
-              key={t}
-              active={tag === t}
-              onClick={() => setTag(tag === t ? null : t)}
-              muted
-            >
+            <Chip key={t} active={tag === t} onClick={() => setTag(tag === t ? null : t)} muted>
               #{t}
             </Chip>
           ))}
