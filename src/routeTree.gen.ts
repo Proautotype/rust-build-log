@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TimelineRouteImport } from './routes/timeline'
+import { Route as StudioRouteImport } from './routes/studio'
 import { Route as StoriesRouteImport } from './routes/stories'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as JourneysRouteImport } from './routes/journeys'
@@ -19,6 +20,11 @@ import { Route as StoriesSlugRouteImport } from './routes/stories.$slug'
 const TimelineRoute = TimelineRouteImport.update({
   id: '/timeline',
   path: '/timeline',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StudioRoute = StudioRouteImport.update({
+  id: '/studio',
+  path: '/studio',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StoriesRoute = StoriesRouteImport.update({
@@ -52,6 +58,7 @@ export interface FileRoutesByFullPath {
   '/journeys': typeof JourneysRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/stories': typeof StoriesRouteWithChildren
+  '/studio': typeof StudioRoute
   '/timeline': typeof TimelineRoute
   '/stories/$slug': typeof StoriesSlugRoute
 }
@@ -60,6 +67,7 @@ export interface FileRoutesByTo {
   '/journeys': typeof JourneysRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/stories': typeof StoriesRouteWithChildren
+  '/studio': typeof StudioRoute
   '/timeline': typeof TimelineRoute
   '/stories/$slug': typeof StoriesSlugRoute
 }
@@ -69,6 +77,7 @@ export interface FileRoutesById {
   '/journeys': typeof JourneysRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/stories': typeof StoriesRouteWithChildren
+  '/studio': typeof StudioRoute
   '/timeline': typeof TimelineRoute
   '/stories/$slug': typeof StoriesSlugRoute
 }
@@ -79,6 +88,7 @@ export interface FileRouteTypes {
     | '/journeys'
     | '/sitemap.xml'
     | '/stories'
+    | '/studio'
     | '/timeline'
     | '/stories/$slug'
   fileRoutesByTo: FileRoutesByTo
@@ -87,6 +97,7 @@ export interface FileRouteTypes {
     | '/journeys'
     | '/sitemap.xml'
     | '/stories'
+    | '/studio'
     | '/timeline'
     | '/stories/$slug'
   id:
@@ -95,6 +106,7 @@ export interface FileRouteTypes {
     | '/journeys'
     | '/sitemap.xml'
     | '/stories'
+    | '/studio'
     | '/timeline'
     | '/stories/$slug'
   fileRoutesById: FileRoutesById
@@ -104,6 +116,7 @@ export interface RootRouteChildren {
   JourneysRoute: typeof JourneysRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StoriesRoute: typeof StoriesRouteWithChildren
+  StudioRoute: typeof StudioRoute
   TimelineRoute: typeof TimelineRoute
 }
 
@@ -114,6 +127,13 @@ declare module '@tanstack/react-router' {
       path: '/timeline'
       fullPath: '/timeline'
       preLoaderRoute: typeof TimelineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/studio': {
+      id: '/studio'
+      path: '/studio'
+      fullPath: '/studio'
+      preLoaderRoute: typeof StudioRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/stories': {
@@ -170,18 +190,9 @@ const rootRouteChildren: RootRouteChildren = {
   JourneysRoute: JourneysRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   StoriesRoute: StoriesRouteWithChildren,
+  StudioRoute: StudioRoute,
   TimelineRoute: TimelineRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
