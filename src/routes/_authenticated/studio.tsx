@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import {
   Type,
   Heading1,
@@ -19,10 +21,21 @@ import {
   Plus,
   Copy,
   RotateCcw,
+  Cloud,
+  Loader2,
+  FolderOpen,
 } from "lucide-react";
 import type { ContentBlock, CodeLanguage, Category, Difficulty } from "@/data/stories";
 import { allCategories, allDifficulties } from "@/data/stories";
 import { ContentRenderer } from "@/components/story/ContentRenderer";
+import {
+  listMyStories,
+  listJourneys,
+  saveStory,
+  createJourney,
+  deleteMyStory,
+} from "@/lib/studio.functions";
+
 
 export const Route = createFileRoute("/_authenticated/studio")({
   head: () => ({
@@ -44,6 +57,7 @@ export const Route = createFileRoute("/_authenticated/studio")({
 /* ------------------------------------------------------------------ */
 
 interface Draft {
+  id?: string;
   title: string;
   slug: string;
   shortDescription: string;
@@ -52,7 +66,19 @@ interface Draft {
   difficulty: Difficulty;
   readingMinutes: number;
   tags: string; // comma-separated in the editor
+  journeyId: string | null;
+  published: boolean;
   blocks: EditorBlock[];
+}
+
+interface JourneyRow {
+  id: string;
+  title: string;
+  slug: string;
+  description: string | null;
+  cover: string | null;
+  creator_id: string;
+  started_at: string;
 }
 
 type EditorBlock = ContentBlock & { _uid: string };
@@ -70,6 +96,8 @@ const emptyDraft = (): Draft => ({
   difficulty: "Beginner",
   readingMinutes: 5,
   tags: "rust",
+  journeyId: null,
+  published: false,
   blocks: [
     {
       _uid: uid(),
@@ -85,6 +113,7 @@ const emptyDraft = (): Draft => ({
     },
   ],
 });
+
 
 /* ------------------------------------------------------------------ */
 /*  Block factory (used when dropping from palette)                   */
@@ -183,12 +212,29 @@ function StudioPage() {
   const [draft, setDraft] = useState<Draft>(() => emptyDraft());
   const [mode, setMode] = useState<"edit" | "preview">("edit");
   const [hydrated, setHydrated] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
+
+  const listMyStoriesFn = useServerFn(listMyStories);
+  const listJourneysFn = useServerFn(listJourneys);
+  const saveStoryFn = useServerFn(saveStory);
+  const createJourneyFn = useServerFn(createJourney);
+  const deleteMyStoryFn = useServerFn(deleteMyStory);
+  const qc = useQueryClient();
+
+  const storiesQuery = useQuery({
+    queryKey: ["my-stories"],
+    queryFn: () => listMyStoriesFn(),
+  });
+  const journeysQuery = useQuery({
+    queryKey: ["journeys"],
+    queryFn: () => listJourneysFn(),
+  });
 
   // Load draft from localStorage on client only (avoid SSR mismatch).
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setDraft(JSON.parse(raw));
+      if (raw) setDraft({ ...emptyDraft(), ...JSON.parse(raw) });
     } catch {
       /* ignore */
     }
@@ -243,6 +289,10 @@ function StudioPage() {
       return { ...d, blocks: next };
     });
 
+  const newDraft = () => {
+    if (confirm("Start a fresh draft? Unsaved local changes will be lost.")) setDraft(emptyDraft());
+  };
+
   const resetDraft = () => {
     if (confirm("Discard the current draft and start fresh?")) setDraft(emptyDraft());
   };
@@ -265,6 +315,87 @@ function StudioPage() {
     URL.revokeObjectURL(url);
   };
 
+  const saveMutation = useMutation({
+    mutationFn: async (published: boolean) => {
+      if (!draft.title.trim()) throw new Error("Title is required");
+      if (!draft.slug.trim()) throw new Error("Slug is required");
+      const payload = {
+        id: draft.id,
+        title: draft.title.trim(),
+        slug: draft.slug.trim(),
+        short_description: draft.shortDescription,
+        cover: draft.cover,
+        category: draft.category,
+        difficulty: draft.difficulty,
+        reading_minutes: Number(draft.readingMinutes) || 0,
+        tags: draft.tags
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean),
+        content: draft.blocks.map(({ _uid: _u, ...rest }) => rest),
+        published,
+        journey_id: draft.journeyId,
+      };
+      return saveStoryFn({ data: payload });
+    },
+    onSuccess: (row, published) => {
+      if (row && typeof row === "object" && "id" in row) {
+        setDraft((d) => ({ ...d, id: (row as { id: string }).id, published }));
+      }
+      setStatus(published ? "Published to cloud ✓" : "Draft saved to cloud ✓");
+      qc.invalidateQueries({ queryKey: ["my-stories"] });
+      setTimeout(() => setStatus(null), 2500);
+    },
+    onError: (err: Error) => setStatus(`Save failed: ${err.message}`),
+  });
+
+  const loadStory = (id: string) => {
+    const s = (storiesQuery.data ?? []).find((x) => x.id === id);
+    if (!s) return;
+    setDraft({
+      id: s.id,
+      title: s.title,
+      slug: s.slug,
+      shortDescription: s.short_description ?? "",
+      cover: s.cover ?? "",
+      category: (s.category ?? "Fundamentals") as Category,
+      difficulty: (s.difficulty ?? "Beginner") as Difficulty,
+      readingMinutes: s.reading_minutes ?? 5,
+      tags: (s.tags ?? []).join(", "),
+      journeyId: s.journey_id ?? null,
+      published: s.published ?? false,
+      blocks: (Array.isArray(s.content) ? s.content : []).map((b) => ({
+        ...(b as ContentBlock),
+        _uid: uid(),
+      })),
+    });
+    setStatus(`Loaded "${s.title}"`);
+    setTimeout(() => setStatus(null), 2000);
+  };
+
+  const deleteCurrent = async () => {
+    if (!draft.id) return;
+    if (!confirm("Delete this story from the cloud? This can't be undone.")) return;
+    await deleteMyStoryFn({ data: { id: draft.id } });
+    qc.invalidateQueries({ queryKey: ["my-stories"] });
+    setDraft(emptyDraft());
+    setStatus("Deleted");
+    setTimeout(() => setStatus(null), 2000);
+  };
+
+  const handleCreateJourney = async (input: {
+    title: string;
+    slug: string;
+    description: string;
+    cover: string;
+  }) => {
+    const row = await createJourneyFn({ data: input });
+    qc.invalidateQueries({ queryKey: ["journeys"] });
+    if (row && typeof row === "object" && "id" in row) {
+      update({ journeyId: (row as { id: string }).id });
+    }
+  };
+
   return (
     <div className="border-t border-border/60">
       {/* Studio header */}
@@ -272,11 +403,21 @@ function StudioPage() {
         <div className="container-page flex flex-wrap items-center justify-between gap-3 py-4">
           <div>
             <div className="text-mono text-[11px] uppercase tracking-widest text-primary">
-              Creator Studio
+              Creator Studio {draft.id ? "· editing" : "· new"}
             </div>
-            <h1 className="mt-1 text-2xl font-display tracking-tight">Compose a story</h1>
+            <h1 className="mt-1 text-2xl font-display tracking-tight">
+              {draft.title || "Compose a story"}
+            </h1>
+            {status ? (
+              <div className="mt-1 text-mono text-[11px] text-primary">{status}</div>
+            ) : null}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <StoriesDropdown
+              stories={storiesQuery.data ?? []}
+              onLoad={loadStory}
+              onNew={newDraft}
+            />
             <div className="inline-flex rounded-md border border-border bg-background p-0.5 text-mono text-xs">
               <button
                 onClick={() => setMode("edit")}
@@ -308,9 +449,28 @@ function StudioPage() {
             </button>
             <button
               onClick={exportJson}
-              className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-mono text-xs font-medium text-primary-foreground hover:bg-primary/90"
+              className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-mono text-xs text-foreground hover:border-border-strong"
             >
               <Download className="h-3.5 w-3.5" /> Export JSON
+            </button>
+            <button
+              onClick={() => saveMutation.mutate(false)}
+              disabled={saveMutation.isPending}
+              className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-mono text-xs text-foreground hover:border-border-strong disabled:opacity-50"
+            >
+              {saveMutation.isPending ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Cloud className="h-3.5 w-3.5" />
+              )}
+              Save draft
+            </button>
+            <button
+              onClick={() => saveMutation.mutate(true)}
+              disabled={saveMutation.isPending}
+              className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-mono text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            >
+              <Cloud className="h-3.5 w-3.5" /> {draft.published ? "Update" : "Publish"}
             </button>
           </div>
         </div>
@@ -320,7 +480,7 @@ function StudioPage() {
         <PreviewPane draft={draft} />
       ) : (
         <div className="container-page py-6">
-          <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)_260px]">
+          <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)_280px]">
             <Palette />
             <Canvas
               draft={draft}
@@ -330,13 +490,87 @@ function StudioPage() {
               onDuplicate={duplicateBlock}
               onChangeBlock={updateBlock}
             />
-            <MetaPanel draft={draft} onChange={update} />
+            <MetaPanel
+              draft={draft}
+              onChange={update}
+              journeys={(journeysQuery.data ?? []) as JourneyRow[]}
+              onCreateJourney={handleCreateJourney}
+              onDelete={draft.id ? deleteCurrent : undefined}
+            />
           </div>
         </div>
       )}
     </div>
   );
 }
+
+function StoriesDropdown({
+  stories,
+  onLoad,
+  onNew,
+}: {
+  stories: Array<{ id: string; title: string; published: boolean; updated_at: string }>;
+  onLoad: (id: string) => void;
+  onNew: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-mono text-xs text-foreground hover:border-border-strong"
+      >
+        <FolderOpen className="h-3.5 w-3.5" /> My stories ({stories.length})
+      </button>
+      {open ? (
+        <div
+          className="absolute right-0 z-30 mt-1 w-72 rounded-md border border-border bg-surface p-1.5 shadow-lg"
+          onMouseLeave={() => setOpen(false)}
+        >
+          <button
+            onClick={() => {
+              onNew();
+              setOpen(false);
+            }}
+            className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm hover:bg-accent"
+          >
+            <Plus className="h-3.5 w-3.5" /> New story
+          </button>
+          <div className="my-1 border-t border-border" />
+          {stories.length === 0 ? (
+            <div className="px-2 py-2 text-mono text-[11px] text-muted-foreground">
+              No cloud stories yet.
+            </div>
+          ) : (
+            <ul className="max-h-72 overflow-y-auto">
+              {stories.map((s) => (
+                <li key={s.id}>
+                  <button
+                    onClick={() => {
+                      onLoad(s.id);
+                      setOpen(false);
+                    }}
+                    className="flex w-full items-center justify-between gap-2 rounded px-2 py-1.5 text-left text-sm hover:bg-accent"
+                  >
+                    <span className="truncate">{s.title || "Untitled"}</span>
+                    <span
+                      className={`text-mono text-[10px] ${
+                        s.published ? "text-primary" : "text-muted-foreground"
+                      }`}
+                    >
+                      {s.published ? "live" : "draft"}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 
 /* ------------------------------------------------------------------ */
 /*  Palette (draggable sources)                                       */
@@ -784,10 +1018,52 @@ function BlockFields({
 function MetaPanel({
   draft,
   onChange,
+  journeys,
+  onCreateJourney,
+  onDelete,
 }: {
   draft: Draft;
   onChange: (patch: Partial<Draft>) => void;
+  journeys: JourneyRow[];
+  onCreateJourney: (input: {
+    title: string;
+    slug: string;
+    description: string;
+    cover: string;
+  }) => Promise<void>;
+  onDelete?: () => void;
 }) {
+  const [creatingJourney, setCreatingJourney] = useState(false);
+  const [jTitle, setJTitle] = useState("");
+  const [jSlug, setJSlug] = useState("");
+  const [jDesc, setJDesc] = useState("");
+  const [jCover, setJCover] = useState("");
+  const [jSaving, setJSaving] = useState(false);
+  const [jError, setJError] = useState<string | null>(null);
+
+  const submitJourney = async () => {
+    if (!jTitle.trim()) return;
+    setJSaving(true);
+    setJError(null);
+    try {
+      await onCreateJourney({
+        title: jTitle.trim(),
+        slug: jSlug.trim() || slugify(jTitle),
+        description: jDesc,
+        cover: jCover,
+      });
+      setCreatingJourney(false);
+      setJTitle("");
+      setJSlug("");
+      setJDesc("");
+      setJCover("");
+    } catch (e) {
+      setJError((e as Error).message);
+    } finally {
+      setJSaving(false);
+    }
+  };
+
   return (
     <aside className="lg:sticky lg:top-20 h-fit rounded-lg border border-border bg-surface/60 p-3 space-y-3">
       <div className="text-mono text-[10px] uppercase tracking-widest text-muted-foreground px-1">
@@ -835,12 +1111,90 @@ function MetaPanel({
         value={draft.tags}
         onChange={(v) => onChange({ tags: v })}
       />
-      <div className="pt-2 text-mono text-[10px] leading-relaxed text-muted-foreground px-1">
-        Autosaved locally. Use Export JSON to save the story data.
+
+      {/* Journey attachment */}
+      <div className="rounded-md border border-border bg-background/60 p-2.5 space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+            Journey
+          </span>
+          {!creatingJourney ? (
+            <button
+              onClick={() => setCreatingJourney(true)}
+              className="inline-flex items-center gap-1 text-mono text-[10px] uppercase tracking-widest text-primary hover:underline"
+            >
+              <Plus className="h-3 w-3" /> New
+            </button>
+          ) : null}
+        </div>
+
+        {!creatingJourney ? (
+          <select
+            value={draft.journeyId ?? ""}
+            onChange={(e) => onChange({ journeyId: e.target.value || null })}
+            className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm outline-none focus:border-primary/60 focus:ring-1 focus:ring-primary/40"
+          >
+            <option value="">— No journey —</option>
+            {journeys.map((j) => (
+              <option key={j.id} value={j.id}>
+                {j.title}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <div className="space-y-2">
+            <Input
+              label="Journey title"
+              value={jTitle}
+              onChange={(v) => {
+                setJTitle(v);
+                if (!jSlug) setJSlug(slugify(v));
+              }}
+            />
+            <Input label="Slug" value={jSlug} onChange={(v) => setJSlug(slugify(v))} />
+            <Textarea label="Description" rows={2} value={jDesc} onChange={setJDesc} />
+            <Input label="Cover URL (optional)" value={jCover} onChange={setJCover} />
+            {jError ? (
+              <div className="text-mono text-[11px] text-destructive">{jError}</div>
+            ) : null}
+            <div className="flex gap-2">
+              <button
+                onClick={submitJourney}
+                disabled={jSaving || !jTitle.trim()}
+                className="inline-flex items-center gap-1 rounded-md bg-primary px-2.5 py-1 text-mono text-[11px] font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              >
+                {jSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : null} Create & attach
+              </button>
+              <button
+                onClick={() => {
+                  setCreatingJourney(false);
+                  setJError(null);
+                }}
+                className="rounded-md border border-border px-2.5 py-1 text-mono text-[11px] text-muted-foreground hover:text-foreground"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {onDelete ? (
+        <button
+          onClick={onDelete}
+          className="w-full inline-flex items-center justify-center gap-1.5 rounded-md border border-destructive/40 bg-destructive/10 px-2.5 py-1.5 text-mono text-[11px] text-destructive hover:bg-destructive/20"
+        >
+          <Trash2 className="h-3.5 w-3.5" /> Delete from cloud
+        </button>
+      ) : null}
+
+      <div className="pt-1 text-mono text-[10px] leading-relaxed text-muted-foreground px-1">
+        Autosaves locally. Save draft or Publish to persist to the cloud, tied to your account.
       </div>
     </aside>
   );
 }
+
 
 /* ------------------------------------------------------------------ */
 /*  Preview                                                           */
