@@ -57,6 +57,7 @@ export const Route = createFileRoute("/_authenticated/studio")({
 /* ------------------------------------------------------------------ */
 
 interface Draft {
+  id?: string;
   title: string;
   slug: string;
   shortDescription: string;
@@ -65,7 +66,19 @@ interface Draft {
   difficulty: Difficulty;
   readingMinutes: number;
   tags: string; // comma-separated in the editor
+  journeyId: string | null;
+  published: boolean;
   blocks: EditorBlock[];
+}
+
+interface JourneyRow {
+  id: string;
+  title: string;
+  slug: string;
+  description: string | null;
+  cover: string | null;
+  creator_id: string;
+  started_at: string;
 }
 
 type EditorBlock = ContentBlock & { _uid: string };
@@ -83,6 +96,8 @@ const emptyDraft = (): Draft => ({
   difficulty: "Beginner",
   readingMinutes: 5,
   tags: "rust",
+  journeyId: null,
+  published: false,
   blocks: [
     {
       _uid: uid(),
@@ -98,6 +113,7 @@ const emptyDraft = (): Draft => ({
     },
   ],
 });
+
 
 /* ------------------------------------------------------------------ */
 /*  Block factory (used when dropping from palette)                   */
