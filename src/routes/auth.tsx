@@ -110,7 +110,7 @@ function AuthPage() {
         </p>
 
         <div className="mt-8 space-y-3">
-          <button
+          {/* <button
             onClick={handleGoogle}
             disabled={loading}
             className="w-full inline-flex items-center justify-center gap-2 rounded-md border border-border bg-background px-4 py-2.5 text-sm font-medium hover:bg-accent disabled:opacity-50"
@@ -122,7 +122,7 @@ function AuthPage() {
               />
             </svg>
             Continue with Google
-          </button>
+          </button> */}
 
           <div className="relative py-2">
             <div className="absolute inset-0 flex items-center">
