@@ -212,12 +212,29 @@ function StudioPage() {
   const [draft, setDraft] = useState<Draft>(() => emptyDraft());
   const [mode, setMode] = useState<"edit" | "preview">("edit");
   const [hydrated, setHydrated] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
+
+  const listMyStoriesFn = useServerFn(listMyStories);
+  const listJourneysFn = useServerFn(listJourneys);
+  const saveStoryFn = useServerFn(saveStory);
+  const createJourneyFn = useServerFn(createJourney);
+  const deleteMyStoryFn = useServerFn(deleteMyStory);
+  const qc = useQueryClient();
+
+  const storiesQuery = useQuery({
+    queryKey: ["my-stories"],
+    queryFn: () => listMyStoriesFn(),
+  });
+  const journeysQuery = useQuery({
+    queryKey: ["journeys"],
+    queryFn: () => listJourneysFn(),
+  });
 
   // Load draft from localStorage on client only (avoid SSR mismatch).
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setDraft(JSON.parse(raw));
+      if (raw) setDraft({ ...emptyDraft(), ...JSON.parse(raw) });
     } catch {
       /* ignore */
     }
@@ -272,6 +289,10 @@ function StudioPage() {
       return { ...d, blocks: next };
     });
 
+  const newDraft = () => {
+    if (confirm("Start a fresh draft? Unsaved local changes will be lost.")) setDraft(emptyDraft());
+  };
+
   const resetDraft = () => {
     if (confirm("Discard the current draft and start fresh?")) setDraft(emptyDraft());
   };
@@ -294,6 +315,87 @@ function StudioPage() {
     URL.revokeObjectURL(url);
   };
 
+  const saveMutation = useMutation({
+    mutationFn: async (published: boolean) => {
+      if (!draft.title.trim()) throw new Error("Title is required");
+      if (!draft.slug.trim()) throw new Error("Slug is required");
+      const payload = {
+        id: draft.id,
+        title: draft.title.trim(),
+        slug: draft.slug.trim(),
+        short_description: draft.shortDescription,
+        cover: draft.cover,
+        category: draft.category,
+        difficulty: draft.difficulty,
+        reading_minutes: Number(draft.readingMinutes) || 0,
+        tags: draft.tags
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean),
+        content: draft.blocks.map(({ _uid: _u, ...rest }) => rest),
+        published,
+        journey_id: draft.journeyId,
+      };
+      return saveStoryFn({ data: payload });
+    },
+    onSuccess: (row, published) => {
+      if (row && typeof row === "object" && "id" in row) {
+        setDraft((d) => ({ ...d, id: (row as { id: string }).id, published }));
+      }
+      setStatus(published ? "Published to cloud ✓" : "Draft saved to cloud ✓");
+      qc.invalidateQueries({ queryKey: ["my-stories"] });
+      setTimeout(() => setStatus(null), 2500);
+    },
+    onError: (err: Error) => setStatus(`Save failed: ${err.message}`),
+  });
+
+  const loadStory = (id: string) => {
+    const s = (storiesQuery.data ?? []).find((x) => x.id === id);
+    if (!s) return;
+    setDraft({
+      id: s.id,
+      title: s.title,
+      slug: s.slug,
+      shortDescription: s.short_description ?? "",
+      cover: s.cover ?? "",
+      category: (s.category ?? "Fundamentals") as Category,
+      difficulty: (s.difficulty ?? "Beginner") as Difficulty,
+      readingMinutes: s.reading_minutes ?? 5,
+      tags: (s.tags ?? []).join(", "),
+      journeyId: s.journey_id ?? null,
+      published: s.published ?? false,
+      blocks: (Array.isArray(s.content) ? s.content : []).map((b) => ({
+        ...(b as ContentBlock),
+        _uid: uid(),
+      })),
+    });
+    setStatus(`Loaded "${s.title}"`);
+    setTimeout(() => setStatus(null), 2000);
+  };
+
+  const deleteCurrent = async () => {
+    if (!draft.id) return;
+    if (!confirm("Delete this story from the cloud? This can't be undone.")) return;
+    await deleteMyStoryFn({ data: { id: draft.id } });
+    qc.invalidateQueries({ queryKey: ["my-stories"] });
+    setDraft(emptyDraft());
+    setStatus("Deleted");
+    setTimeout(() => setStatus(null), 2000);
+  };
+
+  const handleCreateJourney = async (input: {
+    title: string;
+    slug: string;
+    description: string;
+    cover: string;
+  }) => {
+    const row = await createJourneyFn({ data: input });
+    qc.invalidateQueries({ queryKey: ["journeys"] });
+    if (row && typeof row === "object" && "id" in row) {
+      update({ journeyId: (row as { id: string }).id });
+    }
+  };
+
   return (
     <div className="border-t border-border/60">
       {/* Studio header */}
@@ -301,11 +403,21 @@ function StudioPage() {
         <div className="container-page flex flex-wrap items-center justify-between gap-3 py-4">
           <div>
             <div className="text-mono text-[11px] uppercase tracking-widest text-primary">
-              Creator Studio
+              Creator Studio {draft.id ? "· editing" : "· new"}
             </div>
-            <h1 className="mt-1 text-2xl font-display tracking-tight">Compose a story</h1>
+            <h1 className="mt-1 text-2xl font-display tracking-tight">
+              {draft.title || "Compose a story"}
+            </h1>
+            {status ? (
+              <div className="mt-1 text-mono text-[11px] text-primary">{status}</div>
+            ) : null}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <StoriesDropdown
+              stories={storiesQuery.data ?? []}
+              onLoad={loadStory}
+              onNew={newDraft}
+            />
             <div className="inline-flex rounded-md border border-border bg-background p-0.5 text-mono text-xs">
               <button
                 onClick={() => setMode("edit")}
@@ -337,9 +449,28 @@ function StudioPage() {
             </button>
             <button
               onClick={exportJson}
-              className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-mono text-xs font-medium text-primary-foreground hover:bg-primary/90"
+              className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-mono text-xs text-foreground hover:border-border-strong"
             >
               <Download className="h-3.5 w-3.5" /> Export JSON
+            </button>
+            <button
+              onClick={() => saveMutation.mutate(false)}
+              disabled={saveMutation.isPending}
+              className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-mono text-xs text-foreground hover:border-border-strong disabled:opacity-50"
+            >
+              {saveMutation.isPending ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Cloud className="h-3.5 w-3.5" />
+              )}
+              Save draft
+            </button>
+            <button
+              onClick={() => saveMutation.mutate(true)}
+              disabled={saveMutation.isPending}
+              className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-mono text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            >
+              <Cloud className="h-3.5 w-3.5" /> {draft.published ? "Update" : "Publish"}
             </button>
           </div>
         </div>
@@ -349,7 +480,7 @@ function StudioPage() {
         <PreviewPane draft={draft} />
       ) : (
         <div className="container-page py-6">
-          <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)_260px]">
+          <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)_280px]">
             <Palette />
             <Canvas
               draft={draft}
@@ -359,13 +490,87 @@ function StudioPage() {
               onDuplicate={duplicateBlock}
               onChangeBlock={updateBlock}
             />
-            <MetaPanel draft={draft} onChange={update} />
+            <MetaPanel
+              draft={draft}
+              onChange={update}
+              journeys={(journeysQuery.data ?? []) as JourneyRow[]}
+              onCreateJourney={handleCreateJourney}
+              onDelete={draft.id ? deleteCurrent : undefined}
+            />
           </div>
         </div>
       )}
     </div>
   );
 }
+
+function StoriesDropdown({
+  stories,
+  onLoad,
+  onNew,
+}: {
+  stories: Array<{ id: string; title: string; published: boolean; updated_at: string }>;
+  onLoad: (id: string) => void;
+  onNew: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-mono text-xs text-foreground hover:border-border-strong"
+      >
+        <FolderOpen className="h-3.5 w-3.5" /> My stories ({stories.length})
+      </button>
+      {open ? (
+        <div
+          className="absolute right-0 z-30 mt-1 w-72 rounded-md border border-border bg-surface p-1.5 shadow-lg"
+          onMouseLeave={() => setOpen(false)}
+        >
+          <button
+            onClick={() => {
+              onNew();
+              setOpen(false);
+            }}
+            className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-sm hover:bg-accent"
+          >
+            <Plus className="h-3.5 w-3.5" /> New story
+          </button>
+          <div className="my-1 border-t border-border" />
+          {stories.length === 0 ? (
+            <div className="px-2 py-2 text-mono text-[11px] text-muted-foreground">
+              No cloud stories yet.
+            </div>
+          ) : (
+            <ul className="max-h-72 overflow-y-auto">
+              {stories.map((s) => (
+                <li key={s.id}>
+                  <button
+                    onClick={() => {
+                      onLoad(s.id);
+                      setOpen(false);
+                    }}
+                    className="flex w-full items-center justify-between gap-2 rounded px-2 py-1.5 text-left text-sm hover:bg-accent"
+                  >
+                    <span className="truncate">{s.title || "Untitled"}</span>
+                    <span
+                      className={`text-mono text-[10px] ${
+                        s.published ? "text-primary" : "text-muted-foreground"
+                      }`}
+                    >
+                      {s.published ? "live" : "draft"}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 
 /* ------------------------------------------------------------------ */
 /*  Palette (draggable sources)                                       */
