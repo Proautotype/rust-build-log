@@ -1018,10 +1018,52 @@ function BlockFields({
 function MetaPanel({
   draft,
   onChange,
+  journeys,
+  onCreateJourney,
+  onDelete,
 }: {
   draft: Draft;
   onChange: (patch: Partial<Draft>) => void;
+  journeys: JourneyRow[];
+  onCreateJourney: (input: {
+    title: string;
+    slug: string;
+    description: string;
+    cover: string;
+  }) => Promise<void>;
+  onDelete?: () => void;
 }) {
+  const [creatingJourney, setCreatingJourney] = useState(false);
+  const [jTitle, setJTitle] = useState("");
+  const [jSlug, setJSlug] = useState("");
+  const [jDesc, setJDesc] = useState("");
+  const [jCover, setJCover] = useState("");
+  const [jSaving, setJSaving] = useState(false);
+  const [jError, setJError] = useState<string | null>(null);
+
+  const submitJourney = async () => {
+    if (!jTitle.trim()) return;
+    setJSaving(true);
+    setJError(null);
+    try {
+      await onCreateJourney({
+        title: jTitle.trim(),
+        slug: jSlug.trim() || slugify(jTitle),
+        description: jDesc,
+        cover: jCover,
+      });
+      setCreatingJourney(false);
+      setJTitle("");
+      setJSlug("");
+      setJDesc("");
+      setJCover("");
+    } catch (e) {
+      setJError((e as Error).message);
+    } finally {
+      setJSaving(false);
+    }
+  };
+
   return (
     <aside className="lg:sticky lg:top-20 h-fit rounded-lg border border-border bg-surface/60 p-3 space-y-3">
       <div className="text-mono text-[10px] uppercase tracking-widest text-muted-foreground px-1">
@@ -1069,12 +1111,90 @@ function MetaPanel({
         value={draft.tags}
         onChange={(v) => onChange({ tags: v })}
       />
-      <div className="pt-2 text-mono text-[10px] leading-relaxed text-muted-foreground px-1">
-        Autosaved locally. Use Export JSON to save the story data.
+
+      {/* Journey attachment */}
+      <div className="rounded-md border border-border bg-background/60 p-2.5 space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+            Journey
+          </span>
+          {!creatingJourney ? (
+            <button
+              onClick={() => setCreatingJourney(true)}
+              className="inline-flex items-center gap-1 text-mono text-[10px] uppercase tracking-widest text-primary hover:underline"
+            >
+              <Plus className="h-3 w-3" /> New
+            </button>
+          ) : null}
+        </div>
+
+        {!creatingJourney ? (
+          <select
+            value={draft.journeyId ?? ""}
+            onChange={(e) => onChange({ journeyId: e.target.value || null })}
+            className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm outline-none focus:border-primary/60 focus:ring-1 focus:ring-primary/40"
+          >
+            <option value="">— No journey —</option>
+            {journeys.map((j) => (
+              <option key={j.id} value={j.id}>
+                {j.title}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <div className="space-y-2">
+            <Input
+              label="Journey title"
+              value={jTitle}
+              onChange={(v) => {
+                setJTitle(v);
+                if (!jSlug) setJSlug(slugify(v));
+              }}
+            />
+            <Input label="Slug" value={jSlug} onChange={(v) => setJSlug(slugify(v))} />
+            <Textarea label="Description" rows={2} value={jDesc} onChange={setJDesc} />
+            <Input label="Cover URL (optional)" value={jCover} onChange={setJCover} />
+            {jError ? (
+              <div className="text-mono text-[11px] text-destructive">{jError}</div>
+            ) : null}
+            <div className="flex gap-2">
+              <button
+                onClick={submitJourney}
+                disabled={jSaving || !jTitle.trim()}
+                className="inline-flex items-center gap-1 rounded-md bg-primary px-2.5 py-1 text-mono text-[11px] font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              >
+                {jSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : null} Create & attach
+              </button>
+              <button
+                onClick={() => {
+                  setCreatingJourney(false);
+                  setJError(null);
+                }}
+                className="rounded-md border border-border px-2.5 py-1 text-mono text-[11px] text-muted-foreground hover:text-foreground"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {onDelete ? (
+        <button
+          onClick={onDelete}
+          className="w-full inline-flex items-center justify-center gap-1.5 rounded-md border border-destructive/40 bg-destructive/10 px-2.5 py-1.5 text-mono text-[11px] text-destructive hover:bg-destructive/20"
+        >
+          <Trash2 className="h-3.5 w-3.5" /> Delete from cloud
+        </button>
+      ) : null}
+
+      <div className="pt-1 text-mono text-[10px] leading-relaxed text-muted-foreground px-1">
+        Autosaves locally. Save draft or Publish to persist to the cloud, tied to your account.
       </div>
     </aside>
   );
 }
+
 
 /* ------------------------------------------------------------------ */
 /*  Preview                                                           */
