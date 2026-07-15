@@ -38,6 +38,42 @@ export type Database = {
         }
         Relationships: []
       }
+      journeys: {
+        Row: {
+          cover: string | null
+          created_at: string
+          creator_id: string
+          description: string | null
+          id: string
+          slug: string
+          started_at: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          cover?: string | null
+          created_at?: string
+          creator_id: string
+          description?: string | null
+          id?: string
+          slug: string
+          started_at?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          cover?: string | null
+          created_at?: string
+          creator_id?: string
+          description?: string | null
+          id?: string
+          slug?: string
+          started_at?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -74,6 +110,7 @@ export type Database = {
           creator_id: string
           difficulty: string | null
           id: string
+          journey_id: string | null
           published: boolean
           reading_minutes: number
           short_description: string | null
@@ -90,6 +127,7 @@ export type Database = {
           creator_id: string
           difficulty?: string | null
           id?: string
+          journey_id?: string | null
           published?: boolean
           reading_minutes?: number
           short_description?: string | null
@@ -106,6 +144,7 @@ export type Database = {
           creator_id?: string
           difficulty?: string | null
           id?: string
+          journey_id?: string | null
           published?: boolean
           reading_minutes?: number
           short_description?: string | null
@@ -114,7 +153,15 @@ export type Database = {
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "stories_journey_id_fkey"
+            columns: ["journey_id"]
+            isOneToOne: false
+            referencedRelation: "journeys"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
