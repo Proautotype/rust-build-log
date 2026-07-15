@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import {
   Type,
   Heading1,
@@ -19,10 +21,21 @@ import {
   Plus,
   Copy,
   RotateCcw,
+  Cloud,
+  Loader2,
+  FolderOpen,
 } from "lucide-react";
 import type { ContentBlock, CodeLanguage, Category, Difficulty } from "@/data/stories";
 import { allCategories, allDifficulties } from "@/data/stories";
 import { ContentRenderer } from "@/components/story/ContentRenderer";
+import {
+  listMyStories,
+  listJourneys,
+  saveStory,
+  createJourney,
+  deleteMyStory,
+} from "@/lib/studio.functions";
+
 
 export const Route = createFileRoute("/_authenticated/studio")({
   head: () => ({
