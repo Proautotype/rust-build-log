@@ -233,7 +233,7 @@ function StoryDetail() {
                     />
                   </div>
                   <ul className="mt-4 space-y-1.5 border-l border-border">
-                    {journeyStories.map((s, i) => (
+                    {journeyStories.map((s: Story, i: number) => (
                       <li key={s.id}>
                         <Link
                           to="/stories/$slug"
@@ -269,7 +269,7 @@ function StoryDetail() {
               Related stories
             </h2>
             <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {related.map((s) => (
+              {related.map((s: Story) => (
                 <StoryCard key={s.id} story={s} />
               ))}
             </div>
