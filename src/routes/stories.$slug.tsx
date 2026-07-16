@@ -95,7 +95,7 @@ export const Route = createFileRoute("/stories/$slug")({
 
 function StoryDetail() {
   const { story, journey, journeyStories, related, authorName } = Route.useLoaderData();
-  const journeyIndex = journey ? journeyStories.findIndex((s) => s.id === story.id) : -1;
+  const journeyIndex = journey ? journeyStories.findIndex((s: Story) => s.id === story.id) : -1;
   const prev = journeyIndex > 0 ? journeyStories[journeyIndex - 1] : undefined;
   const next =
     journeyIndex >= 0 && journeyIndex < journeyStories.length - 1
