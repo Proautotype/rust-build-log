@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
-import { stories } from "@/data/stories";
+import { supabase } from "@/integrations/supabase/client";
 
 const BASE_URL = "";
 
@@ -15,14 +15,19 @@ export const Route = createFileRoute("/sitemap.xml")({
   server: {
     handlers: {
       GET: async () => {
+        const { data: stories } = await supabase
+          .from("stories")
+          .select("slug, updated_at")
+          .eq("published", true);
+
         const entries: SitemapEntry[] = [
           { path: "/", changefreq: "weekly", priority: "1.0" },
           { path: "/stories", changefreq: "weekly", priority: "0.9" },
           { path: "/journeys", changefreq: "monthly", priority: "0.7" },
           { path: "/timeline", changefreq: "weekly", priority: "0.7" },
-          ...stories.map((s) => ({
+          ...(stories ?? []).map((s) => ({
             path: `/stories/${s.slug}`,
-            lastmod: s.updatedAt,
+            lastmod: s.updated_at,
             changefreq: "monthly" as const,
             priority: "0.8",
           })),

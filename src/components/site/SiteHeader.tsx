@@ -1,10 +1,11 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Terminal, Github, LogOut, User as UserIcon } from "lucide-react";
+import { Terminal, Github, LogOut, User as UserIcon, PenSquare, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useRole } from "@/hooks/useRole";
 import { supabase } from "@/integrations/supabase/client";
 
 type NavItem = {
-  to: "/" | "/stories" | "/journeys" | "/timeline" | "/studio";
+  to: "/" | "/stories" | "/journeys" | "/timeline";
   label: string;
   exact?: boolean;
 };
@@ -13,11 +14,11 @@ const nav: NavItem[] = [
   { to: "/stories", label: "Stories" },
   { to: "/journeys", label: "Journeys" },
   { to: "/timeline", label: "Timeline" },
-  { to: "/studio", label: "Studio" },
 ];
 
 export function SiteHeader() {
   const { user, profile, loading } = useAuth();
+  const { isWriter, isAdmin } = useRole();
   const navigate = useNavigate();
 
   async function signOut() {
@@ -62,10 +63,34 @@ export function SiteHeader() {
             <Github className="h-4 w-4" />
           </a>
 
+          {!loading && user && isWriter && (
+            <Link
+              to="/studio"
+              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-primary/40 bg-primary/10 px-2.5 text-xs font-medium text-primary hover:bg-primary/20"
+            >
+              <PenSquare className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Studio</span>
+            </Link>
+          )}
+
+          {!loading && user && isAdmin && (
+            <Link
+              to="/admin/requests"
+              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border bg-background px-2.5 text-xs text-muted-foreground hover:text-foreground"
+              title="Writer requests"
+            >
+              <ShieldCheck className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Admin</span>
+            </Link>
+          )}
+
           {!loading && (
             user ? (
               <div className="flex items-center gap-2">
-                <div className="hidden sm:flex items-center gap-2 rounded-md border border-border/70 bg-card/40 px-2 py-1">
+                <Link
+                  to="/profile"
+                  className="hidden sm:flex items-center gap-2 rounded-md border border-border/70 bg-card/40 px-2 py-1 hover:border-primary/40 transition"
+                >
                   {profile?.avatar_url ? (
                     <img
                       src={profile.avatar_url}
@@ -78,7 +103,7 @@ export function SiteHeader() {
                   <span className="text-xs font-medium">
                     {profile?.display_name ?? user.email?.split("@")[0]}
                   </span>
-                </div>
+                </Link>
                 <button
                   onClick={signOut}
                   aria-label="Sign out"
@@ -114,6 +139,22 @@ export function SiteHeader() {
               {item.label}
             </Link>
           ))}
+          {user && isWriter && (
+            <Link
+              to="/studio"
+              className="px-3 py-1.5 rounded-md text-sm text-primary whitespace-nowrap"
+            >
+              Studio
+            </Link>
+          )}
+          {user && (
+            <Link
+              to="/profile"
+              className="px-3 py-1.5 rounded-md text-sm text-muted-foreground whitespace-nowrap"
+            >
+              Profile
+            </Link>
+          )}
         </div>
       </div>
     </header>

@@ -1,15 +1,16 @@
 import { createFileRoute, Outlet, useLocation } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Search, X } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Search, X, Loader2 } from "lucide-react";
 import {
-  stories as allStories,
   allCategories,
   allDifficulties,
-  allTags,
+  rowToStory,
   type Category,
   type Difficulty,
 } from "@/data/stories";
 import { StoryCard } from "@/components/story/StoryCard";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/stories")({
   head: () => ({
@@ -27,7 +28,6 @@ export const Route = createFileRoute("/stories")({
 
 function StoriesLayout() {
   const loc = useLocation();
-  // If a nested route is active, render it; otherwise show the listing.
   const isDetail = loc.pathname.startsWith("/stories/") && loc.pathname !== "/stories";
   return isDetail ? <Outlet /> : <StoriesList />;
 }
@@ -38,8 +38,26 @@ function StoriesList() {
   const [difficulty, setDifficulty] = useState<Difficulty | "All">("All");
   const [tag, setTag] = useState<string | null>(null);
 
+  const { data: stories = [], isLoading } = useQuery({
+    queryKey: ["public-stories"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("stories")
+        .select("*")
+        .eq("published", true)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []).map(rowToStory);
+    },
+  });
+
+  const allTags = useMemo(
+    () => Array.from(new Set(stories.flatMap((s) => s.tags))).sort(),
+    [stories],
+  );
+
   const filtered = useMemo(() => {
-    return allStories.filter((s) => {
+    return stories.filter((s) => {
       if (category !== "All" && s.category !== category) return false;
       if (difficulty !== "All" && s.difficulty !== difficulty) return false;
       if (tag && !s.tags.includes(tag)) return false;
@@ -49,7 +67,7 @@ function StoriesList() {
       }
       return true;
     });
-  }, [q, category, difficulty, tag]);
+  }, [q, category, difficulty, tag, stories]);
 
   const activeFilters =
     (category !== "All" ? 1 : 0) + (difficulty !== "All" ? 1 : 0) + (tag ? 1 : 0);
@@ -66,7 +84,6 @@ function StoriesList() {
         </p>
       </div>
 
-      {/* Search */}
       <div className="mt-8 flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 focus-within:border-primary/50 transition">
         <Search className="h-4 w-4 text-muted-foreground" />
         <input
@@ -86,41 +103,33 @@ function StoriesList() {
         ) : null}
       </div>
 
-      {/* Filters */}
       <div className="mt-6 space-y-4">
         <FilterRow label="Category">
-          <Chip active={category === "All"} onClick={() => setCategory("All")}>
-            All
-          </Chip>
+          <Chip active={category === "All"} onClick={() => setCategory("All")}>All</Chip>
           {allCategories.map((c) => (
-            <Chip key={c} active={category === c} onClick={() => setCategory(c)}>
-              {c}
-            </Chip>
+            <Chip key={c} active={category === c} onClick={() => setCategory(c)}>{c}</Chip>
           ))}
         </FilterRow>
         <FilterRow label="Difficulty">
-          <Chip active={difficulty === "All"} onClick={() => setDifficulty("All")}>
-            All
-          </Chip>
+          <Chip active={difficulty === "All"} onClick={() => setDifficulty("All")}>All</Chip>
           {allDifficulties.map((d) => (
-            <Chip key={d} active={difficulty === d} onClick={() => setDifficulty(d)}>
-              {d}
-            </Chip>
+            <Chip key={d} active={difficulty === d} onClick={() => setDifficulty(d)}>{d}</Chip>
           ))}
         </FilterRow>
-        <FilterRow label="Tags">
-          {allTags.map((t) => (
-            <Chip key={t} active={tag === t} onClick={() => setTag(tag === t ? null : t)} muted>
-              #{t}
-            </Chip>
-          ))}
-        </FilterRow>
+        {allTags.length > 0 && (
+          <FilterRow label="Tags">
+            {allTags.map((t) => (
+              <Chip key={t} active={tag === t} onClick={() => setTag(tag === t ? null : t)} muted>
+                #{t}
+              </Chip>
+            ))}
+          </FilterRow>
+        )}
       </div>
 
-      {/* Result meta */}
       <div className="mt-8 flex items-center justify-between text-mono text-xs text-muted-foreground">
         <div>
-          <span className="text-foreground">{filtered.length}</span> / {allStories.length} stories
+          <span className="text-foreground">{filtered.length}</span> / {stories.length} stories
           {activeFilters > 0 ? <> · {activeFilters} filter(s) active</> : null}
         </div>
         {activeFilters > 0 || q ? (
@@ -138,8 +147,11 @@ function StoriesList() {
         ) : null}
       </div>
 
-      {/* Grid */}
-      {filtered.length === 0 ? (
+      {isLoading ? (
+        <div className="mt-12 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" /> Loading stories…
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="mt-12 rounded-xl border border-dashed border-border bg-surface p-10 text-center text-muted-foreground">
           <div className="text-mono text-sm">// no stories match those filters.</div>
         </div>
