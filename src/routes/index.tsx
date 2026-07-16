@@ -1,15 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Sparkles, GitBranch, BookOpen } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
+import { ArrowRight, Sparkles, GitBranch, BookOpen, Loader2 } from "lucide-react";
 import { StoryCard } from "@/components/story/StoryCard";
-import {
-  heroImage,
-  journeys,
-  stories,
-  technologies,
-  allTags,
-  getStoriesForJourney,
-} from "@/data/stories";
+import { heroImage, rowToJourney, rowToStory, technologies } from "@/data/stories";
 import { formatDate } from "@/lib/format";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -26,14 +22,36 @@ export const Route = createFileRoute("/")({
 });
 
 function HomePage() {
+  const { data, isLoading } = useQuery({
+    queryKey: ["home-data"],
+    queryFn: async () => {
+      const [s, j] = await Promise.all([
+        supabase.from("stories").select("*").eq("published", true).order("created_at", { ascending: false }),
+        supabase.from("journeys").select("*").order("started_at", { ascending: false }),
+      ]);
+      return {
+        stories: (s.data ?? []).map(rowToStory),
+        journeys: (j.data ?? []).map(rowToJourney),
+      };
+    },
+  });
+
+  const stories = data?.stories ?? [];
+  const journeys = data?.journeys ?? [];
   const featured = journeys[0];
-  const featuredStories = getStoriesForJourney(featured);
-  const latest = [...stories].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 6);
+  const featuredStories = useMemo(
+    () => (featured ? stories.filter((s) => s.journeyId === featured.id) : []),
+    [featured, stories],
+  );
+  const latest = stories.slice(0, 6);
+  const allTags = useMemo(
+    () => Array.from(new Set(stories.flatMap((s) => s.tags))).sort(),
+    [stories],
+  );
   const popularTags = allTags.slice(0, 12);
 
   return (
     <div>
-      {/* Hero */}
       <section className="relative overflow-hidden border-b border-border/60">
         <div className="absolute inset-0 grid-bg opacity-40" aria-hidden />
         <div
@@ -86,78 +104,79 @@ function HomePage() {
                 <span className="text-foreground">{stories.length}</span> stories
               </div>
               <div>
-                <span className="text-foreground">{journeys.length}</span> journey
+                <span className="text-foreground">{journeys.length}</span> journey{journeys.length === 1 ? "" : "s"}
               </div>
               <div>
                 <span className="text-foreground">{allTags.length}</span> topics
               </div>
-              <div>
-                Started <span className="text-foreground">{formatDate(featured.startedAt)}</span>
-              </div>
+              {featured ? (
+                <div>
+                  Started <span className="text-foreground">{formatDate(featured.startedAt)}</span>
+                </div>
+              ) : null}
             </div>
           </div>
         </div>
       </section>
 
-      {/* Featured journey */}
-      <section className="container-page py-16 md:py-20">
-        <SectionHeader
-          eyebrow="Featured journey"
-          title="Learning Rust"
-          description="The main learning path — from `hello world` to shipping a video processing pipeline in unsafe code."
-        />
+      {featured && (
+        <section className="container-page py-16 md:py-20">
+          <SectionHeader
+            eyebrow="Featured journey"
+            title={featured.title}
+            description={featured.description}
+          />
 
-        <div className="mt-8 overflow-hidden rounded-2xl border border-border bg-card">
-          <div className="grid md:grid-cols-[1.1fr_1fr]">
-            <div className="relative aspect-[16/10] md:aspect-auto md:min-h-[380px]">
-              <img
-                src={heroImage}
-                alt="Learning Rust journey"
-                loading="eager"
-                width={1600}
-                height={900}
-                className="absolute inset-0 h-full w-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-card via-card/40 to-transparent" />
-            </div>
-            <div className="p-8 md:p-10 flex flex-col justify-center">
-              <div className="text-mono text-[11px] uppercase tracking-widest text-primary">
-                Journey · started {formatDate(featured.startedAt)}
+          <div className="mt-8 overflow-hidden rounded-2xl border border-border bg-card">
+            <div className="grid md:grid-cols-[1.1fr_1fr]">
+              <div className="relative aspect-[16/10] md:aspect-auto md:min-h-[380px]">
+                <img
+                  src={featured.cover || heroImage}
+                  alt={featured.title}
+                  loading="eager"
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-card via-card/40 to-transparent" />
               </div>
-              <h3 className="mt-3 text-3xl md:text-4xl font-display tracking-tight">
-                {featured.title}
-              </h3>
-              <p className="mt-3 text-muted-foreground leading-relaxed">{featured.description}</p>
+              <div className="p-8 md:p-10 flex flex-col justify-center">
+                <div className="text-mono text-[11px] uppercase tracking-widest text-primary">
+                  Journey · started {formatDate(featured.startedAt)}
+                </div>
+                <h3 className="mt-3 text-3xl md:text-4xl font-display tracking-tight">
+                  {featured.title}
+                </h3>
+                <p className="mt-3 text-muted-foreground leading-relaxed">{featured.description}</p>
 
-              <div className="mt-6 space-y-2">
-                {featuredStories.slice(0, 5).map((s, i) => (
-                  <Link
-                    key={s.id}
-                    to="/stories/$slug"
-                    params={{ slug: s.slug }}
-                    className="flex items-center gap-3 rounded-md border border-border bg-surface-2 px-3 py-2 text-sm text-foreground hover:border-primary/40 transition"
-                  >
-                    <span className="text-mono text-[11px] text-muted-foreground w-6">
-                      {String(i + 1).padStart(2, "0")}
-                    </span>
-                    <span className="flex-1 truncate">{s.title}</span>
-                    <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
-                  </Link>
-                ))}
+                <div className="mt-6 space-y-2">
+                  {featuredStories.slice(0, 5).map((s, i) => (
+                    <Link
+                      key={s.id}
+                      to="/stories/$slug"
+                      params={{ slug: s.slug }}
+                      className="flex items-center gap-3 rounded-md border border-border bg-surface-2 px-3 py-2 text-sm text-foreground hover:border-primary/40 transition"
+                    >
+                      <span className="text-mono text-[11px] text-muted-foreground w-6">
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
+                      <span className="flex-1 truncate">{s.title}</span>
+                      <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+                    </Link>
+                  ))}
+                  {featuredStories.length === 0 && (
+                    <div className="text-mono text-[11px] text-muted-foreground">
+                      No stories in this journey yet.
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
-      {/* Latest stories */}
       <section className="container-page py-16">
         <div className="flex items-end justify-between gap-4">
-          <SectionHeader
-            eyebrow="Latest"
-            title="Recent stories"
-            description="Fresh from the compiler."
-          />
+          <SectionHeader eyebrow="Latest" title="Recent stories" description="Fresh from the compiler." />
           <Link
             to="/stories"
             className="text-mono text-xs text-muted-foreground hover:text-primary inline-flex items-center gap-1"
@@ -166,22 +185,27 @@ function HomePage() {
           </Link>
         </div>
 
-        <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {latest.map((s) => (
-            <StoryCard key={s.id} story={s} />
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="mt-8 flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" /> Loading…
+          </div>
+        ) : latest.length === 0 ? (
+          <div className="mt-8 rounded-xl border border-dashed border-border bg-surface p-10 text-center text-muted-foreground">
+            <div className="text-mono text-sm">// no stories yet — sign in and become a writer to publish.</div>
+          </div>
+        ) : (
+          <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {latest.map((s) => (
+              <StoryCard key={s.id} story={s} />
+            ))}
+          </div>
+        )}
       </section>
 
-      {/* Popular topics + technologies */}
       <section className="container-page py-16">
         <div className="grid gap-10 md:grid-cols-2">
           <div>
-            <SectionHeader
-              eyebrow="Topics"
-              title="Popular tags"
-              icon={<Sparkles className="h-4 w-4" />}
-            />
+            <SectionHeader eyebrow="Topics" title="Popular tags" icon={<Sparkles className="h-4 w-4" />} />
             <div className="mt-6 flex flex-wrap gap-2">
               {popularTags.map((t) => (
                 <span
@@ -192,15 +216,14 @@ function HomePage() {
                   {t}
                 </span>
               ))}
+              {popularTags.length === 0 && (
+                <span className="text-mono text-xs text-muted-foreground">No tags yet.</span>
+              )}
             </div>
           </div>
 
           <div>
-            <SectionHeader
-              eyebrow="Stack"
-              title="Technologies explored"
-              icon={<BookOpen className="h-4 w-4" />}
-            />
+            <SectionHeader eyebrow="Stack" title="Technologies explored" icon={<BookOpen className="h-4 w-4" />} />
             <div className="mt-6 grid grid-cols-2 gap-3">
               {technologies.map((t) => (
                 <div
@@ -216,7 +239,6 @@ function HomePage() {
         </div>
       </section>
 
-      {/* Progress teaser */}
       <section className="container-page pb-20">
         <div className="rounded-2xl border border-border bg-gradient-to-br from-surface to-surface-2 p-8 md:p-10 relative overflow-hidden">
           <div

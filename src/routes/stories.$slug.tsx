@@ -1,12 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, Calendar, Clock, GitCommit } from "lucide-react";
-import {
-  getStoryBySlug,
-  getRelatedStories,
-  getAdjacentStories,
-  getJourneyForStory,
-  getStoriesForJourney,
-} from "@/data/stories";
+import { ArrowLeft, ArrowRight, Calendar, Clock, GitCommit, User as UserIcon } from "lucide-react";
+import { rowToStory, rowToJourney, type Story, type Journey } from "@/data/stories";
 import { ContentRenderer } from "@/components/story/ContentRenderer";
 import { TableOfContents } from "@/components/story/TableOfContents";
 import { DifficultyBadge } from "@/components/story/DifficultyBadge";
@@ -14,12 +8,64 @@ import { StoryCard } from "@/components/story/StoryCard";
 import { Tag } from "@/components/story/Tag";
 import { Comments } from "@/components/story/Comments";
 import { formatDateLong } from "@/lib/format";
+import { supabase } from "@/integrations/supabase/client";
+
+interface LoaderData {
+  story: Story;
+  journey: Journey | null;
+  journeyStories: Story[];
+  related: Story[];
+  authorName: string | null;
+}
 
 export const Route = createFileRoute("/stories/$slug")({
-  loader: ({ params }) => {
-    const story = getStoryBySlug(params.slug);
-    if (!story) throw notFound();
-    return { story };
+  loader: async ({ params }): Promise<LoaderData> => {
+    const { data: storyRow, error } = await supabase
+      .from("stories")
+      .select("*")
+      .eq("slug", params.slug)
+      .eq("published", true)
+      .maybeSingle();
+    if (error || !storyRow) throw notFound();
+    const story = rowToStory(storyRow);
+
+    let journey: Journey | null = null;
+    let journeyStories: Story[] = [];
+    if (story.journeyId) {
+      const [{ data: j }, { data: js }] = await Promise.all([
+        supabase.from("journeys").select("*").eq("id", story.journeyId).maybeSingle(),
+        supabase
+          .from("stories")
+          .select("*")
+          .eq("journey_id", story.journeyId)
+          .eq("published", true)
+          .order("created_at", { ascending: true }),
+      ]);
+      if (j) journey = rowToJourney(j);
+      if (js) journeyStories = js.map(rowToStory);
+    }
+
+    // Simple "related": same category, excluding self.
+    const { data: rel } = await supabase
+      .from("stories")
+      .select("*")
+      .eq("published", true)
+      .eq("category", story.category)
+      .neq("id", story.id)
+      .limit(3);
+    const related = (rel ?? []).map(rowToStory);
+
+    let authorName: string | null = null;
+    if (story.creatorId) {
+      const { data: p } = await supabase
+        .from("profiles")
+        .select("display_name")
+        .eq("id", story.creatorId)
+        .maybeSingle();
+      authorName = p?.display_name ?? null;
+    }
+
+    return { story, journey, journeyStories, related, authorName };
   },
   head: ({ loaderData }) => {
     if (!loaderData) {
@@ -48,16 +94,16 @@ export const Route = createFileRoute("/stories/$slug")({
 });
 
 function StoryDetail() {
-  const { story } = Route.useLoaderData();
-  const related = getRelatedStories(story);
-  const { prev, next } = getAdjacentStories(story);
-  const journey = getJourneyForStory(story);
-  const journeyStories = journey ? getStoriesForJourney(journey) : [];
-  const journeyIndex = journey ? journey.storyIds.indexOf(story.id) : -1;
+  const { story, journey, journeyStories, related, authorName } = Route.useLoaderData();
+  const journeyIndex = journey ? journeyStories.findIndex((s: Story) => s.id === story.id) : -1;
+  const prev = journeyIndex > 0 ? journeyStories[journeyIndex - 1] : undefined;
+  const next =
+    journeyIndex >= 0 && journeyIndex < journeyStories.length - 1
+      ? journeyStories[journeyIndex + 1]
+      : undefined;
 
   return (
     <article>
-      {/* Header / hero */}
       <header className="relative overflow-hidden border-b border-border/60">
         <div className="absolute inset-0">
           <img
@@ -94,6 +140,12 @@ function StoryDetail() {
           </p>
 
           <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-mono text-xs text-muted-foreground">
+            {authorName && (
+              <span className="inline-flex items-center gap-1.5">
+                <UserIcon className="h-3.5 w-3.5" />
+                {authorName}
+              </span>
+            )}
             <span className="inline-flex items-center gap-1.5">
               <Calendar className="h-3.5 w-3.5" />
               {formatDateLong(story.createdAt)}
@@ -118,13 +170,11 @@ function StoryDetail() {
         </div>
       </header>
 
-      {/* Body */}
       <div className="container-page py-12">
         <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_240px]">
           <div className="min-w-0 max-w-2xl">
             <ContentRenderer blocks={story.content} />
 
-            {/* Prev / next */}
             <div className="mt-16 grid gap-3 md:grid-cols-2 border-t border-border pt-8">
               {prev ? (
                 <Link
@@ -159,7 +209,6 @@ function StoryDetail() {
             </div>
           </div>
 
-          {/* Sidebar */}
           <aside className="hidden lg:block">
             <div className="sticky top-20 space-y-8">
               <TableOfContents blocks={story.content} />
@@ -184,7 +233,7 @@ function StoryDetail() {
                     />
                   </div>
                   <ul className="mt-4 space-y-1.5 border-l border-border">
-                    {journeyStories.map((s, i) => (
+                    {journeyStories.map((s: Story, i: number) => (
                       <li key={s.id}>
                         <Link
                           to="/stories/$slug"
@@ -209,10 +258,8 @@ function StoryDetail() {
           </aside>
         </div>
 
-        {/* Comments */}
         <Comments storySlug={story.slug} />
 
-        {/* Related */}
         {related.length > 0 ? (
           <section className="mt-16 border-t border-border pt-12">
             <div className="text-mono text-[11px] uppercase tracking-widest text-primary">
@@ -222,7 +269,7 @@ function StoryDetail() {
               Related stories
             </h2>
             <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {related.map((s) => (
+              {related.map((s: Story) => (
                 <StoryCard key={s.id} story={s} />
               ))}
             </div>
