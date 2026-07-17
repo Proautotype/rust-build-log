@@ -7,6 +7,7 @@ export interface Profile {
   display_name: string | null;
   avatar_url: string | null;
   bio: string | null;
+  is_pro: boolean;
 }
 
 export function useAuth() {
