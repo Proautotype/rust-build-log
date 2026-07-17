@@ -7,6 +7,7 @@ export interface Profile {
   display_name: string | null;
   avatar_url: string | null;
   bio: string | null;
+  is_pro: boolean;
 }
 
 export function useAuth() {
@@ -43,7 +44,7 @@ export function useAuth() {
     let mounted = true;
     supabase
       .from("profiles")
-      .select("id, display_name, avatar_url, bio")
+      .select("id, display_name, avatar_url, bio, is_pro")
       .eq("id", user.id)
       .maybeSingle()
       .then(({ data }) => {

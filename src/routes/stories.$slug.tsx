@@ -7,6 +7,9 @@ import { DifficultyBadge } from "@/components/story/DifficultyBadge";
 import { StoryCard } from "@/components/story/StoryCard";
 import { Tag } from "@/components/story/Tag";
 import { Comments } from "@/components/story/Comments";
+import { ShareButton } from "@/components/story/ShareButton";
+import { WriterCard, type WriterInfo } from "@/components/story/WriterCard";
+import { AdSlot } from "@/components/ads/AdSlot";
 import { formatDateLong } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -15,7 +18,7 @@ interface LoaderData {
   journey: Journey | null;
   journeyStories: Story[];
   related: Story[];
-  authorName: string | null;
+  writer: WriterInfo | null;
 }
 
 export const Route = createFileRoute("/stories/$slug")({
@@ -55,17 +58,17 @@ export const Route = createFileRoute("/stories/$slug")({
       .limit(3);
     const related = (rel ?? []).map(rowToStory);
 
-    let authorName: string | null = null;
+    let writer: WriterInfo | null = null;
     if (story.creatorId) {
       const { data: p } = await supabase
         .from("profiles")
-        .select("display_name")
+        .select("display_name, avatar_url, bio")
         .eq("id", story.creatorId)
         .maybeSingle();
-      authorName = p?.display_name ?? null;
+      if (p) writer = p as WriterInfo;
     }
 
-    return { story, journey, journeyStories, related, authorName };
+    return { story, journey, journeyStories, related, writer };
   },
   head: ({ loaderData }) => {
     if (!loaderData) {
@@ -94,7 +97,12 @@ export const Route = createFileRoute("/stories/$slug")({
 });
 
 function StoryDetail() {
-  const { story, journey, journeyStories, related, authorName } = Route.useLoaderData();
+  const { story, journey, journeyStories, related, writer } = Route.useLoaderData();
+  const authorName = writer?.display_name ?? null;
+  const shareUrl =
+    typeof window !== "undefined"
+      ? window.location.href
+      : `https://rustjourney.app/stories/${story.slug}`;
   const journeyIndex = journey ? journeyStories.findIndex((s: Story) => s.id === story.id) : -1;
   const prev = journeyIndex > 0 ? journeyStories[journeyIndex - 1] : undefined;
   const next =
@@ -162,10 +170,19 @@ function StoryDetail() {
             ) : null}
           </div>
 
-          <div className="mt-4 flex flex-wrap gap-1.5">
-            {story.tags.map((t: string) => (
-              <Tag key={t} label={t} />
-            ))}
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap gap-1.5">
+              {story.tags.map((t: string) => (
+                <Tag key={t} label={t} />
+              ))}
+            </div>
+            <div className="ml-auto">
+              <ShareButton
+                url={shareUrl}
+                title={story.title}
+                text={story.shortDescription}
+              />
+            </div>
           </div>
         </div>
       </header>
@@ -174,6 +191,10 @@ function StoryDetail() {
         <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_240px]">
           <div className="min-w-0 max-w-2xl">
             <ContentRenderer blocks={story.content} />
+
+            <AdSlot className="mt-12" />
+
+            {writer && <WriterCard writer={writer} />}
 
             <div className="mt-16 grid gap-3 md:grid-cols-2 border-t border-border pt-8">
               {prev ? (

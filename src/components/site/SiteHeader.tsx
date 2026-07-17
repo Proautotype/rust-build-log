@@ -1,5 +1,14 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Terminal, Github, LogOut, User as UserIcon, PenSquare, ShieldCheck } from "lucide-react";
+import {
+  Terminal,
+  Github,
+  LogOut,
+  User as UserIcon,
+  PenSquare,
+  ShieldCheck,
+  Sparkles,
+  Settings,
+} from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
 import { supabase } from "@/integrations/supabase/client";
@@ -74,18 +83,38 @@ export function SiteHeader() {
           )}
 
           {!loading && user && isAdmin && (
+            <>
+              <Link
+                to="/admin/requests"
+                className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border bg-background px-2.5 text-xs text-muted-foreground hover:text-foreground"
+                title="Writer requests"
+              >
+                <ShieldCheck className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Admin</span>
+              </Link>
+              <Link
+                to="/admin/settings"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background text-muted-foreground hover:text-foreground"
+                title="Site settings"
+              >
+                <Settings className="h-3.5 w-3.5" />
+              </Link>
+            </>
+          )}
+
+          {!loading && user && !profile?.is_pro && (
             <Link
-              to="/admin/requests"
-              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border bg-background px-2.5 text-xs text-muted-foreground hover:text-foreground"
-              title="Writer requests"
+              to="/upgrade"
+              className="hidden sm:inline-flex h-8 items-center gap-1.5 rounded-md border border-primary/40 bg-primary/5 px-2.5 text-xs font-medium text-primary hover:bg-primary/10"
+              title="Upgrade to Pro"
             >
-              <ShieldCheck className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Admin</span>
+              <Sparkles className="h-3.5 w-3.5" />
+              Upgrade
             </Link>
           )}
 
-          {!loading && (
-            user ? (
+          {!loading &&
+            (user ? (
               <div className="flex items-center gap-2">
                 <Link
                   to="/profile"
@@ -103,6 +132,11 @@ export function SiteHeader() {
                   <span className="text-xs font-medium">
                     {profile?.display_name ?? user.email?.split("@")[0]}
                   </span>
+                  {profile?.is_pro && (
+                    <span className="inline-flex items-center gap-0.5 rounded bg-primary/15 text-primary text-mono text-[9px] uppercase tracking-wider px-1 py-0.5">
+                      <Sparkles className="h-2.5 w-2.5" /> Pro
+                    </span>
+                  )}
                 </Link>
                 <button
                   onClick={signOut}
@@ -153,6 +187,14 @@ export function SiteHeader() {
               className="px-3 py-1.5 rounded-md text-sm text-muted-foreground whitespace-nowrap"
             >
               Profile
+            </Link>
+          )}
+          {user && !profile?.is_pro && (
+            <Link
+              to="/upgrade"
+              className="px-3 py-1.5 rounded-md text-sm text-primary whitespace-nowrap"
+            >
+              Upgrade
             </Link>
           )}
         </div>
