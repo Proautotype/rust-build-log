@@ -132,6 +132,11 @@ export function SiteHeader() {
                   <span className="text-xs font-medium">
                     {profile?.display_name ?? user.email?.split("@")[0]}
                   </span>
+                  {profile?.is_pro && (
+                    <span className="inline-flex items-center gap-0.5 rounded bg-primary/15 text-primary text-mono text-[9px] uppercase tracking-wider px-1 py-0.5">
+                      <Sparkles className="h-2.5 w-2.5" /> Pro
+                    </span>
+                  )}
                 </Link>
                 <button
                   onClick={signOut}
