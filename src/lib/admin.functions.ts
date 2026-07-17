@@ -1,0 +1,94 @@
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+
+export const getSiteSettings = createServerFn({ method: "GET" }).handler(async () => {
+  // Public read is allowed by RLS; use the middleware-provided client would require auth,
+  // so we go through a lightweight anon-safe path via the shared client.
+  const { supabase } = await import("@/integrations/supabase/client");
+  const { data, error } = await supabase
+    .from("site_settings")
+    .select("id, adsense_enabled, adsense_client, adsense_slot")
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data;
+});
+
+export const updateSiteSettings = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        adsense_enabled: z.boolean(),
+        adsense_client: z.string().max(120).nullable().optional(),
+        adsense_slot: z.string().max(120).nullable().optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: isAdmin } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
+    if (!isAdmin) throw new Error("Forbidden");
+
+    const { data: existing } = await context.supabase
+      .from("site_settings")
+      .select("id")
+      .limit(1)
+      .maybeSingle();
+
+    const payload = {
+      adsense_enabled: data.adsense_enabled,
+      adsense_client: data.adsense_client?.trim() || null,
+      adsense_slot: data.adsense_slot?.trim() || null,
+      updated_at: new Date().toISOString(),
+      updated_by: context.userId,
+    };
+
+    if (existing) {
+      const { data: row, error } = await context.supabase
+        .from("site_settings")
+        .update(payload)
+        .eq("id", existing.id)
+        .select()
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      return row;
+    } else {
+      const { data: row, error } = await context.supabase
+        .from("site_settings")
+        .insert(payload)
+        .select()
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      return row;
+    }
+  });
+
+export const upgradeToPro = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("profiles")
+      .update({ is_pro: true })
+      .eq("id", context.userId)
+      .select()
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return data;
+  });
+
+export const downgradeFromPro = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("profiles")
+      .update({ is_pro: false })
+      .eq("id", context.userId)
+      .select()
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return data;
+  });
