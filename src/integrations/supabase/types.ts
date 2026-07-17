@@ -81,6 +81,7 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          is_pro: boolean
           updated_at: string
         }
         Insert: {
@@ -89,6 +90,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id: string
+          is_pro?: boolean
           updated_at?: string
         }
         Update: {
@@ -97,7 +99,35 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          is_pro?: boolean
           updated_at?: string
+        }
+        Relationships: []
+      }
+      site_settings: {
+        Row: {
+          adsense_client: string | null
+          adsense_enabled: boolean
+          adsense_slot: string | null
+          id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          adsense_client?: string | null
+          adsense_enabled?: boolean
+          adsense_slot?: string | null
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          adsense_client?: string | null
+          adsense_enabled?: boolean
+          adsense_slot?: string | null
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
