@@ -1,5 +1,14 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Terminal, Github, LogOut, User as UserIcon, PenSquare, ShieldCheck } from "lucide-react";
+import {
+  Terminal,
+  Github,
+  LogOut,
+  User as UserIcon,
+  PenSquare,
+  ShieldCheck,
+  Sparkles,
+  Settings,
+} from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
 import { supabase } from "@/integrations/supabase/client";
