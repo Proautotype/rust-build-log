@@ -170,10 +170,19 @@ function StoryDetail() {
             ) : null}
           </div>
 
-          <div className="mt-4 flex flex-wrap gap-1.5">
-            {story.tags.map((t: string) => (
-              <Tag key={t} label={t} />
-            ))}
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap gap-1.5">
+              {story.tags.map((t: string) => (
+                <Tag key={t} label={t} />
+              ))}
+            </div>
+            <div className="ml-auto">
+              <ShareButton
+                url={shareUrl}
+                title={story.title}
+                text={story.shortDescription}
+              />
+            </div>
           </div>
         </div>
       </header>
@@ -182,6 +191,10 @@ function StoryDetail() {
         <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_240px]">
           <div className="min-w-0 max-w-2xl">
             <ContentRenderer blocks={story.content} />
+
+            <AdSlot className="mt-12" />
+
+            {writer && <WriterCard writer={writer} />}
 
             <div className="mt-16 grid gap-3 md:grid-cols-2 border-t border-border pt-8">
               {prev ? (
