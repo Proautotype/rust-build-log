@@ -7,6 +7,9 @@ import { DifficultyBadge } from "@/components/story/DifficultyBadge";
 import { StoryCard } from "@/components/story/StoryCard";
 import { Tag } from "@/components/story/Tag";
 import { Comments } from "@/components/story/Comments";
+import { ShareButton } from "@/components/story/ShareButton";
+import { WriterCard, type WriterInfo } from "@/components/story/WriterCard";
+import { AdSlot } from "@/components/ads/AdSlot";
 import { formatDateLong } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -15,7 +18,7 @@ interface LoaderData {
   journey: Journey | null;
   journeyStories: Story[];
   related: Story[];
-  authorName: string | null;
+  writer: WriterInfo | null;
 }
 
 export const Route = createFileRoute("/stories/$slug")({
