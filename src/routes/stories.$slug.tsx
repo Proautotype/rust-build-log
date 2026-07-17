@@ -58,17 +58,17 @@ export const Route = createFileRoute("/stories/$slug")({
       .limit(3);
     const related = (rel ?? []).map(rowToStory);
 
-    let authorName: string | null = null;
+    let writer: WriterInfo | null = null;
     if (story.creatorId) {
       const { data: p } = await supabase
         .from("profiles")
-        .select("display_name")
+        .select("display_name, avatar_url, bio")
         .eq("id", story.creatorId)
         .maybeSingle();
-      authorName = p?.display_name ?? null;
+      if (p) writer = p as WriterInfo;
     }
 
-    return { story, journey, journeyStories, related, authorName };
+    return { story, journey, journeyStories, related, writer };
   },
   head: ({ loaderData }) => {
     if (!loaderData) {
