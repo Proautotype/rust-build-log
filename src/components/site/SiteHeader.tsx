@@ -189,6 +189,14 @@ export function SiteHeader() {
               Profile
             </Link>
           )}
+          {user && !profile?.is_pro && (
+            <Link
+              to="/upgrade"
+              className="px-3 py-1.5 rounded-md text-sm text-primary whitespace-nowrap"
+            >
+              Upgrade
+            </Link>
+          )}
         </div>
       </div>
     </header>
