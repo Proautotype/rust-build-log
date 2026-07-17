@@ -97,7 +97,12 @@ export const Route = createFileRoute("/stories/$slug")({
 });
 
 function StoryDetail() {
-  const { story, journey, journeyStories, related, authorName } = Route.useLoaderData();
+  const { story, journey, journeyStories, related, writer } = Route.useLoaderData();
+  const authorName = writer?.display_name ?? null;
+  const shareUrl =
+    typeof window !== "undefined"
+      ? window.location.href
+      : `https://rustjourney.app/stories/${story.slug}`;
   const journeyIndex = journey ? journeyStories.findIndex((s: Story) => s.id === story.id) : -1;
   const prev = journeyIndex > 0 ? journeyStories[journeyIndex - 1] : undefined;
   const next =
