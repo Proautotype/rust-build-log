@@ -20,8 +20,10 @@ import { Route as StoriesSlugRouteImport } from './routes/stories.$slug'
 import { Route as AuthenticatedUpgradeRouteImport } from './routes/_authenticated/upgrade'
 import { Route as AuthenticatedStudioRouteImport } from './routes/_authenticated/studio'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
+import { Route as AuthenticatedCoinsRouteImport } from './routes/_authenticated/coins'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin.settings'
 import { Route as AuthenticatedAdminRequestsRouteImport } from './routes/_authenticated/admin.requests'
+import { Route as AuthenticatedAdminDashboardRouteImport } from './routes/_authenticated/admin.dashboard'
 
 const TimelineRoute = TimelineRouteImport.update({
   id: '/timeline',
@@ -77,6 +79,11 @@ const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedCoinsRoute = AuthenticatedCoinsRouteImport.update({
+  id: '/coins',
+  path: '/coins',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAdminSettingsRoute =
   AuthenticatedAdminSettingsRouteImport.update({
     id: '/admin/settings',
@@ -89,6 +96,12 @@ const AuthenticatedAdminRequestsRoute =
     path: '/admin/requests',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminDashboardRoute =
+  AuthenticatedAdminDashboardRouteImport.update({
+    id: '/admin/dashboard',
+    path: '/admin/dashboard',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -97,10 +110,12 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/stories': typeof StoriesRouteWithChildren
   '/timeline': typeof TimelineRoute
+  '/coins': typeof AuthenticatedCoinsRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/studio': typeof AuthenticatedStudioRoute
   '/upgrade': typeof AuthenticatedUpgradeRoute
   '/stories/$slug': typeof StoriesSlugRoute
+  '/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
   '/admin/requests': typeof AuthenticatedAdminRequestsRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
 }
@@ -111,10 +126,12 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/stories': typeof StoriesRouteWithChildren
   '/timeline': typeof TimelineRoute
+  '/coins': typeof AuthenticatedCoinsRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/studio': typeof AuthenticatedStudioRoute
   '/upgrade': typeof AuthenticatedUpgradeRoute
   '/stories/$slug': typeof StoriesSlugRoute
+  '/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
   '/admin/requests': typeof AuthenticatedAdminRequestsRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
 }
@@ -127,10 +144,12 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/stories': typeof StoriesRouteWithChildren
   '/timeline': typeof TimelineRoute
+  '/_authenticated/coins': typeof AuthenticatedCoinsRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/studio': typeof AuthenticatedStudioRoute
   '/_authenticated/upgrade': typeof AuthenticatedUpgradeRoute
   '/stories/$slug': typeof StoriesSlugRoute
+  '/_authenticated/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
   '/_authenticated/admin/requests': typeof AuthenticatedAdminRequestsRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
 }
@@ -143,10 +162,12 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/stories'
     | '/timeline'
+    | '/coins'
     | '/profile'
     | '/studio'
     | '/upgrade'
     | '/stories/$slug'
+    | '/admin/dashboard'
     | '/admin/requests'
     | '/admin/settings'
   fileRoutesByTo: FileRoutesByTo
@@ -157,10 +178,12 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/stories'
     | '/timeline'
+    | '/coins'
     | '/profile'
     | '/studio'
     | '/upgrade'
     | '/stories/$slug'
+    | '/admin/dashboard'
     | '/admin/requests'
     | '/admin/settings'
   id:
@@ -172,10 +195,12 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/stories'
     | '/timeline'
+    | '/_authenticated/coins'
     | '/_authenticated/profile'
     | '/_authenticated/studio'
     | '/_authenticated/upgrade'
     | '/stories/$slug'
+    | '/_authenticated/admin/dashboard'
     | '/_authenticated/admin/requests'
     | '/_authenticated/admin/settings'
   fileRoutesById: FileRoutesById
@@ -269,6 +294,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProfileRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/coins': {
+      id: '/_authenticated/coins'
+      path: '/coins'
+      fullPath: '/coins'
+      preLoaderRoute: typeof AuthenticatedCoinsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/settings': {
       id: '/_authenticated/admin/settings'
       path: '/admin/settings'
@@ -283,21 +315,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRequestsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin/dashboard': {
+      id: '/_authenticated/admin/dashboard'
+      path: '/admin/dashboard'
+      fullPath: '/admin/dashboard'
+      preLoaderRoute: typeof AuthenticatedAdminDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedCoinsRoute: typeof AuthenticatedCoinsRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedStudioRoute: typeof AuthenticatedStudioRoute
   AuthenticatedUpgradeRoute: typeof AuthenticatedUpgradeRoute
+  AuthenticatedAdminDashboardRoute: typeof AuthenticatedAdminDashboardRoute
   AuthenticatedAdminRequestsRoute: typeof AuthenticatedAdminRequestsRoute
   AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedCoinsRoute: AuthenticatedCoinsRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedStudioRoute: AuthenticatedStudioRoute,
   AuthenticatedUpgradeRoute: AuthenticatedUpgradeRoute,
+  AuthenticatedAdminDashboardRoute: AuthenticatedAdminDashboardRoute,
   AuthenticatedAdminRequestsRoute: AuthenticatedAdminRequestsRoute,
   AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
 }
@@ -328,13 +371,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

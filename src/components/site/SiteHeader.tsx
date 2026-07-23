@@ -8,6 +8,8 @@ import {
   ShieldCheck,
   Sparkles,
   Settings,
+  Coins,
+  LayoutDashboard,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
@@ -85,12 +87,19 @@ export function SiteHeader() {
           {!loading && user && isAdmin && (
             <>
               <Link
-                to="/admin/requests"
+                to="/admin/dashboard"
                 className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border bg-background px-2.5 text-xs text-muted-foreground hover:text-foreground"
+                title="Admin dashboard"
+              >
+                <LayoutDashboard className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Admin</span>
+              </Link>
+              <Link
+                to="/admin/requests"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background text-muted-foreground hover:text-foreground"
                 title="Writer requests"
               >
                 <ShieldCheck className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Admin</span>
               </Link>
               <Link
                 to="/admin/settings"
@@ -100,6 +109,17 @@ export function SiteHeader() {
                 <Settings className="h-3.5 w-3.5" />
               </Link>
             </>
+          )}
+
+          {!loading && user && (
+            <Link
+              to="/coins"
+              title="Coins"
+              className="inline-flex h-8 items-center gap-1 rounded-md border border-primary/40 bg-primary/5 px-2 text-mono text-xs font-medium text-primary hover:bg-primary/10"
+            >
+              <Coins className="h-3.5 w-3.5" />
+              {profile?.coin_balance ?? 0}
+            </Link>
           )}
 
           {!loading && user && !profile?.is_pro && (

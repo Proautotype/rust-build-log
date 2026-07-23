@@ -25,7 +25,7 @@ import {
   Loader2,
   FolderOpen,
 } from "lucide-react";
-import type { ContentBlock, CodeLanguage, Category, Difficulty } from "@/data/stories";
+import type { ContentBlock, CodeLanguage, Category, Difficulty, Monetization } from "@/data/stories";
 import { allCategories, allDifficulties } from "@/data/stories";
 import { ContentRenderer } from "@/components/story/ContentRenderer";
 import {
@@ -65,10 +65,13 @@ interface Draft {
   category: Category;
   difficulty: Difficulty;
   readingMinutes: number;
-  tags: string; // comma-separated in the editor
+  tags: string;
   journeyId: string | null;
   published: boolean;
   blocks: EditorBlock[];
+  monetization: Monetization;
+  unlockPrice: number;
+  tipEnabled: boolean;
 }
 
 interface JourneyRow {
@@ -98,6 +101,9 @@ const emptyDraft = (): Draft => ({
   tags: "rust",
   journeyId: null,
   published: false,
+  monetization: "free",
+  unlockPrice: 100,
+  tipEnabled: false,
   blocks: [
     {
       _uid: uid(),
@@ -335,6 +341,9 @@ function StudioPage() {
         content: draft.blocks.map(({ _uid: _u, ...rest }) => rest),
         published,
         journey_id: draft.journeyId,
+        monetization: draft.monetization,
+        unlock_price: draft.unlockPrice,
+        tip_enabled: draft.tipEnabled,
       };
       return saveStoryFn({ data: payload });
     },
@@ -364,6 +373,9 @@ function StudioPage() {
       tags: (s.tags ?? []).join(", "),
       journeyId: s.journey_id ?? null,
       published: s.published ?? false,
+      monetization: ((s as { monetization?: Monetization }).monetization ?? "free") as Monetization,
+      unlockPrice: (s as { unlock_price?: number }).unlock_price ?? 100,
+      tipEnabled: (s as { tip_enabled?: boolean }).tip_enabled ?? false,
       blocks: (Array.isArray(s.content) ? s.content : []).map((b) => ({
         ...(b as ContentBlock),
         _uid: uid(),
