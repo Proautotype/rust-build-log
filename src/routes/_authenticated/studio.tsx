@@ -1191,6 +1191,45 @@ function MetaPanel({
         )}
       </div>
 
+      {/* Monetization */}
+      <div className="rounded-md border border-border bg-background/60 p-2.5 space-y-2">
+        <div className="text-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+          Monetization
+        </div>
+        <Select
+          label="Mode"
+          value={draft.monetization}
+          onChange={(v) => onChange({ monetization: v as Monetization })}
+          options={[
+            { value: "free", label: "Free" },
+            { value: "tips", label: "Free + accept tips" },
+            { value: "locked", label: "Locked (coins to unlock)" },
+          ]}
+        />
+        {draft.monetization === "locked" ? (
+          <Input
+            label="Unlock price (coins)"
+            type="number"
+            value={String(draft.unlockPrice)}
+            onChange={(v) => onChange({ unlockPrice: Math.max(0, Number(v) || 0) })}
+          />
+        ) : null}
+        {draft.monetization === "tips" ? (
+          <label className="inline-flex items-center gap-2 text-mono text-[11px] text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={draft.tipEnabled}
+              onChange={(e) => onChange({ tipEnabled: e.target.checked })}
+            />
+            Show a "tip the writer" button on this story
+          </label>
+        ) : null}
+        <p className="text-mono text-[10px] leading-relaxed text-muted-foreground">
+          Locked stories require readers to spend coins to read. Tips are optional and support you
+          directly.
+        </p>
+      </div>
+
       {onDelete ? (
         <button
           onClick={onDelete}
