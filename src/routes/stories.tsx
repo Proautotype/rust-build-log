@@ -105,15 +105,23 @@ function StoriesList() {
 
       <div className="mt-6 space-y-4">
         <FilterRow label="Category">
-          <Chip active={category === "All"} onClick={() => setCategory("All")}>All</Chip>
+          <Chip active={category === "All"} onClick={() => setCategory("All")}>
+            All
+          </Chip>
           {allCategories.map((c) => (
-            <Chip key={c} active={category === c} onClick={() => setCategory(c)}>{c}</Chip>
+            <Chip key={c} active={category === c} onClick={() => setCategory(c)}>
+              {c}
+            </Chip>
           ))}
         </FilterRow>
         <FilterRow label="Difficulty">
-          <Chip active={difficulty === "All"} onClick={() => setDifficulty("All")}>All</Chip>
+          <Chip active={difficulty === "All"} onClick={() => setDifficulty("All")}>
+            All
+          </Chip>
           {allDifficulties.map((d) => (
-            <Chip key={d} active={difficulty === d} onClick={() => setDifficulty(d)}>{d}</Chip>
+            <Chip key={d} active={difficulty === d} onClick={() => setDifficulty(d)}>
+              {d}
+            </Chip>
           ))}
         </FilterRow>
         {allTags.length > 0 && (
