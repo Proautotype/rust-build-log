@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Clock, Calendar } from "lucide-react";
+import { Clock, Calendar, Lock, Coins, HandHeart } from "lucide-react";
 import type { Story } from "@/data/stories";
 import { DifficultyBadge } from "./DifficultyBadge";
 import { Tag } from "./Tag";
@@ -34,6 +34,15 @@ export function StoryCard({ story, featured }: Props) {
         <div className="absolute left-3 top-3 flex gap-2">
           <DifficultyBadge level={story.difficulty} />
         </div>
+        {story.monetization === "locked" ? (
+          <div className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-md border border-primary/40 bg-background/80 backdrop-blur px-2 py-0.5 text-mono text-[10px] text-primary">
+            <Lock className="h-3 w-3" /> {story.unlockPrice} <Coins className="h-3 w-3" />
+          </div>
+        ) : story.monetization === "tips" || story.tipEnabled ? (
+          <div className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-md border border-border bg-background/80 backdrop-blur px-2 py-0.5 text-mono text-[10px] text-muted-foreground">
+            <HandHeart className="h-3 w-3 text-primary" /> Tips
+          </div>
+        ) : null}
       </div>
 
       <div className={`flex flex-col p-5 ${featured ? "md:w-1/2 md:p-8" : ""}`}>

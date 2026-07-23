@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      coin_transactions: {
+        Row: {
+          amount: number
+          counterparty_id: string | null
+          created_at: string
+          id: string
+          kind: string
+          note: string | null
+          story_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          counterparty_id?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          note?: string | null
+          story_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          counterparty_id?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          note?: string | null
+          story_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       comments: {
         Row: {
           body: string
@@ -77,7 +110,9 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          banned: boolean
           bio: string | null
+          coin_balance: number
           created_at: string
           display_name: string | null
           id: string
@@ -86,7 +121,9 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          banned?: boolean
           bio?: string | null
+          coin_balance?: number
           created_at?: string
           display_name?: string | null
           id: string
@@ -95,7 +132,9 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          banned?: boolean
           bio?: string | null
+          coin_balance?: number
           created_at?: string
           display_name?: string | null
           id?: string
@@ -141,12 +180,15 @@ export type Database = {
           difficulty: string | null
           id: string
           journey_id: string | null
+          monetization: Database["public"]["Enums"]["story_monetization"]
           published: boolean
           reading_minutes: number
           short_description: string | null
           slug: string
           tags: string[]
+          tip_enabled: boolean
           title: string
+          unlock_price: number
           updated_at: string
         }
         Insert: {
@@ -158,12 +200,15 @@ export type Database = {
           difficulty?: string | null
           id?: string
           journey_id?: string | null
+          monetization?: Database["public"]["Enums"]["story_monetization"]
           published?: boolean
           reading_minutes?: number
           short_description?: string | null
           slug: string
           tags?: string[]
+          tip_enabled?: boolean
           title: string
+          unlock_price?: number
           updated_at?: string
         }
         Update: {
@@ -175,12 +220,15 @@ export type Database = {
           difficulty?: string | null
           id?: string
           journey_id?: string | null
+          monetization?: Database["public"]["Enums"]["story_monetization"]
           published?: boolean
           reading_minutes?: number
           short_description?: string | null
           slug?: string
           tags?: string[]
+          tip_enabled?: boolean
           title?: string
+          unlock_price?: number
           updated_at?: string
         }
         Relationships: [
@@ -189,6 +237,38 @@ export type Database = {
             columns: ["journey_id"]
             isOneToOne: false
             referencedRelation: "journeys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      story_unlocks: {
+        Row: {
+          created_at: string
+          id: string
+          price_paid: number
+          story_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          price_paid?: number
+          story_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          price_paid?: number
+          story_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "story_unlocks_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "stories"
             referencedColumns: ["id"]
           },
         ]
@@ -262,6 +342,7 @@ export type Database = {
     }
     Enums: {
       app_role: "reader" | "writer" | "admin"
+      story_monetization: "free" | "tips" | "locked"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -390,6 +471,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["reader", "writer", "admin"],
+      story_monetization: ["free", "tips", "locked"],
     },
   },
 } as const

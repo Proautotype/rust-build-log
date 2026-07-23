@@ -25,7 +25,7 @@ import {
   Loader2,
   FolderOpen,
 } from "lucide-react";
-import type { ContentBlock, CodeLanguage, Category, Difficulty } from "@/data/stories";
+import type { ContentBlock, CodeLanguage, Category, Difficulty, Monetization } from "@/data/stories";
 import { allCategories, allDifficulties } from "@/data/stories";
 import { ContentRenderer } from "@/components/story/ContentRenderer";
 import {
@@ -65,10 +65,13 @@ interface Draft {
   category: Category;
   difficulty: Difficulty;
   readingMinutes: number;
-  tags: string; // comma-separated in the editor
+  tags: string;
   journeyId: string | null;
   published: boolean;
   blocks: EditorBlock[];
+  monetization: Monetization;
+  unlockPrice: number;
+  tipEnabled: boolean;
 }
 
 interface JourneyRow {
@@ -98,6 +101,9 @@ const emptyDraft = (): Draft => ({
   tags: "rust",
   journeyId: null,
   published: false,
+  monetization: "free",
+  unlockPrice: 100,
+  tipEnabled: false,
   blocks: [
     {
       _uid: uid(),
@@ -335,6 +341,9 @@ function StudioPage() {
         content: draft.blocks.map(({ _uid: _u, ...rest }) => rest),
         published,
         journey_id: draft.journeyId,
+        monetization: draft.monetization,
+        unlock_price: draft.unlockPrice,
+        tip_enabled: draft.tipEnabled,
       };
       return saveStoryFn({ data: payload });
     },
@@ -364,6 +373,9 @@ function StudioPage() {
       tags: (s.tags ?? []).join(", "),
       journeyId: s.journey_id ?? null,
       published: s.published ?? false,
+      monetization: ((s as { monetization?: Monetization }).monetization ?? "free") as Monetization,
+      unlockPrice: (s as { unlock_price?: number }).unlock_price ?? 100,
+      tipEnabled: (s as { tip_enabled?: boolean }).tip_enabled ?? false,
       blocks: (Array.isArray(s.content) ? s.content : []).map((b) => ({
         ...(b as ContentBlock),
         _uid: uid(),
@@ -1177,6 +1189,45 @@ function MetaPanel({
             </div>
           </div>
         )}
+      </div>
+
+      {/* Monetization */}
+      <div className="rounded-md border border-border bg-background/60 p-2.5 space-y-2">
+        <div className="text-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+          Monetization
+        </div>
+        <Select
+          label="Mode"
+          value={draft.monetization}
+          onChange={(v) => onChange({ monetization: v as Monetization })}
+          options={[
+            { value: "free", label: "Free" },
+            { value: "tips", label: "Free + accept tips" },
+            { value: "locked", label: "Locked (coins to unlock)" },
+          ]}
+        />
+        {draft.monetization === "locked" ? (
+          <Input
+            label="Unlock price (coins)"
+            type="number"
+            value={String(draft.unlockPrice)}
+            onChange={(v) => onChange({ unlockPrice: Math.max(0, Number(v) || 0) })}
+          />
+        ) : null}
+        {draft.monetization === "tips" ? (
+          <label className="inline-flex items-center gap-2 text-mono text-[11px] text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={draft.tipEnabled}
+              onChange={(e) => onChange({ tipEnabled: e.target.checked })}
+            />
+            Show a "tip the writer" button on this story
+          </label>
+        ) : null}
+        <p className="text-mono text-[10px] leading-relaxed text-muted-foreground">
+          Locked stories require readers to spend coins to read. Tips are optional and support you
+          directly.
+        </p>
       </div>
 
       {onDelete ? (

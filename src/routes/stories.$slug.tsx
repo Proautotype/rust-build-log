@@ -1,5 +1,19 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, Calendar, Clock, GitCommit, User as UserIcon } from "lucide-react";
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Calendar,
+  Clock,
+  GitCommit,
+  User as UserIcon,
+  Lock,
+  Coins,
+  HandHeart,
+  Loader2,
+} from "lucide-react";
 import { rowToStory, rowToJourney, type Story, type Journey } from "@/data/stories";
 import { ContentRenderer } from "@/components/story/ContentRenderer";
 import { TableOfContents } from "@/components/story/TableOfContents";
@@ -12,6 +26,8 @@ import { WriterCard, type WriterInfo } from "@/components/story/WriterCard";
 import { AdSlot } from "@/components/ads/AdSlot";
 import { formatDateLong } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { getMyCoinState, unlockStory, tipStory } from "@/lib/coins.functions";
 
 interface LoaderData {
   story: Story;
@@ -48,7 +64,6 @@ export const Route = createFileRoute("/stories/$slug")({
       if (js) journeyStories = js.map(rowToStory);
     }
 
-    // Simple "related": same category, excluding self.
     const { data: rel } = await supabase
       .from("stories")
       .select("*")
@@ -98,6 +113,40 @@ export const Route = createFileRoute("/stories/$slug")({
 
 function StoryDetail() {
   const { story, journey, journeyStories, related, writer } = Route.useLoaderData();
+  const { user } = useAuth();
+
+  const coinStateFn = useServerFn(getMyCoinState);
+  const unlockFn = useServerFn(unlockStory);
+  const tipFn = useServerFn(tipStory);
+  const qc = useQueryClient();
+
+  const coinState = useQuery({
+    queryKey: ["coin-state"],
+    queryFn: () => coinStateFn(),
+    enabled: !!user,
+  });
+
+  const isCreator = !!user && story.creatorId === user.id;
+  const unlocked =
+    coinState.data?.unlockedStoryIds?.includes(story.id) ?? false;
+  const locked =
+    story.monetization === "locked" && !isCreator && !unlocked;
+
+  const unlockMut = useMutation({
+    mutationFn: () => unlockFn({ data: { storyId: story.id } }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["coin-state"] });
+    },
+  });
+
+  const [tipAmount, setTipAmount] = useState(10);
+  const tipMut = useMutation({
+    mutationFn: (amount: number) => tipFn({ data: { storyId: story.id, amount } }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["coin-state"] });
+    },
+  });
+
   const authorName = writer?.display_name ?? null;
   const shareUrl =
     typeof window !== "undefined"
@@ -109,6 +158,9 @@ function StoryDetail() {
     journeyIndex >= 0 && journeyIndex < journeyStories.length - 1
       ? journeyStories[journeyIndex + 1]
       : undefined;
+
+  const previewBlocks = locked ? story.content.slice(0, 2) : story.content;
+  const tipEnabled = story.tipEnabled || story.monetization === "tips";
 
   return (
     <article>
@@ -137,6 +189,16 @@ function StoryDetail() {
             </span>
             <span className="text-muted-foreground/50">·</span>
             <DifficultyBadge level={story.difficulty} />
+            {story.monetization === "locked" && (
+              <span className="ml-2 inline-flex items-center gap-1 rounded-md border border-primary/40 bg-primary/10 px-2 py-0.5 text-mono text-[10px] text-primary">
+                <Lock className="h-3 w-3" /> {story.unlockPrice} coins to unlock
+              </span>
+            )}
+            {tipEnabled && story.monetization !== "locked" && (
+              <span className="ml-2 inline-flex items-center gap-1 rounded-md border border-border bg-surface px-2 py-0.5 text-mono text-[10px] text-muted-foreground">
+                <HandHeart className="h-3 w-3 text-primary" /> tips welcome
+              </span>
+            )}
           </div>
 
           <h1 className="mt-4 max-w-3xl text-4xl md:text-5xl lg:text-6xl font-display tracking-tight leading-[1.05]">
@@ -190,7 +252,101 @@ function StoryDetail() {
       <div className="container-page py-12">
         <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_240px]">
           <div className="min-w-0 max-w-2xl">
-            <ContentRenderer blocks={story.content} />
+            <ContentRenderer blocks={previewBlocks} />
+
+            {locked && (
+              <div className="relative mt-8 rounded-2xl border border-primary/40 bg-gradient-to-b from-primary/10 to-transparent p-8 text-center">
+                <div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-full bg-primary/15 text-primary">
+                  <Lock className="h-5 w-5" />
+                </div>
+                <h3 className="mt-4 text-xl font-display">Premium story</h3>
+                <p className="mt-2 text-sm text-muted-foreground max-w-sm mx-auto">
+                  Unlock the rest of this story with{" "}
+                  <span className="text-primary font-medium">{story.unlockPrice} coins</span>.
+                </p>
+                {user ? (
+                  <div className="mt-6 flex flex-col items-center gap-2">
+                    <button
+                      disabled={unlockMut.isPending}
+                      onClick={() => unlockMut.mutate()}
+                      className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                    >
+                      {unlockMut.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Coins className="h-4 w-4" />
+                      )}
+                      Unlock for {story.unlockPrice}
+                    </button>
+                    <div className="text-mono text-[11px] text-muted-foreground">
+                      Balance: {coinState.data?.balance ?? 0} coins ·{" "}
+                      <Link to="/coins" className="text-primary hover:underline">
+                        top up
+                      </Link>
+                    </div>
+                    {unlockMut.isError ? (
+                      <div className="text-xs text-destructive">
+                        {(unlockMut.error as Error).message}
+                      </div>
+                    ) : null}
+                  </div>
+                ) : (
+                  <Link
+                    to="/auth"
+                    className="mt-6 inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                  >
+                    Sign in to unlock
+                  </Link>
+                )}
+              </div>
+            )}
+
+            {!locked && tipEnabled && user && !isCreator && (
+              <div className="mt-10 rounded-xl border border-border bg-card/40 p-5">
+                <div className="flex items-center gap-2">
+                  <HandHeart className="h-4 w-4 text-primary" />
+                  <div className="font-medium">Tip the writer</div>
+                </div>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Send a small coin tip to say thanks for this story.
+                </p>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  {[5, 10, 25, 50].map((v) => (
+                    <button
+                      key={v}
+                      onClick={() => setTipAmount(v)}
+                      className={`text-mono text-xs px-2.5 py-1 rounded border transition ${
+                        tipAmount === v
+                          ? "border-primary text-primary bg-primary/10"
+                          : "border-border text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {v} <Coins className="inline h-3 w-3" />
+                    </button>
+                  ))}
+                  <button
+                    disabled={tipMut.isPending}
+                    onClick={() => tipMut.mutate(tipAmount)}
+                    className="ml-auto inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                  >
+                    {tipMut.isPending ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <HandHeart className="h-3.5 w-3.5" />
+                    )}
+                    Send {tipAmount}
+                  </button>
+                </div>
+                {tipMut.isSuccess ? (
+                  <div className="mt-2 text-xs text-emerald-400">Thanks for the tip! ✨</div>
+                ) : null}
+                {tipMut.isError ? (
+                  <div className="mt-2 text-xs text-destructive">
+                    {(tipMut.error as Error).message}
+                  </div>
+                ) : null}
+              </div>
+            )}
 
             <AdSlot className="mt-12" />
 

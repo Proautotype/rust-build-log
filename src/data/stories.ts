@@ -34,6 +34,8 @@ export type ContentBlock =
   | { type: "pdf"; title: string; description?: string; sizeKb: number; href: string }
   | { type: "gallery"; images: { src: string; alt: string }[] };
 
+export type Monetization = "free" | "tips" | "locked";
+
 export interface Story {
   id: string;
   title: string;
@@ -49,6 +51,9 @@ export interface Story {
   readingMinutes: number;
   journeyId: string | null;
   creatorId: string | null;
+  monetization: Monetization;
+  unlockPrice: number;
+  tipEnabled: boolean;
 }
 
 export interface Journey {
@@ -89,6 +94,11 @@ export const technologies = [
 const FALLBACK_COVER = "https://placehold.co/1600x900/1a1a1a/f97316?text=Rust+Journey";
 
 export function rowToStory(row: Tables<"stories">): Story {
+  const r = row as Tables<"stories"> & {
+    monetization?: Monetization | null;
+    unlock_price?: number | null;
+    tip_enabled?: boolean | null;
+  };
   return {
     id: row.id,
     title: row.title,
@@ -104,6 +114,9 @@ export function rowToStory(row: Tables<"stories">): Story {
     readingMinutes: row.reading_minutes ?? 5,
     journeyId: row.journey_id,
     creatorId: row.creator_id,
+    monetization: (r.monetization ?? "free") as Monetization,
+    unlockPrice: r.unlock_price ?? 0,
+    tipEnabled: r.tip_enabled ?? false,
   };
 }
 
