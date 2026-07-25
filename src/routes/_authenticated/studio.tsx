@@ -353,6 +353,7 @@ function StudioPage() {
         monetization: draft.monetization,
         unlock_price: draft.unlockPrice,
         tip_enabled: draft.tipEnabled,
+        promoted: draft.promoted,
       };
       return saveStoryFn({ data: payload });
     },
@@ -385,6 +386,7 @@ function StudioPage() {
       monetization: ((s as { monetization?: Monetization }).monetization ?? "free") as Monetization,
       unlockPrice: (s as { unlock_price?: number }).unlock_price ?? 100,
       tipEnabled: (s as { tip_enabled?: boolean }).tip_enabled ?? false,
+      promoted: (s as { promoted?: boolean }).promoted ?? false,
       blocks: (Array.isArray(s.content) ? s.content : []).map((b) => ({
         ...(b as ContentBlock),
         _uid: uid(),
@@ -448,7 +450,36 @@ function StudioPage() {
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                <Pencil className="h-3.5 w-3.5" /> Edit
+                <Pencil className="h-3.5 w-3.5" /> Blocks
+              </button>
+              <button
+                onClick={() => {
+                  const isMd =
+                    draft.blocks.length === 1 && draft.blocks[0]?.type === "markdown";
+                  if (
+                    !isMd &&
+                    draft.blocks.length > 0 &&
+                    !confirm(
+                      "Switch to Markdown editor? Existing blocks will be converted into a single Markdown block.",
+                    )
+                  ) {
+                    return;
+                  }
+                  if (!isMd) {
+                    const md = blocksToMarkdown(draft.blocks);
+                    update({
+                      blocks: [{ _uid: uid(), type: "markdown", markdown: md }],
+                    });
+                  }
+                  setMode("markdown");
+                }}
+                className={`inline-flex items-center gap-1.5 rounded px-3 py-1.5 transition ${
+                  mode === "markdown"
+                    ? "bg-accent text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <FileCode className="h-3.5 w-3.5" /> Markdown
               </button>
               <button
                 onClick={() => setMode("preview")}
@@ -499,6 +530,30 @@ function StudioPage() {
 
       {mode === "preview" ? (
         <PreviewPane draft={draft} />
+      ) : mode === "markdown" ? (
+        <div className="container-page py-6">
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
+            <div className="rounded-lg border border-border bg-background p-3">
+              <MarkdownField
+                value={
+                  draft.blocks[0]?.type === "markdown" ? draft.blocks[0].markdown : ""
+                }
+                onChange={(v) =>
+                  update({
+                    blocks: [{ _uid: uid(), type: "markdown", markdown: v }],
+                  })
+                }
+              />
+            </div>
+            <MetaPanel
+              draft={draft}
+              onChange={update}
+              journeys={(journeysQuery.data ?? []) as JourneyRow[]}
+              onCreateJourney={handleCreateJourney}
+              onDelete={draft.id ? deleteCurrent : undefined}
+            />
+          </div>
+        </div>
       ) : (
         <div className="container-page py-6">
           <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)_280px]">
