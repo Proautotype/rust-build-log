@@ -85,7 +85,7 @@ export const Route = createFileRoute("/stories/$slug")({
 
     return { story, journey, journeyStories, related, writer };
   },
-  head: ({ loaderData }) => {
+  head: ({ loaderData, params }) => {
     if (!loaderData) {
       return {
         meta: [
@@ -94,17 +94,69 @@ export const Route = createFileRoute("/stories/$slug")({
         ],
       };
     }
-    const { story } = loaderData;
+    const { story, writer } = loaderData;
+    const url = `https://rust-build-log.lovable.app/stories/${params.slug}`;
+    const keywords = [story.category, story.difficulty, ...story.tags, "rust"].filter(Boolean).join(", ");
     return {
       meta: [
         { title: `${story.title} — Rust Journey` },
         { name: "description", content: story.shortDescription },
+        { name: "keywords", content: keywords },
+        { name: "author", content: writer?.display_name ?? "Rust Journey" },
+        { name: "robots", content: "index, follow, max-image-preview:large" },
         { property: "og:title", content: story.title },
         { property: "og:description", content: story.shortDescription },
         { property: "og:type", content: "article" },
+        { property: "og:url", content: url },
         { property: "og:image", content: story.cover },
+        { property: "article:published_time", content: story.createdAt },
+        { property: "article:modified_time", content: story.updatedAt },
+        { property: "article:section", content: story.category },
+        ...story.tags.map((t) => ({ property: "article:tag", content: t })),
         { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: story.title },
+        { name: "twitter:description", content: story.shortDescription },
         { name: "twitter:image", content: story.cover },
+      ],
+      links: [{ rel: "canonical", href: url }],
+      scripts: [
+        {
+          type: "application/ld+json",
+          children: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BlogPosting",
+            headline: story.title,
+            description: story.shortDescription,
+            image: [story.cover],
+            datePublished: story.createdAt,
+            dateModified: story.updatedAt,
+            author: {
+              "@type": "Person",
+              name: writer?.display_name ?? "Rust Journey",
+            },
+            publisher: {
+              "@type": "Organization",
+              name: "Rust Journey",
+              url: "https://rust-build-log.lovable.app",
+            },
+            mainEntityOfPage: { "@type": "WebPage", "@id": url },
+            keywords,
+            articleSection: story.category,
+            wordCount: Math.max(1, story.readingMinutes * 200),
+          }),
+        },
+        {
+          type: "application/ld+json",
+          children: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, name: "Home", item: "https://rust-build-log.lovable.app/" },
+              { "@type": "ListItem", position: 2, name: "Stories", item: "https://rust-build-log.lovable.app/stories" },
+              { "@type": "ListItem", position: 3, name: story.title, item: url },
+            ],
+          }),
+        },
       ],
     };
   },
