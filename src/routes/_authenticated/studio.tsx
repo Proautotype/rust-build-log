@@ -812,6 +812,8 @@ function blockLabel(b: ContentBlock): string {
       return "PDF";
     case "gallery":
       return "Gallery";
+    case "markdown":
+      return "Markdown";
   }
 }
 
@@ -1018,6 +1020,13 @@ function BlockFields({
               });
             onChange({ images } as Partial<EditorBlock>);
           }}
+        />
+      );
+    case "markdown":
+      return (
+        <MarkdownField
+          value={block.markdown}
+          onChange={(v) => onChange({ markdown: v } as Partial<EditorBlock>)}
         />
       );
   }
