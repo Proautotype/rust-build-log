@@ -71,70 +71,28 @@ function HomePage() {
 
   return (
     <div>
-      <section className="relative overflow-hidden border-b border-border/60">
-        <div className="absolute inset-0 grid-bg opacity-40" aria-hidden />
-        <div
-          className="absolute inset-0 opacity-70"
-          style={{
-            background:
-              "radial-gradient(1200px 500px at 15% 0%, color-mix(in oklab, var(--rust) 20%, transparent), transparent 60%), radial-gradient(900px 400px at 90% 20%, color-mix(in oklab, var(--info) 12%, transparent), transparent 60%)",
-          }}
-          aria-hidden
-        />
+      <Spotlight stories={spotlight} />
 
-        <div className="container-page relative py-20 md:py-28">
-          <div className="mx-auto max-w-3xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-border bg-surface/70 px-3 py-1 backdrop-blur">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-              <span className="text-mono text-[11px] uppercase tracking-widest text-muted-foreground">
-                Currently learning · Rust
-              </span>
-            </div>
+      <StoryRow eyebrow="Premium" title="Paid stories" stories={paidStories} />
+      <StoryRow eyebrow="Trending" title="Top stories" stories={topStories} />
+      <StoryRow eyebrow="Fresh" title="New releases" stories={stories.slice(0, 12)} />
 
-            <h1 className="mt-6 text-4xl md:text-6xl font-display tracking-tight text-foreground leading-[1.05]">
-              Documenting my journey learning <span className="italic text-primary">Rust</span>, one
-              experiment at a time.
-            </h1>
-
-            <p className="mt-6 max-w-2xl text-base md:text-lg text-muted-foreground leading-relaxed">
-              This isn't a blog. It's a learning journal — every story is a milestone, every
-              experiment a compile error I finally understood.
-            </p>
-
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Link
-                to="/stories"
-                className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition hover:bg-primary/90"
-              >
-                Browse stories
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link
-                to="/timeline"
-                className="inline-flex items-center gap-2 rounded-md border border-border bg-surface/70 px-4 py-2 text-sm text-foreground transition hover:border-primary/40"
-              >
-                <GitBranch className="h-4 w-4" />
-                See the timeline
-              </Link>
-            </div>
-
-            <div className="mt-10 flex flex-wrap gap-x-8 gap-y-2 text-mono text-xs text-muted-foreground">
-              <div>
-                <span className="text-foreground">{stories.length}</span> stories
-              </div>
-              <div>
-                <span className="text-foreground">{journeys.length}</span> journey{journeys.length === 1 ? "" : "s"}
-              </div>
-              <div>
-                <span className="text-foreground">{allTags.length}</span> topics
-              </div>
-              {featured ? (
-                <div>
-                  Started <span className="text-foreground">{formatDate(featured.startedAt)}</span>
-                </div>
-              ) : null}
-            </div>
+      <section className="container-page pt-4 pb-8">
+        <div className="flex flex-wrap gap-x-8 gap-y-2 text-mono text-xs text-muted-foreground">
+          <div>
+            <span className="text-foreground">{stories.length}</span> stories
           </div>
+          <div>
+            <span className="text-foreground">{journeys.length}</span> journey{journeys.length === 1 ? "" : "s"}
+          </div>
+          <div>
+            <span className="text-foreground">{allTags.length}</span> topics
+          </div>
+          {featured ? (
+            <div>
+              Started <span className="text-foreground">{formatDate(featured.startedAt)}</span>
+            </div>
+          ) : null}
         </div>
       </section>
 
