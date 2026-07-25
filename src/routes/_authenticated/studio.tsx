@@ -690,8 +690,201 @@ function Palette() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Canvas (drop zone + block list)                                   */
+/*  Media library (upload + draggable assets)                         */
 /* ------------------------------------------------------------------ */
+
+interface MediaAsset {
+  id: string;
+  kind: "image" | "video";
+  url: string;
+  path: string;
+  filename: string | null;
+}
+
+function MediaLibrary() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [dropActive, setDropActive] = useState(false);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  const assetsQuery = useQuery({
+    queryKey: ["media-assets", user?.id],
+    enabled: !!user,
+    queryFn: async (): Promise<MediaAsset[]> => {
+      const { data, error } = await supabase
+        .from("media_assets")
+        .select("id, kind, url, path, filename")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as MediaAsset[];
+    },
+  });
+
+  const uploadFiles = async (files: FileList | File[]) => {
+    if (!user) {
+      setError("Sign in to upload media.");
+      return;
+    }
+    setError(null);
+    setUploading(true);
+    try {
+      for (const file of Array.from(files)) {
+        const kind: "image" | "video" | null = file.type.startsWith("image/")
+          ? "image"
+          : file.type.startsWith("video/")
+            ? "video"
+            : null;
+        if (!kind) {
+          setError(`Unsupported file: ${file.name}`);
+          continue;
+        }
+        const safe = file.name.replace(/[^a-zA-Z0-9._-]+/g, "-");
+        const path = `${user.id}/${Date.now()}-${safe}`;
+        const { error: upErr } = await supabase.storage
+          .from("media")
+          .upload(path, file, { cacheControl: "31536000", upsert: false });
+        if (upErr) throw upErr;
+        // Long-lived signed URL (bucket is private for admin policy reasons).
+        const { data: signed, error: sErr } = await supabase.storage
+          .from("media")
+          .createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
+        if (sErr || !signed) throw sErr ?? new Error("Failed to sign URL");
+        const { error: insErr } = await supabase.from("media_assets").insert({
+          user_id: user.id,
+          kind,
+          url: signed.signedUrl,
+          path,
+          filename: file.name,
+          size_bytes: file.size,
+        });
+        if (insErr) throw insErr;
+      }
+      qc.invalidateQueries({ queryKey: ["media-assets", user.id] });
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeAsset = async (asset: MediaAsset) => {
+    if (!confirm("Delete this media file?")) return;
+    await supabase.storage.from("media").remove([asset.path]);
+    await supabase.from("media_assets").delete().eq("id", asset.id);
+    qc.invalidateQueries({ queryKey: ["media-assets", user?.id] });
+  };
+
+  const assets = assetsQuery.data ?? [];
+
+  return (
+    <aside className="lg:sticky lg:top-[420px] h-fit rounded-lg border border-border bg-surface/60 p-3">
+      <div className="flex items-center justify-between px-1 pb-2">
+        <div className="text-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+          Media library
+        </div>
+        <button
+          onClick={() => inputRef.current?.click()}
+          disabled={uploading}
+          className="inline-flex items-center gap-1 rounded border border-border bg-background px-1.5 py-0.5 text-mono text-[10px] text-muted-foreground hover:text-foreground disabled:opacity-50"
+        >
+          {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+          Upload
+        </button>
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*,video/*"
+          multiple
+          hidden
+          onChange={(e) => {
+            if (e.target.files?.length) uploadFiles(e.target.files);
+            e.target.value = "";
+          }}
+        />
+      </div>
+
+      <div
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDropActive(true);
+        }}
+        onDragLeave={() => setDropActive(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDropActive(false);
+          if (e.dataTransfer.files?.length) uploadFiles(e.dataTransfer.files);
+        }}
+        className={`mb-2 rounded-md border border-dashed p-3 text-center text-mono text-[10px] transition ${
+          dropActive
+            ? "border-primary bg-primary/10 text-primary"
+            : "border-border text-muted-foreground"
+        }`}
+      >
+        Drop image / video files here
+      </div>
+
+      {error ? (
+        <div className="mb-2 text-mono text-[10px] text-destructive">{error}</div>
+      ) : null}
+
+      {assetsQuery.isLoading ? (
+        <div className="text-mono text-[10px] text-muted-foreground">Loading…</div>
+      ) : assets.length === 0 ? (
+        <div className="text-mono text-[10px] text-muted-foreground">
+          No media yet. Upload files, then drag them into your story.
+        </div>
+      ) : (
+        <ul className="grid grid-cols-2 gap-1.5">
+          {assets.map((a) => (
+            <li key={a.id} className="group relative">
+              <div
+                draggable
+                onDragStart={(e) => {
+                  e.dataTransfer.setData(
+                    "application/x-block-media",
+                    JSON.stringify({
+                      kind: a.kind,
+                      url: a.url,
+                      title: a.filename ?? "",
+                    }),
+                  );
+                  e.dataTransfer.effectAllowed = "copy";
+                }}
+                className="relative aspect-video overflow-hidden rounded border border-border bg-background cursor-grab active:cursor-grabbing"
+                title={`Drag "${a.filename ?? a.kind}" onto the canvas`}
+              >
+                {a.kind === "image" ? (
+                  <img
+                    src={a.url}
+                    alt={a.filename ?? ""}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-surface-2">
+                    <Film className="h-5 w-5 text-primary" />
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={() => removeAsset(a)}
+                className="absolute right-0.5 top-0.5 rounded bg-background/80 p-0.5 text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive"
+                title="Delete"
+              >
+                <Trash2 className="h-3 w-3" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className="mt-2 px-1 text-mono text-[10px] leading-relaxed text-muted-foreground">
+        Drag a thumbnail onto the story canvas to insert it.
+      </p>
+    </aside>
+  );
+}
+
 
 interface CanvasProps {
   draft: Draft;
