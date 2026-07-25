@@ -1112,12 +1112,87 @@ function BlockFields({
       );
     case "markdown":
       return (
-        <MarkdownField
-          value={block.markdown}
-          onChange={(v) => onChange({ markdown: v } as Partial<EditorBlock>)}
-        />
+        <div className="space-y-2">
+          <MarkdownField
+            value={block.markdown}
+            onChange={(v) => onChange({ markdown: v } as Partial<EditorBlock>)}
+          />
+          <ColorField
+            value={block.color}
+            onChange={(v) => onChange({ color: v } as Partial<EditorBlock>)}
+          />
+        </div>
       );
+    case "videoFile":
+      return (
+        <div className="grid gap-2 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <Input
+              label="Video URL"
+              value={block.src}
+              onChange={(v) => onChange({ src: v } as Partial<EditorBlock>)}
+            />
+          </div>
+          <Input
+            label="Title"
+            value={block.title}
+            onChange={(v) => onChange({ title: v } as Partial<EditorBlock>)}
+          />
+          <Input
+            label="Poster (optional)"
+            value={block.poster ?? ""}
+            onChange={(v) => onChange({ poster: v } as Partial<EditorBlock>)}
+          />
+        </div>
+      );
+    default:
+      return null;
   }
+}
+
+function ColorField({
+  value,
+  onChange,
+}: {
+  value: string | undefined;
+  onChange: (v: string | undefined) => void;
+}) {
+  const swatches = ["#f97316", "#ef4444", "#eab308", "#22c55e", "#3b82f6", "#a855f7", "#e5e7eb"];
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+        Text color
+      </span>
+      <input
+        type="color"
+        value={value ?? "#e5e7eb"}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-6 w-8 cursor-pointer rounded border border-border bg-background"
+        aria-label="Pick color"
+      />
+      <div className="flex items-center gap-1">
+        {swatches.map((c) => (
+          <button
+            key={c}
+            type="button"
+            onClick={() => onChange(c)}
+            className="h-4 w-4 rounded-full border border-border/60"
+            style={{ backgroundColor: c }}
+            aria-label={`Use ${c}`}
+          />
+        ))}
+      </div>
+      {value ? (
+        <button
+          type="button"
+          onClick={() => onChange(undefined)}
+          className="text-mono text-[10px] text-muted-foreground hover:text-foreground"
+        >
+          reset
+        </button>
+      ) : null}
+    </div>
+  );
 }
 
 /* ------------------------------------------------------------------ */
