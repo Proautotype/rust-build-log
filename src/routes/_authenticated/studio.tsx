@@ -1756,6 +1756,8 @@ function blocksToMarkdown(blocks: EditorBlock[]): string {
           return `![${b.alt}](${b.src})` + (b.caption ? `\n\n*${b.caption}*` : "");
         case "video":
           return `[▶ ${b.title}](https://youtu.be/${b.youtubeId})`;
+        case "videoFile":
+          return `[▶ ${b.title || "Video"}](${b.src})`;
         case "pdf":
           return `[📄 ${b.title}](${b.href})`;
         case "gallery":
