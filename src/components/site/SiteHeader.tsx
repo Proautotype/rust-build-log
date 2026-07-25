@@ -45,7 +45,7 @@ export function SiteHeader() {
             <Terminal className="h-3.5 w-3.5" />
           </span>
           <span className="text-mono text-sm font-semibold tracking-tight">
-            rust<span className="text-primary">.</span>journey
+            on<span className="text-primary">.</span>blog
           </span>
         </Link>
 
@@ -174,8 +174,7 @@ export function SiteHeader() {
               >
                 Sign in
               </Link>
-            )
-          )}
+            ))}
         </div>
       </div>
 

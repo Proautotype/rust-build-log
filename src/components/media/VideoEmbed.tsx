@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Play } from "lucide-react";
 
 interface Props {
@@ -33,7 +33,8 @@ export function VideoEmbed({ youtubeId, title }: Props) {
               loading="lazy"
               className="absolute inset-0 h-full w-full object-cover opacity-70 group-hover:opacity-90 transition"
               onError={(e) => {
-                (e.currentTarget as HTMLImageElement).src = `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
+                (e.currentTarget as HTMLImageElement).src =
+                  `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
               }}
             />
             <span className="relative flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg ring-4 ring-primary/20 transition group-hover:scale-105">

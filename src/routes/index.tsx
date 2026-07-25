@@ -26,7 +26,11 @@ function HomePage() {
     queryKey: ["home-data"],
     queryFn: async () => {
       const [s, j] = await Promise.all([
-        supabase.from("stories").select("*").eq("published", true).order("created_at", { ascending: false }),
+        supabase
+          .from("stories")
+          .select("*")
+          .eq("published", true)
+          .order("created_at", { ascending: false }),
         supabase.from("journeys").select("*").order("started_at", { ascending: false }),
       ]);
       return {
@@ -104,7 +108,8 @@ function HomePage() {
                 <span className="text-foreground">{stories.length}</span> stories
               </div>
               <div>
-                <span className="text-foreground">{journeys.length}</span> journey{journeys.length === 1 ? "" : "s"}
+                <span className="text-foreground">{journeys.length}</span> journey
+                {journeys.length === 1 ? "" : "s"}
               </div>
               <div>
                 <span className="text-foreground">{allTags.length}</span> topics
@@ -176,7 +181,11 @@ function HomePage() {
 
       <section className="container-page py-16">
         <div className="flex items-end justify-between gap-4">
-          <SectionHeader eyebrow="Latest" title="Recent stories" description="Fresh from the compiler." />
+          <SectionHeader
+            eyebrow="Latest"
+            title="Recent stories"
+            description="Fresh from the compiler."
+          />
           <Link
             to="/stories"
             className="text-mono text-xs text-muted-foreground hover:text-primary inline-flex items-center gap-1"
@@ -191,7 +200,9 @@ function HomePage() {
           </div>
         ) : latest.length === 0 ? (
           <div className="mt-8 rounded-xl border border-dashed border-border bg-surface p-10 text-center text-muted-foreground">
-            <div className="text-mono text-sm">// no stories yet — sign in and become a writer to publish.</div>
+            <div className="text-mono text-sm">
+              // no stories yet — sign in and become a writer to publish.
+            </div>
           </div>
         ) : (
           <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -205,7 +216,11 @@ function HomePage() {
       <section className="container-page py-16">
         <div className="grid gap-10 md:grid-cols-2">
           <div>
-            <SectionHeader eyebrow="Topics" title="Popular tags" icon={<Sparkles className="h-4 w-4" />} />
+            <SectionHeader
+              eyebrow="Topics"
+              title="Popular tags"
+              icon={<Sparkles className="h-4 w-4" />}
+            />
             <div className="mt-6 flex flex-wrap gap-2">
               {popularTags.map((t) => (
                 <span
@@ -223,7 +238,11 @@ function HomePage() {
           </div>
 
           <div>
-            <SectionHeader eyebrow="Stack" title="Technologies explored" icon={<BookOpen className="h-4 w-4" />} />
+            <SectionHeader
+              eyebrow="Stack"
+              title="Technologies explored"
+              icon={<BookOpen className="h-4 w-4" />}
+            />
             <div className="mt-6 grid grid-cols-2 gap-3">
               {technologies.map((t) => (
                 <div

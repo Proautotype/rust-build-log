@@ -34,10 +34,7 @@ import { formatDateLong } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/admin/dashboard")({
   head: () => ({
-    meta: [
-      { title: "Admin dashboard — Rust Journey" },
-      { name: "robots", content: "noindex" },
-    ],
+    meta: [{ title: "Admin dashboard — Rust Journey" }, { name: "robots", content: "noindex" }],
   }),
   component: AdminDashboard,
 });
@@ -236,9 +233,7 @@ function UsersTab() {
                     <button
                       key={r}
                       disabled={roleMut.isPending}
-                      onClick={() =>
-                        roleMut.mutate({ userId: u.id, role: r, grant: !has })
-                      }
+                      onClick={() => roleMut.mutate({ userId: u.id, role: r, grant: !has })}
                       className={`text-mono text-[10px] uppercase tracking-widest px-2 py-1 rounded border transition ${
                         has
                           ? "border-primary/40 bg-primary/10 text-primary"
@@ -416,9 +411,7 @@ function LedgerTab() {
             <div className="text-mono text-[10px] uppercase tracking-widest text-primary w-28">
               {t.kind}
             </div>
-            <div className="flex-1 min-w-0 truncate text-muted-foreground">
-              {t.note ?? "—"}
-            </div>
+            <div className="flex-1 min-w-0 truncate text-muted-foreground">{t.note ?? "—"}</div>
             <div
               className={`text-mono text-sm ${
                 t.amount >= 0 ? "text-emerald-400" : "text-destructive"
