@@ -32,7 +32,8 @@ export type ContentBlock =
   | { type: "image"; src: string; alt: string; caption?: string }
   | { type: "video"; youtubeId: string; title: string }
   | { type: "pdf"; title: string; description?: string; sizeKb: number; href: string }
-  | { type: "gallery"; images: { src: string; alt: string }[] };
+  | { type: "gallery"; images: { src: string; alt: string }[] }
+  | { type: "markdown"; markdown: string };
 
 export type Monetization = "free" | "tips" | "locked";
 
