@@ -49,18 +49,16 @@ function HomePage() {
     [featured, stories],
   );
   const latest = stories.slice(0, 6);
-  const paidStories = useMemo(
-    () => stories.filter((s) => s.monetization === "locked"),
-    [stories],
-  );
+  const paidStories = useMemo(() => stories.filter((s) => s.monetization === "locked"), [stories]);
   const topStories = useMemo(() => {
     const scored = stories.map((s) => ({
       s,
-      score:
-        (s.monetization === "locked" ? 3 : s.tipEnabled ? 2 : 1) * 10 +
-        s.readingMinutes,
+      score: (s.monetization === "locked" ? 3 : s.tipEnabled ? 2 : 1) * 10 + s.readingMinutes,
     }));
-    return scored.sort((a, b) => b.score - a.score).map((x) => x.s).slice(0, 12);
+    return scored
+      .sort((a, b) => b.score - a.score)
+      .map((x) => x.s)
+      .slice(0, 12);
   }, [stories]);
   const spotlight = useMemo(() => {
     const paid = paidStories.slice(0, 3);
@@ -87,7 +85,8 @@ function HomePage() {
             <span className="text-foreground">{stories.length}</span> stories
           </div>
           <div>
-            <span className="text-foreground">{journeys.length}</span> journey{journeys.length === 1 ? "" : "s"}
+            <span className="text-foreground">{journeys.length}</span> journey
+            {journeys.length === 1 ? "" : "s"}
           </div>
           <div>
             <span className="text-foreground">{allTags.length}</span> topics
