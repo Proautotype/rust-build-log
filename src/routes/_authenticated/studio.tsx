@@ -24,6 +24,13 @@ import {
   Cloud,
   Loader2,
   FolderOpen,
+  Bold,
+  Italic,
+  Link2,
+  Heading as HeadingIcon,
+  CaseSensitive,
+  Sparkles,
+  FileCode,
 } from "lucide-react";
 import type { ContentBlock, CodeLanguage, Category, Difficulty, Monetization } from "@/data/stories";
 import { allCategories, allDifficulties } from "@/data/stories";
@@ -72,6 +79,7 @@ interface Draft {
   monetization: Monetization;
   unlockPrice: number;
   tipEnabled: boolean;
+  promoted: boolean;
 }
 
 interface JourneyRow {
@@ -104,6 +112,7 @@ const emptyDraft = (): Draft => ({
   monetization: "free",
   unlockPrice: 100,
   tipEnabled: false,
+  promoted: false,
   blocks: [
     {
       _uid: uid(),
