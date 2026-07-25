@@ -31,6 +31,8 @@ import {
   CaseSensitive,
   Sparkles,
   FileCode,
+  Upload,
+  Film,
 } from "lucide-react";
 import type { ContentBlock, CodeLanguage, Category, Difficulty, Monetization } from "@/data/stories";
 import { allCategories, allDifficulties } from "@/data/stories";
@@ -42,6 +44,8 @@ import {
   createJourney,
   deleteMyStory,
 } from "@/lib/studio.functions";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 
 export const Route = createFileRoute("/_authenticated/studio")({
