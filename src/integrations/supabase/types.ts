@@ -181,6 +181,8 @@ export type Database = {
           id: string
           journey_id: string | null
           monetization: Database["public"]["Enums"]["story_monetization"]
+          promoted: boolean
+          promoted_until: string | null
           published: boolean
           reading_minutes: number
           short_description: string | null
@@ -201,6 +203,8 @@ export type Database = {
           id?: string
           journey_id?: string | null
           monetization?: Database["public"]["Enums"]["story_monetization"]
+          promoted?: boolean
+          promoted_until?: string | null
           published?: boolean
           reading_minutes?: number
           short_description?: string | null
@@ -221,6 +225,8 @@ export type Database = {
           id?: string
           journey_id?: string | null
           monetization?: Database["public"]["Enums"]["story_monetization"]
+          promoted?: boolean
+          promoted_until?: string | null
           published?: boolean
           reading_minutes?: number
           short_description?: string | null
