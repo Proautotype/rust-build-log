@@ -17,16 +17,17 @@ export type CodeLanguage =
   "rust" | "typescript" | "java" | "kotlin" | "python" | "bash" | "toml" | "text";
 
 export type ContentBlock =
-  | { type: "heading"; level: 2 | 3; text: string; id: string }
-  | { type: "paragraph"; text: string }
-  | { type: "list"; ordered?: boolean; items: string[]; delimiter?: string }
-  | { type: "quote"; text: string; cite?: string }
+  | { type: "heading"; level: 2 | 3; text: string; id: string; color?: string }
+  | { type: "paragraph"; text: string; color?: string }
+  | { type: "list"; ordered?: boolean; items: string[]; delimiter?: string; color?: string }
+  | { type: "quote"; text: string; cite?: string; color?: string }
   | { type: "code"; language: CodeLanguage; filename?: string; code: string }
   | { type: "image"; src: string; alt: string; caption?: string }
   | { type: "video"; youtubeId: string; title: string }
+  | { type: "videoFile"; src: string; title: string; poster?: string }
   | { type: "pdf"; title: string; description?: string; sizeKb: number; href: string }
   | { type: "gallery"; images: { src: string; alt: string }[] }
-  | { type: "markdown"; markdown: string };
+  | { type: "markdown"; markdown: string; color?: string };
 
 export type Monetization = "free" | "tips" | "locked";
 

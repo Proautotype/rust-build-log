@@ -107,6 +107,39 @@ export type Database = {
         }
         Relationships: []
       }
+      media_assets: {
+        Row: {
+          created_at: string
+          filename: string | null
+          id: string
+          kind: string
+          path: string
+          size_bytes: number | null
+          url: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          filename?: string | null
+          id?: string
+          kind: string
+          path: string
+          size_bytes?: number | null
+          url: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          filename?: string | null
+          id?: string
+          kind?: string
+          path?: string
+          size_bytes?: number | null
+          url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -147,6 +180,7 @@ export type Database = {
         Row: {
           adsense_client: string | null
           adsense_enabled: boolean
+          adsense_global_enabled: boolean
           adsense_slot: string | null
           id: string
           updated_at: string
@@ -155,6 +189,7 @@ export type Database = {
         Insert: {
           adsense_client?: string | null
           adsense_enabled?: boolean
+          adsense_global_enabled?: boolean
           adsense_slot?: string | null
           id?: string
           updated_at?: string
@@ -163,6 +198,7 @@ export type Database = {
         Update: {
           adsense_client?: string | null
           adsense_enabled?: boolean
+          adsense_global_enabled?: boolean
           adsense_slot?: string | null
           id?: string
           updated_at?: string
