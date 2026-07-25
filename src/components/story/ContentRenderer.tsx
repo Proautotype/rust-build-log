@@ -11,35 +11,43 @@ export function ContentRenderer({ blocks }: { blocks: ContentBlock[] }) {
     <div className="prose-article">
       {blocks.map((block, i) => {
         switch (block.type) {
-          case "heading":
+          case "heading": {
+            const style = block.color ? { color: block.color } : undefined;
             return block.level === 2 ? (
-              <h2 key={i} id={block.id}>
+              <h2 key={i} id={block.id} style={style}>
                 {block.text}
               </h2>
             ) : (
-              <h3 key={i} id={block.id}>
+              <h3 key={i} id={block.id} style={style}>
                 {block.text}
               </h3>
             );
+          }
           case "paragraph":
-            return <p key={i}>{block.text}</p>;
-          case "list":
+            return (
+              <p key={i} style={block.color ? { color: block.color } : undefined}>
+                {block.text}
+              </p>
+            );
+          case "list": {
+            const style = block.color ? { color: block.color } : undefined;
             return block.ordered ? (
-              <ol key={i}>
+              <ol key={i} style={style}>
                 {block.items.map((it, j) => (
                   <li key={j}>{renderInline(it)}</li>
                 ))}
               </ol>
             ) : (
-              <ul key={i}>
+              <ul key={i} style={style}>
                 {block.items.map((it, j) => (
                   <li key={j}>{renderInline(it)}</li>
                 ))}
               </ul>
             );
+          }
           case "quote":
             return (
-              <blockquote key={i}>
+              <blockquote key={i} style={block.color ? { color: block.color } : undefined}>
                 {block.text}
                 {block.cite ? <div className="mt-2 text-mono text-xs not-italic">— {block.cite}</div> : null}
               </blockquote>
@@ -73,6 +81,23 @@ export function ContentRenderer({ blocks }: { blocks: ContentBlock[] }) {
             );
           case "video":
             return <VideoEmbed key={i} youtubeId={block.youtubeId} title={block.title} />;
+          case "videoFile":
+            return (
+              <figure key={i} className="my-6 overflow-hidden rounded-lg border border-border bg-surface-2">
+                <video
+                  src={block.src}
+                  poster={block.poster}
+                  controls
+                  preload="metadata"
+                  className="w-full"
+                />
+                {block.title ? (
+                  <figcaption className="border-t border-border/80 bg-surface px-4 py-2 text-mono text-xs text-muted-foreground">
+                    {block.title}
+                  </figcaption>
+                ) : null}
+              </figure>
+            );
           case "pdf":
             return (
               <PDFViewer
@@ -87,7 +112,11 @@ export function ContentRenderer({ blocks }: { blocks: ContentBlock[] }) {
             return <ImageGallery key={i} images={block.images} />;
           case "markdown":
             return (
-              <div key={i} className="markdown-body">
+              <div
+                key={i}
+                className="markdown-body"
+                style={block.color ? { color: block.color } : undefined}
+              >
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>{block.markdown}</ReactMarkdown>
               </div>
             );
