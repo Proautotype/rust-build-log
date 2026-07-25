@@ -32,7 +32,8 @@ export type ContentBlock =
   | { type: "image"; src: string; alt: string; caption?: string }
   | { type: "video"; youtubeId: string; title: string }
   | { type: "pdf"; title: string; description?: string; sizeKb: number; href: string }
-  | { type: "gallery"; images: { src: string; alt: string }[] };
+  | { type: "gallery"; images: { src: string; alt: string }[] }
+  | { type: "markdown"; markdown: string };
 
 export type Monetization = "free" | "tips" | "locked";
 
@@ -54,6 +55,7 @@ export interface Story {
   monetization: Monetization;
   unlockPrice: number;
   tipEnabled: boolean;
+  promoted: boolean;
 }
 
 export interface Journey {
@@ -98,6 +100,7 @@ export function rowToStory(row: Tables<"stories">): Story {
     monetization?: Monetization | null;
     unlock_price?: number | null;
     tip_enabled?: boolean | null;
+    promoted?: boolean | null;
   };
   return {
     id: row.id,
@@ -117,6 +120,7 @@ export function rowToStory(row: Tables<"stories">): Story {
     monetization: (r.monetization ?? "free") as Monetization,
     unlockPrice: r.unlock_price ?? 0,
     tipEnabled: r.tip_enabled ?? false,
+    promoted: r.promoted ?? false,
   };
 }
 

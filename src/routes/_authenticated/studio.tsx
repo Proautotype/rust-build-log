@@ -24,6 +24,13 @@ import {
   Cloud,
   Loader2,
   FolderOpen,
+  Bold,
+  Italic,
+  Link2,
+  Heading as HeadingIcon,
+  CaseSensitive,
+  Sparkles,
+  FileCode,
 } from "lucide-react";
 import type { ContentBlock, CodeLanguage, Category, Difficulty, Monetization } from "@/data/stories";
 import { allCategories, allDifficulties } from "@/data/stories";
@@ -72,6 +79,7 @@ interface Draft {
   monetization: Monetization;
   unlockPrice: number;
   tipEnabled: boolean;
+  promoted: boolean;
 }
 
 interface JourneyRow {
@@ -104,6 +112,7 @@ const emptyDraft = (): Draft => ({
   monetization: "free",
   unlockPrice: 100,
   tipEnabled: false,
+  promoted: false,
   blocks: [
     {
       _uid: uid(),
@@ -216,7 +225,7 @@ const PALETTE: {
 
 function StudioPage() {
   const [draft, setDraft] = useState<Draft>(() => emptyDraft());
-  const [mode, setMode] = useState<"edit" | "preview">("edit");
+  const [mode, setMode] = useState<"edit" | "markdown" | "preview">("edit");
   const [hydrated, setHydrated] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
 
@@ -344,6 +353,7 @@ function StudioPage() {
         monetization: draft.monetization,
         unlock_price: draft.unlockPrice,
         tip_enabled: draft.tipEnabled,
+        promoted: draft.promoted,
       };
       return saveStoryFn({ data: payload });
     },
@@ -376,6 +386,7 @@ function StudioPage() {
       monetization: ((s as { monetization?: Monetization }).monetization ?? "free") as Monetization,
       unlockPrice: (s as { unlock_price?: number }).unlock_price ?? 100,
       tipEnabled: (s as { tip_enabled?: boolean }).tip_enabled ?? false,
+      promoted: (s as { promoted?: boolean }).promoted ?? false,
       blocks: (Array.isArray(s.content) ? s.content : []).map((b) => ({
         ...(b as ContentBlock),
         _uid: uid(),
@@ -439,7 +450,36 @@ function StudioPage() {
                     : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                <Pencil className="h-3.5 w-3.5" /> Edit
+                <Pencil className="h-3.5 w-3.5" /> Blocks
+              </button>
+              <button
+                onClick={() => {
+                  const isMd =
+                    draft.blocks.length === 1 && draft.blocks[0]?.type === "markdown";
+                  if (
+                    !isMd &&
+                    draft.blocks.length > 0 &&
+                    !confirm(
+                      "Switch to Markdown editor? Existing blocks will be converted into a single Markdown block.",
+                    )
+                  ) {
+                    return;
+                  }
+                  if (!isMd) {
+                    const md = blocksToMarkdown(draft.blocks);
+                    update({
+                      blocks: [{ _uid: uid(), type: "markdown", markdown: md }],
+                    });
+                  }
+                  setMode("markdown");
+                }}
+                className={`inline-flex items-center gap-1.5 rounded px-3 py-1.5 transition ${
+                  mode === "markdown"
+                    ? "bg-accent text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <FileCode className="h-3.5 w-3.5" /> Markdown
               </button>
               <button
                 onClick={() => setMode("preview")}
@@ -490,6 +530,30 @@ function StudioPage() {
 
       {mode === "preview" ? (
         <PreviewPane draft={draft} />
+      ) : mode === "markdown" ? (
+        <div className="container-page py-6">
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
+            <div className="rounded-lg border border-border bg-background p-3">
+              <MarkdownField
+                value={
+                  draft.blocks[0]?.type === "markdown" ? draft.blocks[0].markdown : ""
+                }
+                onChange={(v) =>
+                  update({
+                    blocks: [{ _uid: uid(), type: "markdown", markdown: v }],
+                  })
+                }
+              />
+            </div>
+            <MetaPanel
+              draft={draft}
+              onChange={update}
+              journeys={(journeysQuery.data ?? []) as JourneyRow[]}
+              onCreateJourney={handleCreateJourney}
+              onDelete={draft.id ? deleteCurrent : undefined}
+            />
+          </div>
+        </div>
       ) : (
         <div className="container-page py-6">
           <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)_280px]">
@@ -812,6 +876,8 @@ function blockLabel(b: ContentBlock): string {
       return "PDF";
     case "gallery":
       return "Gallery";
+    case "markdown":
+      return "Markdown";
   }
 }
 
@@ -1018,6 +1084,13 @@ function BlockFields({
               });
             onChange({ images } as Partial<EditorBlock>);
           }}
+        />
+      );
+    case "markdown":
+      return (
+        <MarkdownField
+          value={block.markdown}
+          onChange={(v) => onChange({ markdown: v } as Partial<EditorBlock>)}
         />
       );
   }
@@ -1228,6 +1301,24 @@ function MetaPanel({
           Locked stories require readers to spend coins to read. Tips are optional and support you
           directly.
         </p>
+        <div className="mt-2 border-t border-border/60 pt-3">
+          <label className="inline-flex items-start gap-2 text-mono text-[11px] text-muted-foreground cursor-pointer">
+            <input
+              type="checkbox"
+              className="mt-0.5"
+              checked={draft.promoted}
+              onChange={(e) => onChange({ promoted: e.target.checked })}
+            />
+            <span>
+              <span className="inline-flex items-center gap-1 text-primary">
+                <Sparkles className="h-3 w-3" /> Promote this story
+              </span>
+              <span className="mt-0.5 block text-muted-foreground">
+                Feature it on the landing page in the "Promoted" row.
+              </span>
+            </span>
+          </label>
+        </div>
       </div>
 
       {onDelete ? (
@@ -1396,4 +1487,185 @@ function slugify(s: string) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 80);
+}
+
+/* ------------------------------------------------------------------ */
+/*  Markdown editor with formatting toolbar                           */
+/* ------------------------------------------------------------------ */
+
+function MarkdownField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const ref = useRef<HTMLTextAreaElement | null>(null);
+
+  const wrapSelection = (before: string, after: string = before) => {
+    const ta = ref.current;
+    if (!ta) return;
+    const start = ta.selectionStart ?? 0;
+    const end = ta.selectionEnd ?? 0;
+    const selected = value.slice(start, end);
+    const next = value.slice(0, start) + before + selected + after + value.slice(end);
+    onChange(next);
+    requestAnimationFrame(() => {
+      ta.focus();
+      ta.selectionStart = start + before.length;
+      ta.selectionEnd = end + before.length;
+    });
+  };
+
+  const linePrefix = (prefix: string) => {
+    const ta = ref.current;
+    if (!ta) return;
+    const start = ta.selectionStart ?? 0;
+    const end = ta.selectionEnd ?? 0;
+    const lineStart = value.lastIndexOf("\n", start - 1) + 1;
+    const before = value.slice(0, lineStart);
+    const middle = value.slice(lineStart, end);
+    const after = value.slice(end);
+    const prefixed = middle
+      .split("\n")
+      .map((l) => (l.startsWith(prefix) ? l : prefix + l))
+      .join("\n");
+    onChange(before + prefixed + after);
+  };
+
+  const transformSelection = (fn: (s: string) => string) => {
+    const ta = ref.current;
+    if (!ta) return;
+    const start = ta.selectionStart ?? 0;
+    const end = ta.selectionEnd ?? 0;
+    if (start === end) return;
+    const next = value.slice(0, start) + fn(value.slice(start, end)) + value.slice(end);
+    onChange(next);
+  };
+
+  const btn =
+    "inline-flex items-center gap-1 rounded border border-border bg-background px-2 py-1 text-mono text-[11px] text-muted-foreground hover:text-foreground hover:border-border-strong";
+
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-wrap items-center gap-1.5">
+        <button type="button" className={btn} onClick={() => wrapSelection("**")} title="Bold">
+          <Bold className="h-3 w-3" /> Bold
+        </button>
+        <button type="button" className={btn} onClick={() => wrapSelection("*")} title="Italic">
+          <Italic className="h-3 w-3" /> Italic
+        </button>
+        <button
+          type="button"
+          className={btn}
+          onClick={() => linePrefix("## ")}
+          title="Heading 2"
+        >
+          <HeadingIcon className="h-3 w-3" /> H2
+        </button>
+        <button
+          type="button"
+          className={btn}
+          onClick={() => linePrefix("### ")}
+          title="Heading 3"
+        >
+          <HeadingIcon className="h-3 w-3" /> H3
+        </button>
+        <button type="button" className={btn} onClick={() => linePrefix("- ")} title="Bullet list">
+          <ListIcon className="h-3 w-3" /> List
+        </button>
+        <button type="button" className={btn} onClick={() => linePrefix("> ")} title="Quote">
+          <Quote className="h-3 w-3" /> Quote
+        </button>
+        <button
+          type="button"
+          className={btn}
+          onClick={() => wrapSelection("`")}
+          title="Inline code"
+        >
+          <Code2 className="h-3 w-3" /> Code
+        </button>
+        <button
+          type="button"
+          className={btn}
+          onClick={() => wrapSelection("[", "](https://)")}
+          title="Link"
+        >
+          <Link2 className="h-3 w-3" /> Link
+        </button>
+        <div className="mx-1 h-4 w-px bg-border" />
+        <button
+          type="button"
+          className={btn}
+          onClick={() => transformSelection((s) => s.toUpperCase())}
+          title="UPPERCASE"
+        >
+          <CaseSensitive className="h-3 w-3" /> UPPER
+        </button>
+        <button
+          type="button"
+          className={btn}
+          onClick={() => transformSelection((s) => s.toLowerCase())}
+          title="lowercase"
+        >
+          <CaseSensitive className="h-3 w-3" /> lower
+        </button>
+        <button
+          type="button"
+          className={btn}
+          onClick={() =>
+            transformSelection((s) =>
+              s.replace(/\b([a-z])(\w*)/g, (_, a: string, b: string) => a.toUpperCase() + b),
+            )
+          }
+          title="Capitalize Words"
+        >
+          <CaseSensitive className="h-3 w-3" /> Capitalize
+        </button>
+      </div>
+      <textarea
+        ref={ref}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        rows={24}
+        placeholder="Write your story in Markdown. Select text and use the toolbar to format."
+        className="w-full resize-y rounded-md border border-border bg-background px-3 py-2 text-mono text-[13px] leading-relaxed text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+      />
+      <p className="text-mono text-[10px] text-muted-foreground">
+        Supports GitHub-flavored Markdown (headings, lists, tables, code fences, links).
+      </p>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Serialize existing blocks -> Markdown (for mode switch)           */
+/* ------------------------------------------------------------------ */
+
+function blocksToMarkdown(blocks: EditorBlock[]): string {
+  return blocks
+    .map((b) => {
+      switch (b.type) {
+        case "heading":
+          return (b.level === 3 ? "### " : "## ") + b.text;
+        case "paragraph":
+          return b.text;
+        case "list":
+          return b.items.map((it, i) => (b.ordered ? `${i + 1}. ${it}` : `- ${it}`)).join("\n");
+        case "quote":
+          return b.text
+            .split("\n")
+            .map((l) => `> ${l}`)
+            .join("\n") + (b.cite ? `\n>\n> — ${b.cite}` : "");
+        case "code":
+          return "```" + (b.language ?? "") + "\n" + b.code + "\n```";
+        case "image":
+          return `![${b.alt}](${b.src})` + (b.caption ? `\n\n*${b.caption}*` : "");
+        case "video":
+          return `[▶ ${b.title}](https://youtu.be/${b.youtubeId})`;
+        case "pdf":
+          return `[📄 ${b.title}](${b.href})`;
+        case "gallery":
+          return b.images.map((im) => `![${im.alt}](${im.src})`).join("\n\n");
+        case "markdown":
+          return b.markdown;
+        default:
+          return "";
+      }
+    })
+    .join("\n\n");
 }

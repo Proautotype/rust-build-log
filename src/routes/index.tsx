@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
-import { ArrowRight, Sparkles, GitBranch, BookOpen, Loader2 } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ArrowRight, Sparkles, GitBranch, BookOpen, Loader2, Search, X } from "lucide-react";
 import { StoryCard } from "@/components/story/StoryCard";
 import { Spotlight, StoryRow } from "@/components/story/StoryShowcase";
 import { heroImage, rowToJourney, rowToStory, technologies } from "@/data/stories";
@@ -15,9 +15,18 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "A developer's public journal documenting the journey of learning Rust — one experiment at a time.",
+          "A developer's public journal documenting the journey of learning Rust — stories, tutorials, projects, and the compile errors along the way.",
       },
+      { property: "og:title", content: "Rust Journey — Learning Rust in Public" },
+      {
+        property: "og:description",
+        content:
+          "A developer's public journal documenting the journey of learning Rust — stories, tutorials, projects, and the compile errors along the way.",
+      },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://rust-build-log.lovable.app/" },
     ],
+    links: [{ rel: "canonical", href: "https://rust-build-log.lovable.app/" }],
   }),
   component: HomePage,
 });
@@ -49,11 +58,15 @@ function HomePage() {
     [featured, stories],
   );
   const latest = stories.slice(0, 6);
+  const promotedStories = useMemo(() => stories.filter((s) => s.promoted), [stories]);
   const paidStories = useMemo(() => stories.filter((s) => s.monetization === "locked"), [stories]);
   const topStories = useMemo(() => {
     const scored = stories.map((s) => ({
       s,
-      score: (s.monetization === "locked" ? 3 : s.tipEnabled ? 2 : 1) * 10 + s.readingMinutes,
+      score:
+        (s.promoted ? 5 : 0) +
+        (s.monetization === "locked" ? 3 : s.tipEnabled ? 2 : 1) * 10 +
+        s.readingMinutes,
     }));
     return scored
       .sort((a, b) => b.score - a.score)
@@ -61,23 +74,89 @@ function HomePage() {
       .slice(0, 12);
   }, [stories]);
   const spotlight = useMemo(() => {
-    const paid = paidStories.slice(0, 3);
-    const rest = stories.filter((s) => !paid.includes(s)).slice(0, 5 - paid.length);
-    return [...paid, ...rest];
-  }, [paidStories, stories]);
+    const promoted = promotedStories.slice(0, 3);
+    const paid = paidStories.filter((s) => !promoted.includes(s)).slice(0, 2);
+    const rest = stories
+      .filter((s) => !promoted.includes(s) && !paid.includes(s))
+      .slice(0, 5 - promoted.length - paid.length);
+    return [...promoted, ...paid, ...rest];
+  }, [promotedStories, paidStories, stories]);
   const allTags = useMemo(
     () => Array.from(new Set(stories.flatMap((s) => s.tags))).sort(),
     [stories],
   );
   const popularTags = allTags.slice(0, 12);
 
+  const [query, setQuery] = useState("");
+  const q = query.trim().toLowerCase();
+  const searchResults = useMemo(() => {
+    if (!q) return [];
+    return stories.filter((s) => {
+      const hay = [
+        s.title,
+        s.shortDescription,
+        s.category,
+        s.difficulty,
+        ...s.tags,
+      ]
+        .join(" ")
+        .toLowerCase();
+      return hay.includes(q);
+    });
+  }, [q, stories]);
+
   return (
     <div>
       <Spotlight stories={spotlight} />
 
-      <StoryRow eyebrow="Premium" title="Paid stories" stories={paidStories} />
-      <StoryRow eyebrow="Trending" title="Top stories" stories={topStories} />
-      <StoryRow eyebrow="Fresh" title="New releases" stories={stories.slice(0, 12)} />
+      <section className="container-page pt-6 pb-2">
+        <div className="relative mx-auto max-w-2xl">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search stories, tags, categories…"
+            aria-label="Search stories"
+            className="w-full rounded-full border border-border bg-surface pl-10 pr-10 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+          />
+          {query ? (
+            <button
+              onClick={() => setQuery("")}
+              aria-label="Clear search"
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          ) : null}
+        </div>
+      </section>
+
+      {q ? (
+        <section className="container-page pb-8 pt-4">
+          <div className="mb-4 text-mono text-xs text-muted-foreground">
+            {searchResults.length === 0
+              ? `No results for "${query}"`
+              : `${searchResults.length} result${searchResults.length === 1 ? "" : "s"} for "${query}"`}
+          </div>
+          {searchResults.length > 0 ? (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {searchResults.map((s) => (
+                <StoryCard key={s.id} story={s} />
+              ))}
+            </div>
+          ) : null}
+        </section>
+      ) : (
+        <>
+          {promotedStories.length > 0 ? (
+            <StoryRow eyebrow="Promoted" title="Featured by writers" stories={promotedStories} />
+          ) : null}
+          <StoryRow eyebrow="Premium" title="Paid stories" stories={paidStories} />
+          <StoryRow eyebrow="Trending" title="Top stories" stories={topStories} />
+          <StoryRow eyebrow="Fresh" title="New releases" stories={stories.slice(0, 12)} />
+        </>
+      )}
 
       <section className="container-page pt-4 pb-8">
         <div className="flex flex-wrap gap-x-8 gap-y-2 text-mono text-xs text-muted-foreground">

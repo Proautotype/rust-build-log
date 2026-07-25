@@ -3,6 +3,8 @@ import { CodeBlock } from "@/components/media/CodeBlock";
 import { VideoEmbed } from "@/components/media/VideoEmbed";
 import { PDFViewer } from "@/components/media/PDFViewer";
 import { ImageGallery } from "@/components/media/ImageGallery";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 export function ContentRenderer({ blocks }: { blocks: ContentBlock[] }) {
   return (
@@ -83,6 +85,12 @@ export function ContentRenderer({ blocks }: { blocks: ContentBlock[] }) {
             );
           case "gallery":
             return <ImageGallery key={i} images={block.images} />;
+          case "markdown":
+            return (
+              <div key={i} className="markdown-body">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{block.markdown}</ReactMarkdown>
+              </div>
+            );
           default:
             return null;
         }
