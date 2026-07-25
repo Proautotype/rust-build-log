@@ -31,6 +31,8 @@ import {
   CaseSensitive,
   Sparkles,
   FileCode,
+  Upload,
+  Film,
 } from "lucide-react";
 import type { ContentBlock, CodeLanguage, Category, Difficulty, Monetization } from "@/data/stories";
 import { allCategories, allDifficulties } from "@/data/stories";
@@ -42,6 +44,8 @@ import {
   createJourney,
   deleteMyStory,
 } from "@/lib/studio.functions";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 
 export const Route = createFileRoute("/_authenticated/studio")({
@@ -557,7 +561,10 @@ function StudioPage() {
       ) : (
         <div className="container-page py-6">
           <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)_280px]">
-            <Palette />
+            <div className="space-y-3">
+              <Palette />
+              <MediaLibrary />
+            </div>
             <Canvas
               draft={draft}
               onInsertAt={insertAt}
@@ -683,8 +690,201 @@ function Palette() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Canvas (drop zone + block list)                                   */
+/*  Media library (upload + draggable assets)                         */
 /* ------------------------------------------------------------------ */
+
+interface MediaAsset {
+  id: string;
+  kind: "image" | "video";
+  url: string;
+  path: string;
+  filename: string | null;
+}
+
+function MediaLibrary() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [dropActive, setDropActive] = useState(false);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  const assetsQuery = useQuery({
+    queryKey: ["media-assets", user?.id],
+    enabled: !!user,
+    queryFn: async (): Promise<MediaAsset[]> => {
+      const { data, error } = await supabase
+        .from("media_assets")
+        .select("id, kind, url, path, filename")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as MediaAsset[];
+    },
+  });
+
+  const uploadFiles = async (files: FileList | File[]) => {
+    if (!user) {
+      setError("Sign in to upload media.");
+      return;
+    }
+    setError(null);
+    setUploading(true);
+    try {
+      for (const file of Array.from(files)) {
+        const kind: "image" | "video" | null = file.type.startsWith("image/")
+          ? "image"
+          : file.type.startsWith("video/")
+            ? "video"
+            : null;
+        if (!kind) {
+          setError(`Unsupported file: ${file.name}`);
+          continue;
+        }
+        const safe = file.name.replace(/[^a-zA-Z0-9._-]+/g, "-");
+        const path = `${user.id}/${Date.now()}-${safe}`;
+        const { error: upErr } = await supabase.storage
+          .from("media")
+          .upload(path, file, { cacheControl: "31536000", upsert: false });
+        if (upErr) throw upErr;
+        // Long-lived signed URL (bucket is private for admin policy reasons).
+        const { data: signed, error: sErr } = await supabase.storage
+          .from("media")
+          .createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
+        if (sErr || !signed) throw sErr ?? new Error("Failed to sign URL");
+        const { error: insErr } = await supabase.from("media_assets").insert({
+          user_id: user.id,
+          kind,
+          url: signed.signedUrl,
+          path,
+          filename: file.name,
+          size_bytes: file.size,
+        });
+        if (insErr) throw insErr;
+      }
+      qc.invalidateQueries({ queryKey: ["media-assets", user.id] });
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeAsset = async (asset: MediaAsset) => {
+    if (!confirm("Delete this media file?")) return;
+    await supabase.storage.from("media").remove([asset.path]);
+    await supabase.from("media_assets").delete().eq("id", asset.id);
+    qc.invalidateQueries({ queryKey: ["media-assets", user?.id] });
+  };
+
+  const assets = assetsQuery.data ?? [];
+
+  return (
+    <aside className="lg:sticky lg:top-[420px] h-fit rounded-lg border border-border bg-surface/60 p-3">
+      <div className="flex items-center justify-between px-1 pb-2">
+        <div className="text-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+          Media library
+        </div>
+        <button
+          onClick={() => inputRef.current?.click()}
+          disabled={uploading}
+          className="inline-flex items-center gap-1 rounded border border-border bg-background px-1.5 py-0.5 text-mono text-[10px] text-muted-foreground hover:text-foreground disabled:opacity-50"
+        >
+          {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+          Upload
+        </button>
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*,video/*"
+          multiple
+          hidden
+          onChange={(e) => {
+            if (e.target.files?.length) uploadFiles(e.target.files);
+            e.target.value = "";
+          }}
+        />
+      </div>
+
+      <div
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDropActive(true);
+        }}
+        onDragLeave={() => setDropActive(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDropActive(false);
+          if (e.dataTransfer.files?.length) uploadFiles(e.dataTransfer.files);
+        }}
+        className={`mb-2 rounded-md border border-dashed p-3 text-center text-mono text-[10px] transition ${
+          dropActive
+            ? "border-primary bg-primary/10 text-primary"
+            : "border-border text-muted-foreground"
+        }`}
+      >
+        Drop image / video files here
+      </div>
+
+      {error ? (
+        <div className="mb-2 text-mono text-[10px] text-destructive">{error}</div>
+      ) : null}
+
+      {assetsQuery.isLoading ? (
+        <div className="text-mono text-[10px] text-muted-foreground">Loading…</div>
+      ) : assets.length === 0 ? (
+        <div className="text-mono text-[10px] text-muted-foreground">
+          No media yet. Upload files, then drag them into your story.
+        </div>
+      ) : (
+        <ul className="grid grid-cols-2 gap-1.5">
+          {assets.map((a) => (
+            <li key={a.id} className="group relative">
+              <div
+                draggable
+                onDragStart={(e) => {
+                  e.dataTransfer.setData(
+                    "application/x-block-media",
+                    JSON.stringify({
+                      kind: a.kind,
+                      url: a.url,
+                      title: a.filename ?? "",
+                    }),
+                  );
+                  e.dataTransfer.effectAllowed = "copy";
+                }}
+                className="relative aspect-video overflow-hidden rounded border border-border bg-background cursor-grab active:cursor-grabbing"
+                title={`Drag "${a.filename ?? a.kind}" onto the canvas`}
+              >
+                {a.kind === "image" ? (
+                  <img
+                    src={a.url}
+                    alt={a.filename ?? ""}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-surface-2">
+                    <Film className="h-5 w-5 text-primary" />
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={() => removeAsset(a)}
+                className="absolute right-0.5 top-0.5 rounded bg-background/80 p-0.5 text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive"
+                title="Delete"
+              >
+                <Trash2 className="h-3 w-3" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className="mt-2 px-1 text-mono text-[10px] leading-relaxed text-muted-foreground">
+        Drag a thumbnail onto the story canvas to insert it.
+      </p>
+    </aside>
+  );
+}
+
 
 interface CanvasProps {
   draft: Draft;
@@ -706,6 +906,21 @@ function Canvas({ draft, onInsertAt, onMove, onRemove, onDuplicate, onChangeBloc
     if (kind) {
       onInsertAt(index, makeBlock(kind));
       return;
+    }
+    const media = e.dataTransfer.getData("application/x-block-media");
+    if (media) {
+      try {
+        const m = JSON.parse(media) as { kind: "image" | "video"; url: string; title?: string };
+        const _uid = uid();
+        const block: EditorBlock =
+          m.kind === "image"
+            ? { _uid, type: "image", src: m.url, alt: m.title ?? "", caption: "" }
+            : { _uid, type: "videoFile", src: m.url, title: m.title ?? "" };
+        onInsertAt(index, block);
+        return;
+      } catch {
+        /* ignore */
+      }
     }
     const movingUid = e.dataTransfer.getData("application/x-block-uid") || dragUid.current;
     if (movingUid) onMove(movingUid, index);
@@ -872,12 +1087,16 @@ function blockLabel(b: ContentBlock): string {
       return "Image";
     case "video":
       return "YouTube";
+    case "videoFile":
+      return "Video (upload)";
     case "pdf":
       return "PDF";
     case "gallery":
       return "Gallery";
     case "markdown":
       return "Markdown";
+    default:
+      return "Block";
   }
 }
 
@@ -895,36 +1114,48 @@ function BlockFields({
   switch (block.type) {
     case "heading":
       return (
-        <div className="grid gap-2 sm:grid-cols-[80px_minmax(0,1fr)]">
-          <Select
-            label="Level"
-            value={String(block.level)}
-            onChange={(v) => onChange({ level: v === "3" ? 3 : 2 } as Partial<EditorBlock>)}
-            options={[
-              { value: "2", label: "H2" },
-              { value: "3", label: "H3" },
-            ]}
-          />
-          <Input
-            label="Text"
-            value={block.text}
-            onChange={(v) =>
-              onChange({
-                text: v,
-                id: slugify(v) || block.id,
-              } as Partial<EditorBlock>)
-            }
+        <div className="space-y-2">
+          <div className="grid gap-2 sm:grid-cols-[80px_minmax(0,1fr)]">
+            <Select
+              label="Level"
+              value={String(block.level)}
+              onChange={(v) => onChange({ level: v === "3" ? 3 : 2 } as Partial<EditorBlock>)}
+              options={[
+                { value: "2", label: "H2" },
+                { value: "3", label: "H3" },
+              ]}
+            />
+            <Input
+              label="Text"
+              value={block.text}
+              onChange={(v) =>
+                onChange({
+                  text: v,
+                  id: slugify(v) || block.id,
+                } as Partial<EditorBlock>)
+              }
+            />
+          </div>
+          <ColorField
+            value={block.color}
+            onChange={(v) => onChange({ color: v } as Partial<EditorBlock>)}
           />
         </div>
       );
     case "paragraph":
       return (
-        <Textarea
-          label="Text"
-          value={block.text}
-          rows={3}
-          onChange={(v) => onChange({ text: v } as Partial<EditorBlock>)}
-        />
+        <div className="space-y-2">
+          <Textarea
+            label="Text"
+            value={block.text}
+            rows={3}
+            onChange={(v) => onChange({ text: v } as Partial<EditorBlock>)}
+          />
+          <ColorField
+            value={block.color}
+            onChange={(v) => onChange({ color: v } as Partial<EditorBlock>)}
+          />
+        </div>
       );
     case "list":
       return (
@@ -947,6 +1178,10 @@ function BlockFields({
               onChange({ items: v.split("\n").map((s) => s) } as Partial<EditorBlock>)
             }
           />
+          <ColorField
+            value={block.color}
+            onChange={(v) => onChange({ color: v } as Partial<EditorBlock>)}
+          />
         </div>
       );
     case "quote":
@@ -962,6 +1197,10 @@ function BlockFields({
             label="Attribution (optional)"
             value={block.cite ?? ""}
             onChange={(v) => onChange({ cite: v } as Partial<EditorBlock>)}
+          />
+          <ColorField
+            value={block.color}
+            onChange={(v) => onChange({ color: v } as Partial<EditorBlock>)}
           />
         </div>
       );
@@ -1088,12 +1327,87 @@ function BlockFields({
       );
     case "markdown":
       return (
-        <MarkdownField
-          value={block.markdown}
-          onChange={(v) => onChange({ markdown: v } as Partial<EditorBlock>)}
-        />
+        <div className="space-y-2">
+          <MarkdownField
+            value={block.markdown}
+            onChange={(v) => onChange({ markdown: v } as Partial<EditorBlock>)}
+          />
+          <ColorField
+            value={block.color}
+            onChange={(v) => onChange({ color: v } as Partial<EditorBlock>)}
+          />
+        </div>
       );
+    case "videoFile":
+      return (
+        <div className="grid gap-2 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <Input
+              label="Video URL"
+              value={block.src}
+              onChange={(v) => onChange({ src: v } as Partial<EditorBlock>)}
+            />
+          </div>
+          <Input
+            label="Title"
+            value={block.title}
+            onChange={(v) => onChange({ title: v } as Partial<EditorBlock>)}
+          />
+          <Input
+            label="Poster (optional)"
+            value={block.poster ?? ""}
+            onChange={(v) => onChange({ poster: v } as Partial<EditorBlock>)}
+          />
+        </div>
+      );
+    default:
+      return null;
   }
+}
+
+function ColorField({
+  value,
+  onChange,
+}: {
+  value: string | undefined;
+  onChange: (v: string | undefined) => void;
+}) {
+  const swatches = ["#f97316", "#ef4444", "#eab308", "#22c55e", "#3b82f6", "#a855f7", "#e5e7eb"];
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+        Text color
+      </span>
+      <input
+        type="color"
+        value={value ?? "#e5e7eb"}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-6 w-8 cursor-pointer rounded border border-border bg-background"
+        aria-label="Pick color"
+      />
+      <div className="flex items-center gap-1">
+        {swatches.map((c) => (
+          <button
+            key={c}
+            type="button"
+            onClick={() => onChange(c)}
+            className="h-4 w-4 rounded-full border border-border/60"
+            style={{ backgroundColor: c }}
+            aria-label={`Use ${c}`}
+          />
+        ))}
+      </div>
+      {value ? (
+        <button
+          type="button"
+          onClick={() => onChange(undefined)}
+          className="text-mono text-[10px] text-muted-foreground hover:text-foreground"
+        >
+          reset
+        </button>
+      ) : null}
+    </div>
+  );
 }
 
 /* ------------------------------------------------------------------ */
@@ -1657,6 +1971,8 @@ function blocksToMarkdown(blocks: EditorBlock[]): string {
           return `![${b.alt}](${b.src})` + (b.caption ? `\n\n*${b.caption}*` : "");
         case "video":
           return `[▶ ${b.title}](https://youtu.be/${b.youtubeId})`;
+        case "videoFile":
+          return `[▶ ${b.title || "Video"}](${b.src})`;
         case "pdf":
           return `[📄 ${b.title}](${b.href})`;
         case "gallery":

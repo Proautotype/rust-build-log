@@ -28,14 +28,19 @@ function SettingsPage() {
   });
 
   const [enabled, setEnabled] = useState(false);
+  const [globalEnabled, setGlobalEnabled] = useState(true);
   const [client, setClient] = useState("");
   const [slot, setSlot] = useState("");
   const [status, setStatus] = useState<string | null>(null);
 
   useEffect(() => {
-    const s = settingsQuery.data;
+    const s = settingsQuery.data as
+      | { adsense_enabled?: boolean; adsense_global_enabled?: boolean; adsense_client?: string | null; adsense_slot?: string | null }
+      | null
+      | undefined;
     if (s) {
       setEnabled(!!s.adsense_enabled);
+      setGlobalEnabled(s.adsense_global_enabled ?? true);
       setClient(s.adsense_client ?? "");
       setSlot(s.adsense_slot ?? "");
     }
@@ -46,6 +51,7 @@ function SettingsPage() {
       saveSettings({
         data: {
           adsense_enabled: enabled,
+          adsense_global_enabled: globalEnabled,
           adsense_client: client.trim() || null,
           adsense_slot: slot.trim() || null,
         },
@@ -110,6 +116,29 @@ function SettingsPage() {
             <span
               className={`inline-block h-5 w-5 rounded-full bg-background shadow transition ${
                 enabled ? "translate-x-5" : "translate-x-0.5"
+              }`}
+            />
+          </button>
+        </label>
+
+        <label className="flex items-center justify-between gap-4">
+          <div>
+            <div className="font-medium">Show ads on every page</div>
+            <div className="text-xs text-muted-foreground">
+              When on, a banner ad appears at the bottom of every page (not just story pages). Pro users still see no ads.
+            </div>
+          </div>
+          <button
+            role="switch"
+            aria-checked={globalEnabled}
+            onClick={() => setGlobalEnabled((v) => !v)}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
+              globalEnabled ? "bg-primary" : "bg-surface-2"
+            }`}
+          >
+            <span
+              className={`inline-block h-5 w-5 rounded-full bg-background shadow transition ${
+                globalEnabled ? "translate-x-5" : "translate-x-0.5"
               }`}
             />
           </button>

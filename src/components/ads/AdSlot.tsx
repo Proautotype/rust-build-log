@@ -25,9 +25,11 @@ interface Props {
   /** Optional override; falls back to global slot in site_settings. */
   slot?: string;
   format?: string;
+  /** When true, only renders if adsense_global_enabled is on. */
+  globalOnly?: boolean;
 }
 
-export function AdSlot({ className, slot, format = "auto" }: Props) {
+export function AdSlot({ className, slot, format = "auto", globalOnly = false }: Props) {
   const { data: settings } = useSiteSettings();
   const { profile } = useAuth();
   const ref = useRef<HTMLModElement | null>(null);
@@ -35,19 +37,20 @@ export function AdSlot({ className, slot, format = "auto" }: Props) {
   const client = settings?.adsense_client ?? null;
   const resolvedSlot = slot ?? settings?.adsense_slot ?? null;
   const enabled = !!settings?.adsense_enabled && !!client && !!resolvedSlot;
+  const globalAllowed = !globalOnly || !!settings?.adsense_global_enabled;
   const isPro = !!profile?.is_pro;
 
   useEffect(() => {
-    if (!enabled || isPro) return;
+    if (!enabled || !globalAllowed || isPro) return;
     ensureAdsScript(client!);
     try {
       (window.adsbygoogle = window.adsbygoogle || []).push({});
     } catch {
       /* AdSense will retry */
     }
-  }, [enabled, isPro, client, resolvedSlot]);
+  }, [enabled, globalAllowed, isPro, client, resolvedSlot]);
 
-  if (!enabled || isPro) return null;
+  if (!enabled || !globalAllowed || isPro) return null;
 
   return (
     <div className={className}>
@@ -63,6 +66,17 @@ export function AdSlot({ className, slot, format = "auto" }: Props) {
         data-ad-format={format}
         data-full-width-responsive="true"
       />
+    </div>
+  );
+}
+
+/** Site-wide banner shown on every page when the admin has enabled it. */
+export function GlobalAdBanner() {
+  return (
+    <div className="border-t border-border/60 bg-surface/30">
+      <div className="container-page py-4">
+        <AdSlot globalOnly />
+      </div>
     </div>
   );
 }
