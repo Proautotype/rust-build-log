@@ -711,6 +711,21 @@ function Canvas({ draft, onInsertAt, onMove, onRemove, onDuplicate, onChangeBloc
       onInsertAt(index, makeBlock(kind));
       return;
     }
+    const media = e.dataTransfer.getData("application/x-block-media");
+    if (media) {
+      try {
+        const m = JSON.parse(media) as { kind: "image" | "video"; url: string; title?: string };
+        const _uid = uid();
+        const block: EditorBlock =
+          m.kind === "image"
+            ? { _uid, type: "image", src: m.url, alt: m.title ?? "", caption: "" }
+            : { _uid, type: "videoFile", src: m.url, title: m.title ?? "" };
+        onInsertAt(index, block);
+        return;
+      } catch {
+        /* ignore */
+      }
+    }
     const movingUid = e.dataTransfer.getData("application/x-block-uid") || dragUid.current;
     if (movingUid) onMove(movingUid, index);
     dragUid.current = null;
