@@ -14,14 +14,7 @@ export type Category =
   | "Meta";
 
 export type CodeLanguage =
-  | "rust"
-  | "typescript"
-  | "java"
-  | "kotlin"
-  | "python"
-  | "bash"
-  | "toml"
-  | "text";
+  "rust" | "typescript" | "java" | "kotlin" | "python" | "bash" | "toml" | "text";
 
 export type ContentBlock =
   | { type: "heading"; level: 2 | 3; text: string; id: string }

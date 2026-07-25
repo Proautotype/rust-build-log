@@ -92,13 +92,7 @@ function HomePage() {
   const searchResults = useMemo(() => {
     if (!q) return [];
     return stories.filter((s) => {
-      const hay = [
-        s.title,
-        s.shortDescription,
-        s.category,
-        s.difficulty,
-        ...s.tags,
-      ]
+      const hay = [s.title, s.shortDescription, s.category, s.difficulty, ...s.tags]
         .join(" ")
         .toLowerCase();
       return hay.includes(q);

@@ -32,7 +32,13 @@ import {
   Sparkles,
   FileCode,
 } from "lucide-react";
-import type { ContentBlock, CodeLanguage, Category, Difficulty, Monetization } from "@/data/stories";
+import type {
+  ContentBlock,
+  CodeLanguage,
+  Category,
+  Difficulty,
+  Monetization,
+} from "@/data/stories";
 import { allCategories, allDifficulties } from "@/data/stories";
 import { ContentRenderer } from "@/components/story/ContentRenderer";
 import {
@@ -42,7 +48,6 @@ import {
   createJourney,
   deleteMyStory,
 } from "@/lib/studio.functions";
-
 
 export const Route = createFileRoute("/_authenticated/studio")({
   head: () => ({
@@ -128,7 +133,6 @@ const emptyDraft = (): Draft => ({
     },
   ],
 });
-
 
 /* ------------------------------------------------------------------ */
 /*  Block factory (used when dropping from palette)                   */
@@ -454,8 +458,7 @@ function StudioPage() {
               </button>
               <button
                 onClick={() => {
-                  const isMd =
-                    draft.blocks.length === 1 && draft.blocks[0]?.type === "markdown";
+                  const isMd = draft.blocks.length === 1 && draft.blocks[0]?.type === "markdown";
                   if (
                     !isMd &&
                     draft.blocks.length > 0 &&
@@ -535,9 +538,7 @@ function StudioPage() {
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
             <div className="rounded-lg border border-border bg-background p-3">
               <MarkdownField
-                value={
-                  draft.blocks[0]?.type === "markdown" ? draft.blocks[0].markdown : ""
-                }
+                value={draft.blocks[0]?.type === "markdown" ? draft.blocks[0].markdown : ""}
                 onChange={(v) =>
                   update({
                     blocks: [{ _uid: uid(), type: "markdown", markdown: v }],
@@ -646,7 +647,6 @@ function StoriesDropdown({
     </div>
   );
 }
-
 
 /* ------------------------------------------------------------------ */
 /*  Palette (draggable sources)                                       */
@@ -1239,9 +1239,7 @@ function MetaPanel({
             <Input label="Slug" value={jSlug} onChange={(v) => setJSlug(slugify(v))} />
             <Textarea label="Description" rows={2} value={jDesc} onChange={setJDesc} />
             <Input label="Cover URL (optional)" value={jCover} onChange={setJCover} />
-            {jError ? (
-              <div className="text-mono text-[11px] text-destructive">{jError}</div>
-            ) : null}
+            {jError ? <div className="text-mono text-[11px] text-destructive">{jError}</div> : null}
             <div className="flex gap-2">
               <button
                 onClick={submitJourney}
@@ -1336,7 +1334,6 @@ function MetaPanel({
     </aside>
   );
 }
-
 
 /* ------------------------------------------------------------------ */
 /*  Preview                                                           */
@@ -1549,20 +1546,10 @@ function MarkdownField({ value, onChange }: { value: string; onChange: (v: strin
         <button type="button" className={btn} onClick={() => wrapSelection("*")} title="Italic">
           <Italic className="h-3 w-3" /> Italic
         </button>
-        <button
-          type="button"
-          className={btn}
-          onClick={() => linePrefix("## ")}
-          title="Heading 2"
-        >
+        <button type="button" className={btn} onClick={() => linePrefix("## ")} title="Heading 2">
           <HeadingIcon className="h-3 w-3" /> H2
         </button>
-        <button
-          type="button"
-          className={btn}
-          onClick={() => linePrefix("### ")}
-          title="Heading 3"
-        >
+        <button type="button" className={btn} onClick={() => linePrefix("### ")} title="Heading 3">
           <HeadingIcon className="h-3 w-3" /> H3
         </button>
         <button type="button" className={btn} onClick={() => linePrefix("- ")} title="Bullet list">
@@ -1647,10 +1634,12 @@ function blocksToMarkdown(blocks: EditorBlock[]): string {
         case "list":
           return b.items.map((it, i) => (b.ordered ? `${i + 1}. ${it}` : `- ${it}`)).join("\n");
         case "quote":
-          return b.text
-            .split("\n")
-            .map((l) => `> ${l}`)
-            .join("\n") + (b.cite ? `\n>\n> — ${b.cite}` : "");
+          return (
+            b.text
+              .split("\n")
+              .map((l) => `> ${l}`)
+              .join("\n") + (b.cite ? `\n>\n> — ${b.cite}` : "")
+          );
         case "code":
           return "```" + (b.language ?? "") + "\n" + b.code + "\n```";
         case "image":
