@@ -560,10 +560,11 @@ function StudioPage() {
         </div>
       ) : (
         <div className="container-page py-6">
-          <div className="space-y-3">
-            <Palette />
-            <MediaLibrary />
-          </div>
+          <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)_280px]">
+            <div className="space-y-3">
+              <Palette />
+              <MediaLibrary />
+            </div>
             <Canvas
               draft={draft}
               onInsertAt={insertAt}
