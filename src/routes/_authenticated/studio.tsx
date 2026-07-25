@@ -872,12 +872,16 @@ function blockLabel(b: ContentBlock): string {
       return "Image";
     case "video":
       return "YouTube";
+    case "videoFile":
+      return "Video (upload)";
     case "pdf":
       return "PDF";
     case "gallery":
       return "Gallery";
     case "markdown":
       return "Markdown";
+    default:
+      return "Block";
   }
 }
 
