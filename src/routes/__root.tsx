@@ -86,10 +86,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: SITE_TITLE },
       { name: "description", content: SITE_DESC },
       { name: "author", content: "Rust Journey" },
+      { name: "keywords", content: "rust, rust programming, learn rust, rust tutorial, systems programming, cargo, tokio, axum, rust journey, developer blog" },
+      { name: "robots", content: "index, follow, max-image-preview:large" },
+      { property: "og:site_name", content: "Rust Journey" },
       { property: "og:title", content: SITE_TITLE },
       { property: "og:description", content: SITE_DESC },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: SITE_TITLE },
+      { name: "twitter:description", content: SITE_DESC },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
@@ -99,6 +104,32 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap",
+      },
+    ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "Rust Journey",
+          url: "https://rust-build-log.lovable.app",
+          description: SITE_DESC,
+          potentialAction: {
+            "@type": "SearchAction",
+            target: "https://rust-build-log.lovable.app/stories?q={search_term_string}",
+            "query-input": "required name=search_term_string",
+          },
+        }),
+      },
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          name: "Rust Journey",
+          url: "https://rust-build-log.lovable.app",
+        }),
       },
     ],
   }),
