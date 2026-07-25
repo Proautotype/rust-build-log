@@ -22,6 +22,7 @@ const storyInput = z.object({
   monetization: z.enum(["free", "tips", "locked"]).default("free"),
   unlock_price: z.number().int().min(0).max(100000).default(0),
   tip_enabled: z.boolean().default(false),
+  promoted: z.boolean().default(false),
 });
 
 const journeyInput = z.object({
@@ -40,7 +41,7 @@ export const listMyStories = createServerFn({ method: "GET" })
     const { data, error } = await context.supabase
       .from("stories")
       .select(
-        "id, title, slug, short_description, cover, category, difficulty, reading_minutes, tags, content, published, journey_id, monetization, unlock_price, tip_enabled, created_at, updated_at",
+        "id, title, slug, short_description, cover, category, difficulty, reading_minutes, tags, content, published, journey_id, monetization, unlock_price, tip_enabled, promoted, created_at, updated_at",
       )
       .eq("creator_id", context.userId)
       .order("updated_at", { ascending: false });
@@ -82,6 +83,7 @@ export const saveStory = createServerFn({ method: "POST" })
       monetization: data.monetization,
       unlock_price: data.monetization === "locked" ? data.unlock_price : 0,
       tip_enabled: data.monetization === "locked" ? false : data.tip_enabled,
+      promoted: data.promoted,
     };
     if (data.id) {
       const { data: row, error } = await context.supabase

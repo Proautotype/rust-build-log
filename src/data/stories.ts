@@ -55,6 +55,7 @@ export interface Story {
   monetization: Monetization;
   unlockPrice: number;
   tipEnabled: boolean;
+  promoted: boolean;
 }
 
 export interface Journey {
@@ -99,6 +100,7 @@ export function rowToStory(row: Tables<"stories">): Story {
     monetization?: Monetization | null;
     unlock_price?: number | null;
     tip_enabled?: boolean | null;
+    promoted?: boolean | null;
   };
   return {
     id: row.id,
@@ -118,6 +120,7 @@ export function rowToStory(row: Tables<"stories">): Story {
     monetization: (r.monetization ?? "free") as Monetization,
     unlockPrice: r.unlock_price ?? 0,
     tipEnabled: r.tip_enabled ?? false,
+    promoted: r.promoted ?? false,
   };
 }
 
