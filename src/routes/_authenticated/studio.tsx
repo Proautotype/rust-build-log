@@ -899,36 +899,48 @@ function BlockFields({
   switch (block.type) {
     case "heading":
       return (
-        <div className="grid gap-2 sm:grid-cols-[80px_minmax(0,1fr)]">
-          <Select
-            label="Level"
-            value={String(block.level)}
-            onChange={(v) => onChange({ level: v === "3" ? 3 : 2 } as Partial<EditorBlock>)}
-            options={[
-              { value: "2", label: "H2" },
-              { value: "3", label: "H3" },
-            ]}
-          />
-          <Input
-            label="Text"
-            value={block.text}
-            onChange={(v) =>
-              onChange({
-                text: v,
-                id: slugify(v) || block.id,
-              } as Partial<EditorBlock>)
-            }
+        <div className="space-y-2">
+          <div className="grid gap-2 sm:grid-cols-[80px_minmax(0,1fr)]">
+            <Select
+              label="Level"
+              value={String(block.level)}
+              onChange={(v) => onChange({ level: v === "3" ? 3 : 2 } as Partial<EditorBlock>)}
+              options={[
+                { value: "2", label: "H2" },
+                { value: "3", label: "H3" },
+              ]}
+            />
+            <Input
+              label="Text"
+              value={block.text}
+              onChange={(v) =>
+                onChange({
+                  text: v,
+                  id: slugify(v) || block.id,
+                } as Partial<EditorBlock>)
+              }
+            />
+          </div>
+          <ColorField
+            value={block.color}
+            onChange={(v) => onChange({ color: v } as Partial<EditorBlock>)}
           />
         </div>
       );
     case "paragraph":
       return (
-        <Textarea
-          label="Text"
-          value={block.text}
-          rows={3}
-          onChange={(v) => onChange({ text: v } as Partial<EditorBlock>)}
-        />
+        <div className="space-y-2">
+          <Textarea
+            label="Text"
+            value={block.text}
+            rows={3}
+            onChange={(v) => onChange({ text: v } as Partial<EditorBlock>)}
+          />
+          <ColorField
+            value={block.color}
+            onChange={(v) => onChange({ color: v } as Partial<EditorBlock>)}
+          />
+        </div>
       );
     case "list":
       return (
@@ -951,6 +963,10 @@ function BlockFields({
               onChange({ items: v.split("\n").map((s) => s) } as Partial<EditorBlock>)
             }
           />
+          <ColorField
+            value={block.color}
+            onChange={(v) => onChange({ color: v } as Partial<EditorBlock>)}
+          />
         </div>
       );
     case "quote":
@@ -966,6 +982,10 @@ function BlockFields({
             label="Attribution (optional)"
             value={block.cite ?? ""}
             onChange={(v) => onChange({ cite: v } as Partial<EditorBlock>)}
+          />
+          <ColorField
+            value={block.color}
+            onChange={(v) => onChange({ color: v } as Partial<EditorBlock>)}
           />
         </div>
       );
