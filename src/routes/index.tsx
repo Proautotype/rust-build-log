@@ -45,6 +45,24 @@ function HomePage() {
     [featured, stories],
   );
   const latest = stories.slice(0, 6);
+  const paidStories = useMemo(
+    () => stories.filter((s) => s.monetization === "locked"),
+    [stories],
+  );
+  const topStories = useMemo(() => {
+    const scored = stories.map((s) => ({
+      s,
+      score:
+        (s.monetization === "locked" ? 3 : s.tipEnabled ? 2 : 1) * 10 +
+        s.readingMinutes,
+    }));
+    return scored.sort((a, b) => b.score - a.score).map((x) => x.s).slice(0, 12);
+  }, [stories]);
+  const spotlight = useMemo(() => {
+    const paid = paidStories.slice(0, 3);
+    const rest = stories.filter((s) => !paid.includes(s)).slice(0, 5 - paid.length);
+    return [...paid, ...rest];
+  }, [paidStories, stories]);
   const allTags = useMemo(
     () => Array.from(new Set(stories.flatMap((s) => s.tags))).sort(),
     [stories],
