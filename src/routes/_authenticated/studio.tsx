@@ -225,7 +225,7 @@ const PALETTE: {
 
 function StudioPage() {
   const [draft, setDraft] = useState<Draft>(() => emptyDraft());
-  const [mode, setMode] = useState<"edit" | "preview">("edit");
+  const [mode, setMode] = useState<"edit" | "markdown" | "preview">("edit");
   const [hydrated, setHydrated] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
 
