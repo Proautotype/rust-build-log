@@ -121,6 +121,29 @@ function SettingsPage() {
           </button>
         </label>
 
+        <label className="flex items-center justify-between gap-4">
+          <div>
+            <div className="font-medium">Show ads on every page</div>
+            <div className="text-xs text-muted-foreground">
+              When on, a banner ad appears at the bottom of every page (not just story pages). Pro users still see no ads.
+            </div>
+          </div>
+          <button
+            role="switch"
+            aria-checked={globalEnabled}
+            onClick={() => setGlobalEnabled((v) => !v)}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
+              globalEnabled ? "bg-primary" : "bg-surface-2"
+            }`}
+          >
+            <span
+              className={`inline-block h-5 w-5 rounded-full bg-background shadow transition ${
+                globalEnabled ? "translate-x-5" : "translate-x-0.5"
+              }`}
+            />
+          </button>
+        </label>
+
         <Field label="AdSense publisher ID (data-ad-client)">
           <input
             value={client}
