@@ -28,14 +28,19 @@ function SettingsPage() {
   });
 
   const [enabled, setEnabled] = useState(false);
+  const [globalEnabled, setGlobalEnabled] = useState(true);
   const [client, setClient] = useState("");
   const [slot, setSlot] = useState("");
   const [status, setStatus] = useState<string | null>(null);
 
   useEffect(() => {
-    const s = settingsQuery.data;
+    const s = settingsQuery.data as
+      | { adsense_enabled?: boolean; adsense_global_enabled?: boolean; adsense_client?: string | null; adsense_slot?: string | null }
+      | null
+      | undefined;
     if (s) {
       setEnabled(!!s.adsense_enabled);
+      setGlobalEnabled(s.adsense_global_enabled ?? true);
       setClient(s.adsense_client ?? "");
       setSlot(s.adsense_slot ?? "");
     }
@@ -46,6 +51,7 @@ function SettingsPage() {
       saveSettings({
         data: {
           adsense_enabled: enabled,
+          adsense_global_enabled: globalEnabled,
           adsense_client: client.trim() || null,
           adsense_slot: slot.trim() || null,
         },

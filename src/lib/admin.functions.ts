@@ -23,6 +23,7 @@ export const updateSiteSettings = createServerFn({ method: "POST" })
         adsense_enabled: z.boolean(),
         adsense_client: z.string().max(120).nullable().optional(),
         adsense_slot: z.string().max(120).nullable().optional(),
+        adsense_global_enabled: z.boolean().optional(),
       })
       .parse(input),
   )
@@ -43,6 +44,7 @@ export const updateSiteSettings = createServerFn({ method: "POST" })
       adsense_enabled: data.adsense_enabled,
       adsense_client: data.adsense_client?.trim() || null,
       adsense_slot: data.adsense_slot?.trim() || null,
+      adsense_global_enabled: data.adsense_global_enabled ?? true,
       updated_at: new Date().toISOString(),
       updated_by: context.userId,
     };
