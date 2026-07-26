@@ -27,7 +27,7 @@ export const updateSiteSettings = createServerFn({ method: "POST" })
         adsense_global_enabled: z.boolean().optional(),
         media_bucket_public: z.boolean().optional(),
         media_max_mb: z.number().int().min(1).max(1024).optional(),
-        media_allowed_types: z.array(z.string().max(80)).max(50).optional(),
+        media_allowed_types: z.string().max(2000).optional(),
       })
       .parse(input),
   )
