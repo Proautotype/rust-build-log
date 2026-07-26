@@ -21,6 +21,7 @@ import { Route as AuthenticatedUpgradeRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedStudioRouteImport } from './routes/_authenticated/studio'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedCoinsRouteImport } from './routes/_authenticated/coins'
+import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin.settings'
 import { Route as AuthenticatedAdminRequestsRouteImport } from './routes/_authenticated/admin.requests'
 import { Route as AuthenticatedAdminDashboardRouteImport } from './routes/_authenticated/admin.dashboard'
@@ -84,6 +85,11 @@ const AuthenticatedCoinsRoute = AuthenticatedCoinsRouteImport.update({
   path: '/coins',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAdminSettingsRoute =
   AuthenticatedAdminSettingsRouteImport.update({
     id: '/admin/settings',
@@ -110,6 +116,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/stories': typeof StoriesRouteWithChildren
   '/timeline': typeof TimelineRoute
+  '/analytics': typeof AuthenticatedAnalyticsRoute
   '/coins': typeof AuthenticatedCoinsRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/studio': typeof AuthenticatedStudioRoute
@@ -126,6 +133,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/stories': typeof StoriesRouteWithChildren
   '/timeline': typeof TimelineRoute
+  '/analytics': typeof AuthenticatedAnalyticsRoute
   '/coins': typeof AuthenticatedCoinsRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/studio': typeof AuthenticatedStudioRoute
@@ -144,6 +152,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/stories': typeof StoriesRouteWithChildren
   '/timeline': typeof TimelineRoute
+  '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/coins': typeof AuthenticatedCoinsRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/studio': typeof AuthenticatedStudioRoute
@@ -162,6 +171,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/stories'
     | '/timeline'
+    | '/analytics'
     | '/coins'
     | '/profile'
     | '/studio'
@@ -178,6 +188,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/stories'
     | '/timeline'
+    | '/analytics'
     | '/coins'
     | '/profile'
     | '/studio'
@@ -195,6 +206,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/stories'
     | '/timeline'
+    | '/_authenticated/analytics'
     | '/_authenticated/coins'
     | '/_authenticated/profile'
     | '/_authenticated/studio'
@@ -301,6 +313,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCoinsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/analytics': {
+      id: '/_authenticated/analytics'
+      path: '/analytics'
+      fullPath: '/analytics'
+      preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/settings': {
       id: '/_authenticated/admin/settings'
       path: '/admin/settings'
@@ -326,6 +345,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedCoinsRoute: typeof AuthenticatedCoinsRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedStudioRoute: typeof AuthenticatedStudioRoute
@@ -336,6 +356,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
   AuthenticatedCoinsRoute: AuthenticatedCoinsRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedStudioRoute: AuthenticatedStudioRoute,
