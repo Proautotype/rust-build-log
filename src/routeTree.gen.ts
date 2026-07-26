@@ -25,6 +25,7 @@ import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin.settings'
 import { Route as AuthenticatedAdminRequestsRouteImport } from './routes/_authenticated/admin.requests'
 import { Route as AuthenticatedAdminDashboardRouteImport } from './routes/_authenticated/admin.dashboard'
+import { Route as ApiPublicAgentsRunRouteImport } from './routes/api/public/agents/run'
 import { Route as ApiPublicAgentsPostRouteImport } from './routes/api/public/agents/post'
 
 const TimelineRoute = TimelineRouteImport.update({
@@ -109,6 +110,11 @@ const AuthenticatedAdminDashboardRoute =
     path: '/admin/dashboard',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicAgentsRunRoute = ApiPublicAgentsRunRouteImport.update({
+  id: '/api/public/agents/run',
+  path: '/api/public/agents/run',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicAgentsPostRoute = ApiPublicAgentsPostRouteImport.update({
   id: '/api/public/agents/post',
   path: '/api/public/agents/post',
@@ -132,6 +138,7 @@ export interface FileRoutesByFullPath {
   '/admin/requests': typeof AuthenticatedAdminRequestsRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/api/public/agents/post': typeof ApiPublicAgentsPostRoute
+  '/api/public/agents/run': typeof ApiPublicAgentsRunRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -150,6 +157,7 @@ export interface FileRoutesByTo {
   '/admin/requests': typeof AuthenticatedAdminRequestsRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/api/public/agents/post': typeof ApiPublicAgentsPostRoute
+  '/api/public/agents/run': typeof ApiPublicAgentsRunRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -170,6 +178,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/requests': typeof AuthenticatedAdminRequestsRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/api/public/agents/post': typeof ApiPublicAgentsPostRoute
+  '/api/public/agents/run': typeof ApiPublicAgentsRunRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -190,6 +199,7 @@ export interface FileRouteTypes {
     | '/admin/requests'
     | '/admin/settings'
     | '/api/public/agents/post'
+    | '/api/public/agents/run'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -208,6 +218,7 @@ export interface FileRouteTypes {
     | '/admin/requests'
     | '/admin/settings'
     | '/api/public/agents/post'
+    | '/api/public/agents/run'
   id:
     | '__root__'
     | '/'
@@ -227,6 +238,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/requests'
     | '/_authenticated/admin/settings'
     | '/api/public/agents/post'
+    | '/api/public/agents/run'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -238,6 +250,7 @@ export interface RootRouteChildren {
   StoriesRoute: typeof StoriesRouteWithChildren
   TimelineRoute: typeof TimelineRoute
   ApiPublicAgentsPostRoute: typeof ApiPublicAgentsPostRoute
+  ApiPublicAgentsRunRoute: typeof ApiPublicAgentsRunRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -354,6 +367,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/agents/run': {
+      id: '/api/public/agents/run'
+      path: '/api/public/agents/run'
+      fullPath: '/api/public/agents/run'
+      preLoaderRoute: typeof ApiPublicAgentsRunRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/agents/post': {
       id: '/api/public/agents/post'
       path: '/api/public/agents/post'
@@ -409,6 +429,7 @@ const rootRouteChildren: RootRouteChildren = {
   StoriesRoute: StoriesRouteWithChildren,
   TimelineRoute: TimelineRoute,
   ApiPublicAgentsPostRoute: ApiPublicAgentsPostRoute,
+  ApiPublicAgentsRunRoute: ApiPublicAgentsRunRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
