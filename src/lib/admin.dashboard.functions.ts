@@ -23,7 +23,7 @@ async function assertAdmin(context: { supabase: any; userId: string }) {
 export const getAdminMetrics = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    await assertAdmin(context);
+    await assertStaff(context);
     const [users, stories, publishedStories, journeys, comments, pending, coinsAgg, unlocks] =
       await Promise.all([
         context.supabase.from("profiles").select("id", { count: "exact", head: true }),
@@ -63,7 +63,7 @@ export const listUsersForAdmin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ search: z.string().optional() }).parse(input))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertStaff(context);
     let q = context.supabase
       .from("profiles")
       .select("id, display_name, avatar_url, bio, is_pro, coin_balance, banned, created_at")
@@ -164,7 +164,7 @@ export const adjustUserCoins = createServerFn({ method: "POST" })
 export const listAllStoriesForAdmin = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    await assertAdmin(context);
+    await assertStaff(context);
     const { data, error } = await context.supabase
       .from("stories")
       .select(
@@ -180,7 +180,7 @@ export const adminDeleteStory = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertStaff(context);
     const { error } = await context.supabase.from("stories").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -189,7 +189,7 @@ export const adminDeleteStory = createServerFn({ method: "POST" })
 export const listCoinLedger = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    await assertAdmin(context);
+    await assertStaff(context);
     const { data, error } = await context.supabase
       .from("coin_transactions")
       .select("id, user_id, amount, kind, story_id, counterparty_id, note, created_at")
@@ -202,7 +202,7 @@ export const listCoinLedger = createServerFn({ method: "GET" })
 export const listAllCommentsForAdmin = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    await assertAdmin(context);
+    await assertStaff(context);
     const { data, error } = await context.supabase
       .from("comments")
       .select("id, story_slug, user_id, body, created_at")
@@ -216,7 +216,7 @@ export const adminDeleteComment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context);
+    await assertStaff(context);
     const { error } = await context.supabase.from("comments").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
