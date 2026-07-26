@@ -22,6 +22,7 @@ import { Route as AuthenticatedStudioRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedCoinsRouteImport } from './routes/_authenticated/coins'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
+import { Route as AuthenticatedAgentsRouteImport } from './routes/_authenticated/agents'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin.settings'
 import { Route as AuthenticatedAdminRequestsRouteImport } from './routes/_authenticated/admin.requests'
 import { Route as AuthenticatedAdminDashboardRouteImport } from './routes/_authenticated/admin.dashboard'
@@ -92,6 +93,11 @@ const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAgentsRoute = AuthenticatedAgentsRouteImport.update({
+  id: '/agents',
+  path: '/agents',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAdminSettingsRoute =
   AuthenticatedAdminSettingsRouteImport.update({
     id: '/admin/settings',
@@ -128,6 +134,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/stories': typeof StoriesRouteWithChildren
   '/timeline': typeof TimelineRoute
+  '/agents': typeof AuthenticatedAgentsRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/coins': typeof AuthenticatedCoinsRoute
   '/profile': typeof AuthenticatedProfileRoute
@@ -147,6 +154,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/stories': typeof StoriesRouteWithChildren
   '/timeline': typeof TimelineRoute
+  '/agents': typeof AuthenticatedAgentsRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/coins': typeof AuthenticatedCoinsRoute
   '/profile': typeof AuthenticatedProfileRoute
@@ -168,6 +176,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/stories': typeof StoriesRouteWithChildren
   '/timeline': typeof TimelineRoute
+  '/_authenticated/agents': typeof AuthenticatedAgentsRoute
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/coins': typeof AuthenticatedCoinsRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
@@ -189,6 +198,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/stories'
     | '/timeline'
+    | '/agents'
     | '/analytics'
     | '/coins'
     | '/profile'
@@ -208,6 +218,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/stories'
     | '/timeline'
+    | '/agents'
     | '/analytics'
     | '/coins'
     | '/profile'
@@ -228,6 +239,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/stories'
     | '/timeline'
+    | '/_authenticated/agents'
     | '/_authenticated/analytics'
     | '/_authenticated/coins'
     | '/_authenticated/profile'
@@ -346,6 +358,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/agents': {
+      id: '/_authenticated/agents'
+      path: '/agents'
+      fullPath: '/agents'
+      preLoaderRoute: typeof AuthenticatedAgentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/settings': {
       id: '/_authenticated/admin/settings'
       path: '/admin/settings'
@@ -385,6 +404,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAgentsRoute: typeof AuthenticatedAgentsRoute
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedCoinsRoute: typeof AuthenticatedCoinsRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
@@ -396,6 +416,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAgentsRoute: AuthenticatedAgentsRoute,
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
   AuthenticatedCoinsRoute: AuthenticatedCoinsRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
