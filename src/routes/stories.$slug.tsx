@@ -1,6 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Eye } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -14,6 +13,7 @@ import {
   Coins,
   HandHeart,
   Loader2,
+  Eye,
 } from "lucide-react";
 import { rowToStory, rowToJourney, type Story, type Journey } from "@/data/stories";
 import { ContentRenderer } from "@/components/story/ContentRenderer";
