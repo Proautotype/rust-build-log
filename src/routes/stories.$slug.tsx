@@ -200,11 +200,25 @@ function StoryDetail() {
     },
   });
 
+  const [viewCount, setViewCount] = useState(story.viewCount);
+  useEffect(() => {
+    let cancelled = false;
+    // Fire-and-forget view counter. Won't retry on failure.
+    supabase
+      .rpc("increment_story_view", { _story_id: story.id })
+      .then(({ data }) => {
+        if (!cancelled && typeof data === "number") setViewCount(data);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [story.id]);
+
   const authorName = writer?.display_name ?? null;
   const shareUrl =
     typeof window !== "undefined"
       ? window.location.href
-      : `https://rustjourney.app/stories/${story.slug}`;
+      : `https://right2read.lovable.app/stories/${story.slug}`;
   const journeyIndex = journey ? journeyStories.findIndex((s: Story) => s.id === story.id) : -1;
   const prev = journeyIndex > 0 ? journeyStories[journeyIndex - 1] : undefined;
   const next =
