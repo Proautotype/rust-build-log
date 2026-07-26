@@ -89,6 +89,13 @@ export function SiteHeader() {
               >
                 <BarChart3 className="h-3.5 w-3.5" />
               </Link>
+              <Link
+                to="/agents"
+                title="AI agents"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background text-muted-foreground hover:text-foreground"
+              >
+                <Bot className="h-3.5 w-3.5" />
+              </Link>
             </>
           )}
 
