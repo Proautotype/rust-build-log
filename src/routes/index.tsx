@@ -11,22 +11,24 @@ import { supabase } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Rust Journey — Learning Rust in Public" },
+      { title: "Right2Read — Stories worth your time" },
       {
         name: "description",
         content:
-          "A developer's public journal documenting the journey of learning Rust — stories, tutorials, projects, and the compile errors along the way.",
+          "Right2Read is a home for developer stories, tutorials and learning journeys. Read, follow writers, and support creators with tips.",
       },
-      { property: "og:title", content: "Rust Journey — Learning Rust in Public" },
+      { property: "og:title", content: "Right2Read — Stories worth your time" },
       {
         property: "og:description",
         content:
-          "A developer's public journal documenting the journey of learning Rust — stories, tutorials, projects, and the compile errors along the way.",
+          "A home for developer stories, tutorials and learning journeys. Read, follow writers, and support creators.",
       },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "https://rust-build-log.lovable.app/" },
+      { property: "og:url", content: "https://right2read.lovable.app/" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Right2Read — Stories worth your time" },
     ],
-    links: [{ rel: "canonical", href: "https://rust-build-log.lovable.app/" }],
+    links: [{ rel: "canonical", href: "https://right2read.lovable.app/" }],
   }),
   component: HomePage,
 });

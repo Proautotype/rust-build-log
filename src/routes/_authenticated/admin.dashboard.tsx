@@ -34,7 +34,7 @@ import { formatDateLong } from "@/lib/format";
 
 export const Route = createFileRoute("/_authenticated/admin/dashboard")({
   head: () => ({
-    meta: [{ title: "Admin dashboard — Rust Journey" }, { name: "robots", content: "noindex" }],
+    meta: [{ title: "Dashboard — Right2Read" }, { name: "robots", content: "noindex" }],
   }),
   component: AdminDashboard,
 });
@@ -42,7 +42,7 @@ export const Route = createFileRoute("/_authenticated/admin/dashboard")({
 type Tab = "overview" | "users" | "content" | "comments" | "ledger";
 
 function AdminDashboard() {
-  const { isAdmin, loading } = useRole();
+  const { isStaff, isAdmin, loading } = useRole();
   const [tab, setTab] = useState<Tab>("overview");
 
   if (loading) {
@@ -52,12 +52,15 @@ function AdminDashboard() {
       </div>
     );
   }
-  if (!isAdmin) {
+  if (!isStaff) {
     return (
       <div className="container-page py-16 max-w-lg">
         <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-6 text-center">
           <ShieldAlert className="h-6 w-6 text-destructive mx-auto mb-2" />
-          <h1 className="text-lg font-semibold">Admins only</h1>
+          <h1 className="text-lg font-semibold">Staff only</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Admins and managers can view the dashboard.
+          </p>
         </div>
       </div>
     );
@@ -73,7 +76,9 @@ function AdminDashboard() {
 
   return (
     <div className="container-page py-10 md:py-14">
-      <div className="text-mono text-[11px] uppercase tracking-widest text-primary">Admin</div>
+      <div className="text-mono text-[11px] uppercase tracking-widest text-primary">
+        {isAdmin ? "Admin" : "Manager"}
+      </div>
       <h1 className="mt-2 text-4xl md:text-5xl font-display tracking-tight">Dashboard</h1>
       <p className="mt-3 text-muted-foreground max-w-2xl">
         Site health, users, moderation and the coin ledger.
@@ -146,6 +151,7 @@ function OverviewTab() {
 }
 
 function UsersTab() {
+  const { isAdmin } = useRole();
   const listFn = useServerFn(listUsersForAdmin);
   const roleFn = useServerFn(setUserRole);
   const banFn = useServerFn(setUserBanned);
@@ -161,7 +167,7 @@ function UsersTab() {
   const invalidate = () => qc.invalidateQueries({ queryKey: ["admin-users"] });
 
   const roleMut = useMutation({
-    mutationFn: (v: { userId: string; role: "reader" | "writer" | "admin"; grant: boolean }) =>
+    mutationFn: (v: { userId: string; role: "reader" | "writer" | "manager" | "admin"; grant: boolean }) =>
       roleFn({ data: v }),
     onSuccess: invalidate,
   });
@@ -227,18 +233,20 @@ function UsersTab() {
               </div>
 
               <div className="flex flex-wrap items-center gap-1.5">
-                {(["reader", "writer", "admin"] as const).map((r) => {
+                {(["reader", "writer", "manager", "admin"] as const).map((r) => {
                   const has = u.roles.includes(r);
+                  const disabled = !isAdmin && (r === "admin" || r === "manager");
                   return (
                     <button
                       key={r}
-                      disabled={roleMut.isPending}
+                      disabled={roleMut.isPending || disabled}
                       onClick={() => roleMut.mutate({ userId: u.id, role: r, grant: !has })}
+                      title={disabled ? "Only admins can change this role" : undefined}
                       className={`text-mono text-[10px] uppercase tracking-widest px-2 py-1 rounded border transition ${
                         has
                           ? "border-primary/40 bg-primary/10 text-primary"
                           : "border-border bg-background text-muted-foreground hover:text-foreground"
-                      }`}
+                      } ${disabled ? "opacity-40 cursor-not-allowed" : ""}`}
                     >
                       {r}
                     </button>

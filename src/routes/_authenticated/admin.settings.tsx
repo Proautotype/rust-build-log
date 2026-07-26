@@ -9,7 +9,7 @@ import { getSiteSettings, updateSiteSettings } from "@/lib/admin.functions";
 export const Route = createFileRoute("/_authenticated/admin/settings")({
   head: () => ({
     meta: [
-      { title: "Site settings — Rust Journey" },
+      { title: "Site settings — Right2Read" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -31,11 +31,22 @@ function SettingsPage() {
   const [globalEnabled, setGlobalEnabled] = useState(true);
   const [client, setClient] = useState("");
   const [slot, setSlot] = useState("");
+  const [bucketPublic, setBucketPublic] = useState(false);
+  const [maxMb, setMaxMb] = useState(25);
+  const [allowedTypes, setAllowedTypes] = useState("image/*,video/mp4,video/webm,application/pdf");
   const [status, setStatus] = useState<string | null>(null);
 
   useEffect(() => {
     const s = settingsQuery.data as
-      | { adsense_enabled?: boolean; adsense_global_enabled?: boolean; adsense_client?: string | null; adsense_slot?: string | null }
+      | {
+          adsense_enabled?: boolean;
+          adsense_global_enabled?: boolean;
+          adsense_client?: string | null;
+          adsense_slot?: string | null;
+          media_bucket_public?: boolean | null;
+          media_max_mb?: number | null;
+          media_allowed_types?: string | null;
+        }
       | null
       | undefined;
     if (s) {
@@ -43,6 +54,9 @@ function SettingsPage() {
       setGlobalEnabled(s.adsense_global_enabled ?? true);
       setClient(s.adsense_client ?? "");
       setSlot(s.adsense_slot ?? "");
+      setBucketPublic(!!s.media_bucket_public);
+      setMaxMb(s.media_max_mb ?? 25);
+      setAllowedTypes(s.media_allowed_types ?? "image/*,video/mp4,video/webm,application/pdf");
     }
   }, [settingsQuery.data]);
 
@@ -54,6 +68,9 @@ function SettingsPage() {
           adsense_global_enabled: globalEnabled,
           adsense_client: client.trim() || null,
           adsense_slot: slot.trim() || null,
+          media_bucket_public: bucketPublic,
+          media_max_mb: maxMb,
+          media_allowed_types: allowedTypes.trim(),
         },
       }),
     onSuccess: () => {
@@ -176,6 +193,73 @@ function SettingsPage() {
             Save settings
           </button>
           {status && <span className="text-mono text-xs text-primary">{status}</span>}
+        </div>
+      </section>
+
+      <section className="mt-8 rounded-xl border border-border bg-card/40 p-6 space-y-5">
+        <div>
+          <h2 className="text-lg font-display">Media bucket</h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Controls the media library used by the Studio for images, videos and PDFs.
+          </p>
+        </div>
+
+        <label className="flex items-center justify-between gap-4">
+          <div>
+            <div className="font-medium">Public media URLs</div>
+            <div className="text-xs text-muted-foreground">
+              When on, uploaded files are served via long-lived public URLs. Turn off to use signed URLs only.
+            </div>
+          </div>
+          <button
+            role="switch"
+            aria-checked={bucketPublic}
+            onClick={() => setBucketPublic((v) => !v)}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
+              bucketPublic ? "bg-primary" : "bg-surface-2"
+            }`}
+          >
+            <span
+              className={`inline-block h-5 w-5 rounded-full bg-background shadow transition ${
+                bucketPublic ? "translate-x-5" : "translate-x-0.5"
+              }`}
+            />
+          </button>
+        </label>
+
+        <Field label="Max upload size (MB)">
+          <input
+            type="number"
+            min={1}
+            max={1024}
+            value={maxMb}
+            onChange={(e) => setMaxMb(Math.max(1, Math.min(1024, Number(e.target.value) || 25)))}
+            className="w-32 rounded-md border border-border bg-background px-3 py-2 text-sm text-mono outline-none focus:ring-1 focus:ring-primary"
+          />
+        </Field>
+
+        <Field label="Allowed MIME types (comma separated)">
+          <input
+            value={allowedTypes}
+            onChange={(e) => setAllowedTypes(e.target.value)}
+            placeholder="image/*,video/mp4,application/pdf"
+            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-mono outline-none focus:ring-1 focus:ring-primary"
+          />
+        </Field>
+
+        <div className="flex items-center gap-3 pt-2">
+          <button
+            onClick={() => save.mutate()}
+            disabled={save.isPending}
+            className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+          >
+            {save.isPending ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Save className="h-3.5 w-3.5" />
+            )}
+            Save all settings
+          </button>
         </div>
       </section>
     </div>

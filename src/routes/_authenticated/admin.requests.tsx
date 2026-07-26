@@ -9,7 +9,7 @@ import { formatDateLong } from "@/lib/format";
 export const Route = createFileRoute("/_authenticated/admin/requests")({
   head: () => ({
     meta: [
-      { title: "Writer requests — Admin" },
+      { title: "Writer requests — Right2Read" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -17,7 +17,7 @@ export const Route = createFileRoute("/_authenticated/admin/requests")({
 });
 
 function AdminRequests() {
-  const { isAdmin, loading } = useRole();
+  const { isStaff, loading } = useRole();
   const list = useServerFn(listWriterRequests);
   const review = useServerFn(reviewWriterRequest);
   const qc = useQueryClient();
@@ -25,7 +25,7 @@ function AdminRequests() {
   const q = useQuery({
     queryKey: ["writer-requests"],
     queryFn: () => list(),
-    enabled: isAdmin,
+    enabled: isStaff,
   });
 
   const decide = useMutation({
@@ -42,14 +42,14 @@ function AdminRequests() {
     );
   }
 
-  if (!isAdmin) {
+  if (!isStaff) {
     return (
       <div className="container-page py-16 max-w-lg">
         <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-6 text-center">
           <ShieldAlert className="h-6 w-6 text-destructive mx-auto mb-2" />
-          <h1 className="text-lg font-semibold">Admins only</h1>
+          <h1 className="text-lg font-semibold">Staff only</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            You need the <span className="text-mono">admin</span> role to view writer requests.
+            You need admin or manager access to review writer requests.
           </p>
         </div>
       </div>

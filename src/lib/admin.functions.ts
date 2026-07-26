@@ -3,12 +3,13 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export const getSiteSettings = createServerFn({ method: "GET" }).handler(async () => {
-  // Public read is allowed by RLS; use the middleware-provided client would require auth,
-  // so we go through a lightweight anon-safe path via the shared client.
+  // Public read is allowed by RLS; use the shared anon client.
   const { supabase } = await import("@/integrations/supabase/client");
   const { data, error } = await supabase
     .from("site_settings")
-    .select("id, adsense_enabled, adsense_client, adsense_slot")
+    .select(
+      "id, adsense_enabled, adsense_client, adsense_slot, adsense_global_enabled, media_bucket_public, media_max_mb, media_allowed_types",
+    )
     .limit(1)
     .maybeSingle();
   if (error) throw new Error(error.message);
@@ -24,6 +25,9 @@ export const updateSiteSettings = createServerFn({ method: "POST" })
         adsense_client: z.string().max(120).nullable().optional(),
         adsense_slot: z.string().max(120).nullable().optional(),
         adsense_global_enabled: z.boolean().optional(),
+        media_bucket_public: z.boolean().optional(),
+        media_max_mb: z.number().int().min(1).max(1024).optional(),
+        media_allowed_types: z.string().max(2000).optional(),
       })
       .parse(input),
   )
@@ -47,6 +51,9 @@ export const updateSiteSettings = createServerFn({ method: "POST" })
       adsense_global_enabled: data.adsense_global_enabled ?? true,
       updated_at: new Date().toISOString(),
       updated_by: context.userId,
+      ...(data.media_bucket_public !== undefined ? { media_bucket_public: data.media_bucket_public } : {}),
+      ...(data.media_max_mb !== undefined ? { media_max_mb: data.media_max_mb } : {}),
+      ...(data.media_allowed_types !== undefined ? { media_allowed_types: data.media_allowed_types } : {}),
     };
 
     if (existing) {

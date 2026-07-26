@@ -183,6 +183,9 @@ export type Database = {
           adsense_global_enabled: boolean
           adsense_slot: string | null
           id: string
+          media_allowed_types: string
+          media_bucket_public: boolean
+          media_max_mb: number
           updated_at: string
           updated_by: string | null
         }
@@ -192,6 +195,9 @@ export type Database = {
           adsense_global_enabled?: boolean
           adsense_slot?: string | null
           id?: string
+          media_allowed_types?: string
+          media_bucket_public?: boolean
+          media_max_mb?: number
           updated_at?: string
           updated_by?: string | null
         }
@@ -201,6 +207,9 @@ export type Database = {
           adsense_global_enabled?: boolean
           adsense_slot?: string | null
           id?: string
+          media_allowed_types?: string
+          media_bucket_public?: boolean
+          media_max_mb?: number
           updated_at?: string
           updated_by?: string | null
         }
@@ -228,6 +237,7 @@ export type Database = {
           title: string
           unlock_price: number
           updated_at: string
+          view_count: number
         }
         Insert: {
           category?: string | null
@@ -250,6 +260,7 @@ export type Database = {
           title: string
           unlock_price?: number
           updated_at?: string
+          view_count?: number
         }
         Update: {
           category?: string | null
@@ -272,6 +283,7 @@ export type Database = {
           title?: string
           unlock_price?: number
           updated_at?: string
+          view_count?: number
         }
         Relationships: [
           {
@@ -312,6 +324,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "stories"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "story_unlocks_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "story_analytics"
+            referencedColumns: ["story_id"]
           },
         ]
       }
@@ -371,7 +390,22 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      story_analytics: {
+        Row: {
+          comment_count: number | null
+          creator_id: string | null
+          published: boolean | null
+          slug: string | null
+          story_id: string | null
+          tip_count: number | null
+          tip_revenue: number | null
+          title: string | null
+          unlock_count: number | null
+          unlock_revenue: number | null
+          view_count: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {
@@ -381,9 +415,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_story_view: { Args: { _story_id: string }; Returns: undefined }
     }
     Enums: {
-      app_role: "reader" | "writer" | "admin"
+      app_role: "reader" | "writer" | "admin" | "manager"
       story_monetization: "free" | "tips" | "locked"
     }
     CompositeTypes: {
@@ -512,7 +547,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["reader", "writer", "admin"],
+      app_role: ["reader", "writer", "admin", "manager"],
       story_monetization: ["free", "tips", "locked"],
     },
   },

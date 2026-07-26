@@ -11,16 +11,21 @@ import {
 } from "@/data/stories";
 import { StoryCard } from "@/components/story/StoryCard";
 import { supabase } from "@/integrations/supabase/client";
+import { useWriterNames } from "@/hooks/useWriterNames";
 
 export const Route = createFileRoute("/stories")({
   head: () => ({
     meta: [
-      { title: "All stories — Rust Journey" },
+      { title: "All stories — Right2Read" },
       {
         name: "description",
         content:
-          "Every story from my Rust learning journey — filter by technology, category, difficulty and tags.",
+          "Every story on Right2Read — filter by category, difficulty and tags to find your next read.",
       },
+      { property: "og:title", content: "All stories — Right2Read" },
+      { property: "og:description", content: "Every story on Right2Read." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: StoriesLayout,
@@ -35,7 +40,7 @@ function StoriesLayout() {
 function StoriesList() {
   const [q, setQ] = useState("");
   const [category, setCategory] = useState<Category | "All">("All");
-  const [difficulty, setDifficulty] = useState<Difficulty | "All">("All");
+  const [difficulty, setDifficulty] = useState<Difficulty | "All" | "None">("All");
   const [tag, setTag] = useState<string | null>(null);
 
   const { data: stories = [], isLoading } = useQuery({
@@ -59,7 +64,8 @@ function StoriesList() {
   const filtered = useMemo(() => {
     return stories.filter((s) => {
       if (category !== "All" && s.category !== category) return false;
-      if (difficulty !== "All" && s.difficulty !== difficulty) return false;
+      if (difficulty === "None" && s.difficulty !== null) return false;
+      if (difficulty !== "All" && difficulty !== "None" && s.difficulty !== difficulty) return false;
       if (tag && !s.tags.includes(tag)) return false;
       if (q) {
         const hay = (s.title + " " + s.shortDescription + " " + s.tags.join(" ")).toLowerCase();
@@ -68,6 +74,8 @@ function StoriesList() {
       return true;
     });
   }, [q, category, difficulty, tag, stories]);
+
+  const writerMap = useWriterNames(filtered.map((s) => s.creatorId));
 
   const activeFilters =
     (category !== "All" ? 1 : 0) + (difficulty !== "All" ? 1 : 0) + (tag ? 1 : 0);
@@ -123,6 +131,9 @@ function StoriesList() {
               {d}
             </Chip>
           ))}
+          <Chip active={difficulty === "None"} onClick={() => setDifficulty("None")} muted>
+            No level
+          </Chip>
         </FilterRow>
         {allTags.length > 0 && (
           <FilterRow label="Tags">
@@ -166,7 +177,11 @@ function StoriesList() {
       ) : (
         <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filtered.map((s) => (
-            <StoryCard key={s.id} story={s} />
+            <StoryCard
+              key={s.id}
+              story={s}
+              writerName={s.creatorId ? writerMap[s.creatorId] : null}
+            />
           ))}
         </div>
       )}
