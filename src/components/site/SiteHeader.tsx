@@ -10,6 +10,7 @@ import {
   Coins,
   LayoutDashboard,
   BarChart3,
+  Bot,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
@@ -88,6 +89,13 @@ export function SiteHeader() {
                 className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background text-muted-foreground hover:text-foreground"
               >
                 <BarChart3 className="h-3.5 w-3.5" />
+              </Link>
+              <Link
+                to="/agents"
+                title="AI agents"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background text-muted-foreground hover:text-foreground"
+              >
+                <Bot className="h-3.5 w-3.5" />
               </Link>
             </>
           )}
@@ -215,6 +223,12 @@ export function SiteHeader() {
                 className="px-3 py-1.5 rounded-md text-sm text-primary whitespace-nowrap"
               >
                 Analytics
+              </Link>
+              <Link
+                to="/agents"
+                className="px-3 py-1.5 rounded-md text-sm text-primary whitespace-nowrap"
+              >
+                AI agents
               </Link>
             </>
           )}

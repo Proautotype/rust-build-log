@@ -50,6 +50,8 @@ import {
   createJourney,
   deleteMyStory,
 } from "@/lib/studio.functions";
+import { draftStoryWithAi } from "@/lib/agent.functions";
+import { Bot } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -236,6 +238,7 @@ function StudioPage() {
   const [mode, setMode] = useState<"edit" | "markdown" | "preview">("edit");
   const [hydrated, setHydrated] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+  const [aiOpen, setAiOpen] = useState(false);
 
   const listMyStoriesFn = useServerFn(listMyStories);
   const listJourneysFn = useServerFn(listJourneys);
@@ -507,6 +510,13 @@ function StudioPage() {
               <RotateCcw className="h-3.5 w-3.5" /> Reset
             </button>
             <button
+              onClick={() => setAiOpen(true)}
+              title="Draft this story with AI"
+              className="inline-flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/10 px-3 py-1.5 text-mono text-xs text-primary hover:bg-primary/20"
+            >
+              <Bot className="h-3.5 w-3.5" /> AI draft
+            </button>
+            <button
               onClick={exportJson}
               className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-mono text-xs text-foreground hover:border-border-strong"
             >
@@ -584,6 +594,127 @@ function StudioPage() {
           </div>
         </div>
       )}
+
+      {aiOpen ? (
+        <AiDraftDialog
+          defaultCategory={draft.category}
+          onClose={() => setAiOpen(false)}
+          onApply={(res) => {
+            update({
+              title: res.title,
+              slug: draft.slug || res.slug,
+              shortDescription: res.shortDescription,
+              tags: res.tags.join(", "),
+              readingMinutes: res.readingMinutes,
+              blocks: [{ _uid: uid(), type: "markdown", markdown: res.markdown }],
+            });
+            setMode("markdown");
+            setAiOpen(false);
+            setStatus("AI draft inserted — review before publishing.");
+            setTimeout(() => setStatus(null), 4000);
+          }}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function AiDraftDialog({
+  defaultCategory,
+  onClose,
+  onApply,
+}: {
+  defaultCategory: string;
+  onClose: () => void;
+  onApply: (res: {
+    title: string;
+    slug: string;
+    shortDescription: string;
+    tags: string[];
+    readingMinutes: number;
+    markdown: string;
+  }) => void;
+}) {
+  const draftFn = useServerFn(draftStoryWithAi);
+  const [topic, setTopic] = useState("");
+  const [tone, setTone] = useState("practical, friendly");
+  const [extra, setExtra] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  const mut = useMutation({
+    mutationFn: () =>
+      draftFn({
+        data: { topic, tone, category: defaultCategory, extraInstructions: extra || undefined },
+      }),
+    onSuccess: (res) => onApply(res as never),
+    onError: (e: Error) => setError(e.message),
+  });
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4">
+      <div className="w-full max-w-lg rounded-xl border border-border bg-card p-6">
+        <div className="flex items-center gap-2">
+          <Bot className="h-5 w-5 text-primary" />
+          <h2 className="text-lg font-semibold">Draft with AI</h2>
+        </div>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Describe what to write about. The draft lands in the Markdown editor for you to edit.
+        </p>
+
+        <label className="mt-4 block text-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+          Topic
+        </label>
+        <textarea
+          rows={3}
+          autoFocus
+          value={topic}
+          onChange={(e) => setTopic(e.target.value)}
+          placeholder="e.g. Ownership and borrowing in Rust, explained for JavaScript developers"
+          className="mt-1.5 w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
+        />
+
+        <label className="mt-3 block text-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+          Tone
+        </label>
+        <input
+          value={tone}
+          onChange={(e) => setTone(e.target.value)}
+          className="mt-1.5 w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
+        />
+
+        <label className="mt-3 block text-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+          Extra instructions (optional)
+        </label>
+        <textarea
+          rows={2}
+          value={extra}
+          onChange={(e) => setExtra(e.target.value)}
+          placeholder="Include a code example with error handling…"
+          className="mt-1.5 w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
+        />
+
+        {error ? <div className="mt-3 text-xs text-destructive">{error}</div> : null}
+
+        <div className="mt-5 flex justify-end gap-2">
+          <button
+            onClick={onClose}
+            className="rounded-md border border-border bg-background px-4 py-2 text-mono text-xs"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => {
+              setError(null);
+              mut.mutate();
+            }}
+            disabled={mut.isPending || topic.trim().length < 3}
+            className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-mono text-xs text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+          >
+            {mut.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+            {mut.isPending ? "Writing…" : "Generate draft"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

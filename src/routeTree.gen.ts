@@ -22,9 +22,12 @@ import { Route as AuthenticatedStudioRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedCoinsRouteImport } from './routes/_authenticated/coins'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
+import { Route as AuthenticatedAgentsRouteImport } from './routes/_authenticated/agents'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin.settings'
 import { Route as AuthenticatedAdminRequestsRouteImport } from './routes/_authenticated/admin.requests'
 import { Route as AuthenticatedAdminDashboardRouteImport } from './routes/_authenticated/admin.dashboard'
+import { Route as ApiPublicAgentsRunRouteImport } from './routes/api/public/agents/run'
+import { Route as ApiPublicAgentsPostRouteImport } from './routes/api/public/agents/post'
 
 const TimelineRoute = TimelineRouteImport.update({
   id: '/timeline',
@@ -90,6 +93,11 @@ const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAgentsRoute = AuthenticatedAgentsRouteImport.update({
+  id: '/agents',
+  path: '/agents',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAdminSettingsRoute =
   AuthenticatedAdminSettingsRouteImport.update({
     id: '/admin/settings',
@@ -108,6 +116,16 @@ const AuthenticatedAdminDashboardRoute =
     path: '/admin/dashboard',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicAgentsRunRoute = ApiPublicAgentsRunRouteImport.update({
+  id: '/api/public/agents/run',
+  path: '/api/public/agents/run',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAgentsPostRoute = ApiPublicAgentsPostRouteImport.update({
+  id: '/api/public/agents/post',
+  path: '/api/public/agents/post',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -116,6 +134,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/stories': typeof StoriesRouteWithChildren
   '/timeline': typeof TimelineRoute
+  '/agents': typeof AuthenticatedAgentsRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/coins': typeof AuthenticatedCoinsRoute
   '/profile': typeof AuthenticatedProfileRoute
@@ -125,6 +144,8 @@ export interface FileRoutesByFullPath {
   '/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
   '/admin/requests': typeof AuthenticatedAdminRequestsRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/api/public/agents/post': typeof ApiPublicAgentsPostRoute
+  '/api/public/agents/run': typeof ApiPublicAgentsRunRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -133,6 +154,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/stories': typeof StoriesRouteWithChildren
   '/timeline': typeof TimelineRoute
+  '/agents': typeof AuthenticatedAgentsRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/coins': typeof AuthenticatedCoinsRoute
   '/profile': typeof AuthenticatedProfileRoute
@@ -142,6 +164,8 @@ export interface FileRoutesByTo {
   '/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
   '/admin/requests': typeof AuthenticatedAdminRequestsRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/api/public/agents/post': typeof ApiPublicAgentsPostRoute
+  '/api/public/agents/run': typeof ApiPublicAgentsRunRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -152,6 +176,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/stories': typeof StoriesRouteWithChildren
   '/timeline': typeof TimelineRoute
+  '/_authenticated/agents': typeof AuthenticatedAgentsRoute
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/coins': typeof AuthenticatedCoinsRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
@@ -161,6 +186,8 @@ export interface FileRoutesById {
   '/_authenticated/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
   '/_authenticated/admin/requests': typeof AuthenticatedAdminRequestsRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/api/public/agents/post': typeof ApiPublicAgentsPostRoute
+  '/api/public/agents/run': typeof ApiPublicAgentsRunRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -171,6 +198,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/stories'
     | '/timeline'
+    | '/agents'
     | '/analytics'
     | '/coins'
     | '/profile'
@@ -180,6 +208,8 @@ export interface FileRouteTypes {
     | '/admin/dashboard'
     | '/admin/requests'
     | '/admin/settings'
+    | '/api/public/agents/post'
+    | '/api/public/agents/run'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -188,6 +218,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/stories'
     | '/timeline'
+    | '/agents'
     | '/analytics'
     | '/coins'
     | '/profile'
@@ -197,6 +228,8 @@ export interface FileRouteTypes {
     | '/admin/dashboard'
     | '/admin/requests'
     | '/admin/settings'
+    | '/api/public/agents/post'
+    | '/api/public/agents/run'
   id:
     | '__root__'
     | '/'
@@ -206,6 +239,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/stories'
     | '/timeline'
+    | '/_authenticated/agents'
     | '/_authenticated/analytics'
     | '/_authenticated/coins'
     | '/_authenticated/profile'
@@ -215,6 +249,8 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/dashboard'
     | '/_authenticated/admin/requests'
     | '/_authenticated/admin/settings'
+    | '/api/public/agents/post'
+    | '/api/public/agents/run'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -225,6 +261,8 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   StoriesRoute: typeof StoriesRouteWithChildren
   TimelineRoute: typeof TimelineRoute
+  ApiPublicAgentsPostRoute: typeof ApiPublicAgentsPostRoute
+  ApiPublicAgentsRunRoute: typeof ApiPublicAgentsRunRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -320,6 +358,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAnalyticsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/agents': {
+      id: '/_authenticated/agents'
+      path: '/agents'
+      fullPath: '/agents'
+      preLoaderRoute: typeof AuthenticatedAgentsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/settings': {
       id: '/_authenticated/admin/settings'
       path: '/admin/settings'
@@ -341,10 +386,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/agents/run': {
+      id: '/api/public/agents/run'
+      path: '/api/public/agents/run'
+      fullPath: '/api/public/agents/run'
+      preLoaderRoute: typeof ApiPublicAgentsRunRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/agents/post': {
+      id: '/api/public/agents/post'
+      path: '/api/public/agents/post'
+      fullPath: '/api/public/agents/post'
+      preLoaderRoute: typeof ApiPublicAgentsPostRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAgentsRoute: typeof AuthenticatedAgentsRoute
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedCoinsRoute: typeof AuthenticatedCoinsRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
@@ -356,6 +416,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAgentsRoute: AuthenticatedAgentsRoute,
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
   AuthenticatedCoinsRoute: AuthenticatedCoinsRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
@@ -388,6 +449,8 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   StoriesRoute: StoriesRouteWithChildren,
   TimelineRoute: TimelineRoute,
+  ApiPublicAgentsPostRoute: ApiPublicAgentsPostRoute,
+  ApiPublicAgentsRunRoute: ApiPublicAgentsRunRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -14,6 +14,101 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_api_keys: {
+        Row: {
+          created_at: string
+          creator_id: string
+          id: string
+          key_hash: string
+          key_prefix: string
+          label: string
+          last_used_at: string | null
+          revoked: boolean
+        }
+        Insert: {
+          created_at?: string
+          creator_id: string
+          id?: string
+          key_hash: string
+          key_prefix: string
+          label?: string
+          last_used_at?: string | null
+          revoked?: boolean
+        }
+        Update: {
+          created_at?: string
+          creator_id?: string
+          id?: string
+          key_hash?: string
+          key_prefix?: string
+          label?: string
+          last_used_at?: string | null
+          revoked?: boolean
+        }
+        Relationships: []
+      }
+      agent_runs: {
+        Row: {
+          agent_id: string | null
+          created_at: string
+          creator_id: string
+          id: string
+          message: string | null
+          source: string
+          status: string
+          story_id: string | null
+        }
+        Insert: {
+          agent_id?: string | null
+          created_at?: string
+          creator_id: string
+          id?: string
+          message?: string | null
+          source?: string
+          status?: string
+          story_id?: string | null
+        }
+        Update: {
+          agent_id?: string | null
+          created_at?: string
+          creator_id?: string
+          id?: string
+          message?: string | null
+          source?: string
+          status?: string
+          story_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_runs_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "creator_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_runs_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "stories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_runs_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "story_analytics"
+            referencedColumns: ["story_id"]
+          },
+          {
+            foreignKeyName: "agent_runs_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "trending_stories"
+            referencedColumns: ["story_id"]
+          },
+        ]
+      }
       coin_transactions: {
         Row: {
           amount: number
@@ -70,6 +165,71 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      creator_agents: {
+        Row: {
+          auto_publish: boolean
+          cadence: string
+          category: string
+          created_at: string
+          creator_id: string
+          enabled: boolean
+          id: string
+          journey_id: string | null
+          last_run_at: string | null
+          monetization: Database["public"]["Enums"]["story_monetization"]
+          name: string
+          tip_enabled: boolean
+          tone: string
+          topic: string
+          unlock_price: number
+          updated_at: string
+        }
+        Insert: {
+          auto_publish?: boolean
+          cadence?: string
+          category?: string
+          created_at?: string
+          creator_id: string
+          enabled?: boolean
+          id?: string
+          journey_id?: string | null
+          last_run_at?: string | null
+          monetization?: Database["public"]["Enums"]["story_monetization"]
+          name?: string
+          tip_enabled?: boolean
+          tone?: string
+          topic?: string
+          unlock_price?: number
+          updated_at?: string
+        }
+        Update: {
+          auto_publish?: boolean
+          cadence?: string
+          category?: string
+          created_at?: string
+          creator_id?: string
+          enabled?: boolean
+          id?: string
+          journey_id?: string | null
+          last_run_at?: string | null
+          monetization?: Database["public"]["Enums"]["story_monetization"]
+          name?: string
+          tip_enabled?: boolean
+          tone?: string
+          topic?: string
+          unlock_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creator_agents_journey_id_fkey"
+            columns: ["journey_id"]
+            isOneToOne: false
+            referencedRelation: "journeys"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       journeys: {
         Row: {
@@ -217,6 +377,7 @@ export type Database = {
       }
       stories: {
         Row: {
+          ai_generated: boolean
           category: string | null
           content: Json
           cover: string | null
@@ -240,6 +401,7 @@ export type Database = {
           view_count: number
         }
         Insert: {
+          ai_generated?: boolean
           category?: string | null
           content?: Json
           cover?: string | null
@@ -263,6 +425,7 @@ export type Database = {
           view_count?: number
         }
         Update: {
+          ai_generated?: boolean
           category?: string | null
           content?: Json
           cover?: string | null
@@ -292,6 +455,52 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "journeys"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      story_search_events: {
+        Row: {
+          created_at: string
+          id: string
+          query: string
+          searcher_id: string | null
+          story_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          query: string
+          searcher_id?: string | null
+          story_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          query?: string
+          searcher_id?: string | null
+          story_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "story_search_events_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "stories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "story_search_events_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "story_analytics"
+            referencedColumns: ["story_id"]
+          },
+          {
+            foreignKeyName: "story_search_events_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "trending_stories"
+            referencedColumns: ["story_id"]
           },
         ]
       }
@@ -330,6 +539,59 @@ export type Database = {
             columns: ["story_id"]
             isOneToOne: false
             referencedRelation: "story_analytics"
+            referencedColumns: ["story_id"]
+          },
+          {
+            foreignKeyName: "story_unlocks_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "trending_stories"
+            referencedColumns: ["story_id"]
+          },
+        ]
+      }
+      story_views: {
+        Row: {
+          created_at: string
+          id: string
+          session_key: string | null
+          story_id: string
+          viewer_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          session_key?: string | null
+          story_id: string
+          viewer_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          session_key?: string | null
+          story_id?: string
+          viewer_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "story_views_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "stories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "story_views_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "story_analytics"
+            referencedColumns: ["story_id"]
+          },
+          {
+            foreignKeyName: "story_views_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "trending_stories"
             referencedColumns: ["story_id"]
           },
         ]
@@ -392,9 +654,11 @@ export type Database = {
     Views: {
       story_analytics: {
         Row: {
+          ai_generated: boolean | null
           comment_count: number | null
           creator_id: string | null
           published: boolean | null
+          searches_7d: number | null
           slug: string | null
           story_id: string | null
           tip_count: number | null
@@ -403,6 +667,21 @@ export type Database = {
           unlock_count: number | null
           unlock_revenue: number | null
           view_count: number | null
+          views_30d: number | null
+          views_7d: number | null
+        }
+        Relationships: []
+      }
+      trending_stories: {
+        Row: {
+          comments_7d: number | null
+          score: number | null
+          searches_7d: number | null
+          slug: string | null
+          story_id: string | null
+          tips_7d: number | null
+          unlocks_7d: number | null
+          views_7d: number | null
         }
         Relationships: []
       }
@@ -415,7 +694,12 @@ export type Database = {
         }
         Returns: boolean
       }
-      increment_story_view: { Args: { _story_id: string }; Returns: undefined }
+      increment_story_view:
+        | { Args: { _story_id: string }; Returns: undefined }
+        | {
+            Args: { _session_key?: string; _story_id: string }
+            Returns: undefined
+          }
     }
     Enums: {
       app_role: "reader" | "writer" | "admin" | "manager"
