@@ -9,7 +9,7 @@ import { getSiteSettings, updateSiteSettings } from "@/lib/admin.functions";
 export const Route = createFileRoute("/_authenticated/admin/settings")({
   head: () => ({
     meta: [
-      { title: "Site settings — Rust Journey" },
+      { title: "Site settings — Right2Read" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -31,11 +31,22 @@ function SettingsPage() {
   const [globalEnabled, setGlobalEnabled] = useState(true);
   const [client, setClient] = useState("");
   const [slot, setSlot] = useState("");
+  const [bucketPublic, setBucketPublic] = useState(false);
+  const [maxMb, setMaxMb] = useState(25);
+  const [allowedTypes, setAllowedTypes] = useState("image/*,video/mp4,video/webm,application/pdf");
   const [status, setStatus] = useState<string | null>(null);
 
   useEffect(() => {
     const s = settingsQuery.data as
-      | { adsense_enabled?: boolean; adsense_global_enabled?: boolean; adsense_client?: string | null; adsense_slot?: string | null }
+      | {
+          adsense_enabled?: boolean;
+          adsense_global_enabled?: boolean;
+          adsense_client?: string | null;
+          adsense_slot?: string | null;
+          media_bucket_public?: boolean | null;
+          media_max_mb?: number | null;
+          media_allowed_types?: string | null;
+        }
       | null
       | undefined;
     if (s) {
@@ -43,6 +54,9 @@ function SettingsPage() {
       setGlobalEnabled(s.adsense_global_enabled ?? true);
       setClient(s.adsense_client ?? "");
       setSlot(s.adsense_slot ?? "");
+      setBucketPublic(!!s.media_bucket_public);
+      setMaxMb(s.media_max_mb ?? 25);
+      setAllowedTypes(s.media_allowed_types ?? "image/*,video/mp4,video/webm,application/pdf");
     }
   }, [settingsQuery.data]);
 
@@ -54,6 +68,9 @@ function SettingsPage() {
           adsense_global_enabled: globalEnabled,
           adsense_client: client.trim() || null,
           adsense_slot: slot.trim() || null,
+          media_bucket_public: bucketPublic,
+          media_max_mb: maxMb,
+          media_allowed_types: allowedTypes.trim(),
         },
       }),
     onSuccess: () => {
