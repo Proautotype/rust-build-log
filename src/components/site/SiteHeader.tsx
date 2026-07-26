@@ -1,6 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
-  Terminal,
   Github,
   LogOut,
   User as UserIcon,
@@ -10,10 +9,12 @@ import {
   Settings,
   Coins,
   LayoutDashboard,
+  BarChart3,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
 import { supabase } from "@/integrations/supabase/client";
+import { R2RLogo } from "./R2RLogo";
 
 type NavItem = {
   to: "/" | "/stories" | "/journeys" | "/timeline";
@@ -29,7 +30,7 @@ const nav: NavItem[] = [
 
 export function SiteHeader() {
   const { user, profile, loading } = useAuth();
-  const { isWriter, isAdmin } = useRole();
+  const { isWriter, isAdmin, isStaff } = useRole();
   const navigate = useNavigate();
 
   async function signOut() {
@@ -41,11 +42,9 @@ export function SiteHeader() {
     <header className="sticky top-0 z-40 border-b border-border/70 bg-background/80 backdrop-blur-xl">
       <div className="container-page flex h-14 items-center justify-between gap-4">
         <Link to="/" className="flex items-center gap-2 group">
-          <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/15 text-primary ring-1 ring-primary/30">
-            <Terminal className="h-3.5 w-3.5" />
-          </span>
+          <R2RLogo className="h-7 w-7" />
           <span className="text-mono text-sm font-semibold tracking-tight">
-            on<span className="text-primary">.</span>blog
+            Right<span className="text-primary">2</span>Read
           </span>
         </Link>
 
@@ -75,24 +74,33 @@ export function SiteHeader() {
           </a>
 
           {!loading && user && isWriter && (
-            <Link
-              to="/studio"
-              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-primary/40 bg-primary/10 px-2.5 text-xs font-medium text-primary hover:bg-primary/20"
-            >
-              <PenSquare className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Studio</span>
-            </Link>
+            <>
+              <Link
+                to="/studio"
+                className="inline-flex h-8 items-center gap-1.5 rounded-md border border-primary/40 bg-primary/10 px-2.5 text-xs font-medium text-primary hover:bg-primary/20"
+              >
+                <PenSquare className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Studio</span>
+              </Link>
+              <Link
+                to="/analytics"
+                title="Story analytics"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background text-muted-foreground hover:text-foreground"
+              >
+                <BarChart3 className="h-3.5 w-3.5" />
+              </Link>
+            </>
           )}
 
-          {!loading && user && isAdmin && (
+          {!loading && user && isStaff && (
             <>
               <Link
                 to="/admin/dashboard"
                 className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border bg-background px-2.5 text-xs text-muted-foreground hover:text-foreground"
-                title="Admin dashboard"
+                title="Dashboard"
               >
                 <LayoutDashboard className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Admin</span>
+                <span className="hidden sm:inline">{isAdmin ? "Admin" : "Manage"}</span>
               </Link>
               <Link
                 to="/admin/requests"
@@ -101,13 +109,15 @@ export function SiteHeader() {
               >
                 <ShieldCheck className="h-3.5 w-3.5" />
               </Link>
-              <Link
-                to="/admin/settings"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background text-muted-foreground hover:text-foreground"
-                title="Site settings"
-              >
-                <Settings className="h-3.5 w-3.5" />
-              </Link>
+              {isAdmin && (
+                <Link
+                  to="/admin/settings"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background text-muted-foreground hover:text-foreground"
+                  title="Site settings"
+                >
+                  <Settings className="h-3.5 w-3.5" />
+                </Link>
+              )}
             </>
           )}
 
@@ -193,12 +203,20 @@ export function SiteHeader() {
             </Link>
           ))}
           {user && isWriter && (
-            <Link
-              to="/studio"
-              className="px-3 py-1.5 rounded-md text-sm text-primary whitespace-nowrap"
-            >
-              Studio
-            </Link>
+            <>
+              <Link
+                to="/studio"
+                className="px-3 py-1.5 rounded-md text-sm text-primary whitespace-nowrap"
+              >
+                Studio
+              </Link>
+              <Link
+                to="/analytics"
+                className="px-3 py-1.5 rounded-md text-sm text-primary whitespace-nowrap"
+              >
+                Analytics
+              </Link>
+            </>
           )}
           {user && (
             <Link

@@ -75,9 +75,9 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   );
 }
 
-const SITE_TITLE = "Rust Journey — Learning Rust in Public";
+const SITE_TITLE = "Right2Read — Stories worth your time";
 const SITE_DESC =
-  "A personal learning journal documenting my journey with Rust — stories, experiments, projects, and the compile errors that taught me.";
+  "Right2Read is a home for developer stories, tutorials and learning journeys. Read from thoughtful writers, follow curated journeys, and support creators with tips and coin unlocks.";
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
@@ -86,10 +86,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: SITE_TITLE },
       { name: "description", content: SITE_DESC },
-      { name: "author", content: "Rust Journey" },
-      { name: "keywords", content: "rust, rust programming, learn rust, rust tutorial, systems programming, cargo, tokio, axum, rust journey, developer blog" },
+      { name: "author", content: "Right2Read" },
+      { name: "keywords", content: "right2read, developer stories, learn to code, tutorials, journeys, tech writers, programming blog" },
       { name: "robots", content: "index, follow, max-image-preview:large" },
-      { property: "og:site_name", content: "Rust Journey" },
+      { property: "og:site_name", content: "Right2Read" },
       { property: "og:title", content: SITE_TITLE },
       { property: "og:description", content: SITE_DESC },
       { property: "og:type", content: "website" },
@@ -113,12 +113,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         children: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "WebSite",
-          name: "Rust Journey",
-          url: "https://rust-build-log.lovable.app",
+          name: "Right2Read",
+          alternateName: "R2R",
+          url: "https://right2read.lovable.app",
           description: SITE_DESC,
           potentialAction: {
             "@type": "SearchAction",
-            target: "https://rust-build-log.lovable.app/stories?q={search_term_string}",
+            target: "https://right2read.lovable.app/stories?q={search_term_string}",
             "query-input": "required name=search_term_string",
           },
         }),
@@ -128,8 +129,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         children: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "Organization",
-          name: "Rust Journey",
-          url: "https://rust-build-log.lovable.app",
+          name: "Right2Read",
+          url: "https://right2read.lovable.app",
         }),
       },
     ],

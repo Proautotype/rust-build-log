@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Clock, Calendar, Lock, Coins, HandHeart } from "lucide-react";
+import { Clock, Calendar, Lock, Coins, HandHeart, Eye, UserRound } from "lucide-react";
 import type { Story } from "@/data/stories";
 import { DifficultyBadge } from "./DifficultyBadge";
 import { Tag } from "./Tag";
@@ -8,9 +8,10 @@ import { formatDate } from "@/lib/format";
 interface Props {
   story: Story;
   featured?: boolean;
+  writerName?: string | null;
 }
 
-export function StoryCard({ story, featured }: Props) {
+export function StoryCard({ story, featured, writerName }: Props) {
   return (
     <Link
       to="/stories/$slug"
@@ -56,6 +57,12 @@ export function StoryCard({ story, featured }: Props) {
         >
           {story.title}
         </h3>
+        {writerName && (
+          <div className="mt-1 inline-flex items-center gap-1 text-mono text-[11px] text-muted-foreground">
+            <UserRound className="h-3 w-3" />
+            by <span className="text-foreground/90">{writerName}</span>
+          </div>
+        )}
         <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
           {story.shortDescription}
         </p>
@@ -66,7 +73,7 @@ export function StoryCard({ story, featured }: Props) {
           ))}
         </div>
 
-        <div className="mt-auto pt-4 flex items-center gap-4 text-[11px] text-mono text-muted-foreground">
+        <div className="mt-auto pt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-mono text-muted-foreground">
           <span className="inline-flex items-center gap-1">
             <Calendar className="h-3 w-3" />
             {formatDate(story.createdAt)}
@@ -74,6 +81,10 @@ export function StoryCard({ story, featured }: Props) {
           <span className="inline-flex items-center gap-1">
             <Clock className="h-3 w-3" />
             {story.readingMinutes} min
+          </span>
+          <span className="inline-flex items-center gap-1" title="Views">
+            <Eye className="h-3 w-3" />
+            {story.viewCount.toLocaleString()}
           </span>
         </div>
       </div>
