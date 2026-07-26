@@ -224,6 +224,12 @@ export function SiteHeader() {
               >
                 Analytics
               </Link>
+              <Link
+                to="/agents"
+                className="px-3 py-1.5 rounded-md text-sm text-primary whitespace-nowrap"
+              >
+                AI agents
+              </Link>
             </>
           )}
           {user && (
