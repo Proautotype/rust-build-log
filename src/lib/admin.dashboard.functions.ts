@@ -3,6 +3,15 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function assertStaff(context: { supabase: any; userId: string }) {
+  const [{ data: isAdmin }, { data: isManager }] = await Promise.all([
+    context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" }),
+    context.supabase.rpc("has_role", { _user_id: context.userId, _role: "manager" }),
+  ]);
+  if (!isAdmin && !isManager) throw new Error("Forbidden");
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function assertAdmin(context: { supabase: any; userId: string }) {
   const { data } = await context.supabase.rpc("has_role", {
     _user_id: context.userId,
@@ -86,7 +95,7 @@ export const setUserRole = createServerFn({ method: "POST" })
     z
       .object({
         userId: z.string().uuid(),
-        role: z.enum(["reader", "writer", "admin"]),
+        role: z.enum(["reader", "writer", "manager", "admin"]),
         grant: z.boolean(),
       })
       .parse(input),
