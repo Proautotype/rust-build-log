@@ -238,6 +238,7 @@ function StudioPage() {
   const [mode, setMode] = useState<"edit" | "markdown" | "preview">("edit");
   const [hydrated, setHydrated] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+  const [aiOpen, setAiOpen] = useState(false);
 
   const listMyStoriesFn = useServerFn(listMyStories);
   const listJourneysFn = useServerFn(listJourneys);
