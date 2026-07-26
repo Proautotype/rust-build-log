@@ -90,29 +90,32 @@ export const Route = createFileRoute("/stories/$slug")({
     if (!loaderData) {
       return {
         meta: [
-          { title: "Story not found — Rust Journey" },
+          { title: "Story not found — Right2Read" },
           { name: "robots", content: "noindex" },
         ],
       };
     }
     const { story, writer } = loaderData;
-    const url = `https://rust-build-log.lovable.app/stories/${params.slug}`;
-    const keywords = [story.category, story.difficulty, ...story.tags, "rust"].filter(Boolean).join(", ");
+    const url = `https://right2read.lovable.app/stories/${params.slug}`;
+    const keywords = [story.category, story.difficulty, ...story.tags].filter(Boolean).join(", ");
+    const authorName = writer?.display_name ?? "Right2Read";
     return {
       meta: [
-        { title: `${story.title} — Rust Journey` },
+        { title: `${story.title} — Right2Read` },
         { name: "description", content: story.shortDescription },
         { name: "keywords", content: keywords },
-        { name: "author", content: writer?.display_name ?? "Rust Journey" },
+        { name: "author", content: authorName },
         { name: "robots", content: "index, follow, max-image-preview:large" },
         { property: "og:title", content: story.title },
         { property: "og:description", content: story.shortDescription },
         { property: "og:type", content: "article" },
         { property: "og:url", content: url },
         { property: "og:image", content: story.cover },
+        { property: "og:site_name", content: "Right2Read" },
         { property: "article:published_time", content: story.createdAt },
         { property: "article:modified_time", content: story.updatedAt },
         { property: "article:section", content: story.category },
+        { property: "article:author", content: authorName },
         ...story.tags.map((t) => ({ property: "article:tag", content: t })),
         { name: "twitter:card", content: "summary_large_image" },
         { name: "twitter:title", content: story.title },
@@ -131,14 +134,11 @@ export const Route = createFileRoute("/stories/$slug")({
             image: [story.cover],
             datePublished: story.createdAt,
             dateModified: story.updatedAt,
-            author: {
-              "@type": "Person",
-              name: writer?.display_name ?? "Rust Journey",
-            },
+            author: { "@type": "Person", name: authorName },
             publisher: {
               "@type": "Organization",
-              name: "Rust Journey",
-              url: "https://rust-build-log.lovable.app",
+              name: "Right2Read",
+              url: "https://right2read.lovable.app",
             },
             mainEntityOfPage: { "@type": "WebPage", "@id": url },
             keywords,
@@ -152,8 +152,8 @@ export const Route = createFileRoute("/stories/$slug")({
             "@context": "https://schema.org",
             "@type": "BreadcrumbList",
             itemListElement: [
-              { "@type": "ListItem", position: 1, name: "Home", item: "https://rust-build-log.lovable.app/" },
-              { "@type": "ListItem", position: 2, name: "Stories", item: "https://rust-build-log.lovable.app/stories" },
+              { "@type": "ListItem", position: 1, name: "Home", item: "https://right2read.lovable.app/" },
+              { "@type": "ListItem", position: 2, name: "Stories", item: "https://right2read.lovable.app/stories" },
               { "@type": "ListItem", position: 3, name: story.title, item: url },
             ],
           }),
