@@ -10,6 +10,7 @@ import {
   Coins,
   LayoutDashboard,
   BarChart3,
+  Bot,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
