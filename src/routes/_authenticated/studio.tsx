@@ -509,6 +509,13 @@ function StudioPage() {
               <RotateCcw className="h-3.5 w-3.5" /> Reset
             </button>
             <button
+              onClick={() => setAiOpen(true)}
+              title="Draft this story with AI"
+              className="inline-flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/10 px-3 py-1.5 text-mono text-xs text-primary hover:bg-primary/20"
+            >
+              <Bot className="h-3.5 w-3.5" /> AI draft
+            </button>
+            <button
               onClick={exportJson}
               className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-mono text-xs text-foreground hover:border-border-strong"
             >
