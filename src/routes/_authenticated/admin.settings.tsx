@@ -195,6 +195,73 @@ function SettingsPage() {
           {status && <span className="text-mono text-xs text-primary">{status}</span>}
         </div>
       </section>
+
+      <section className="mt-8 rounded-xl border border-border bg-card/40 p-6 space-y-5">
+        <div>
+          <h2 className="text-lg font-display">Media bucket</h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Controls the media library used by the Studio for images, videos and PDFs.
+          </p>
+        </div>
+
+        <label className="flex items-center justify-between gap-4">
+          <div>
+            <div className="font-medium">Public media URLs</div>
+            <div className="text-xs text-muted-foreground">
+              When on, uploaded files are served via long-lived public URLs. Turn off to use signed URLs only.
+            </div>
+          </div>
+          <button
+            role="switch"
+            aria-checked={bucketPublic}
+            onClick={() => setBucketPublic((v) => !v)}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
+              bucketPublic ? "bg-primary" : "bg-surface-2"
+            }`}
+          >
+            <span
+              className={`inline-block h-5 w-5 rounded-full bg-background shadow transition ${
+                bucketPublic ? "translate-x-5" : "translate-x-0.5"
+              }`}
+            />
+          </button>
+        </label>
+
+        <Field label="Max upload size (MB)">
+          <input
+            type="number"
+            min={1}
+            max={1024}
+            value={maxMb}
+            onChange={(e) => setMaxMb(Math.max(1, Math.min(1024, Number(e.target.value) || 25)))}
+            className="w-32 rounded-md border border-border bg-background px-3 py-2 text-sm text-mono outline-none focus:ring-1 focus:ring-primary"
+          />
+        </Field>
+
+        <Field label="Allowed MIME types (comma separated)">
+          <input
+            value={allowedTypes}
+            onChange={(e) => setAllowedTypes(e.target.value)}
+            placeholder="image/*,video/mp4,application/pdf"
+            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-mono outline-none focus:ring-1 focus:ring-primary"
+          />
+        </Field>
+
+        <div className="flex items-center gap-3 pt-2">
+          <button
+            onClick={() => save.mutate()}
+            disabled={save.isPending}
+            className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+          >
+            {save.isPending ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Save className="h-3.5 w-3.5" />
+            )}
+            Save all settings
+          </button>
+        </div>
+      </section>
     </div>
   );
 }
