@@ -131,6 +131,9 @@ function StoriesList() {
               {d}
             </Chip>
           ))}
+          <Chip active={difficulty === "None"} onClick={() => setDifficulty("None")} muted>
+            No level
+          </Chip>
         </FilterRow>
         {allTags.length > 0 && (
           <FilterRow label="Tags">
@@ -174,7 +177,11 @@ function StoriesList() {
       ) : (
         <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {filtered.map((s) => (
-            <StoryCard key={s.id} story={s} />
+            <StoryCard
+              key={s.id}
+              story={s}
+              writerName={s.creatorId ? writerMap[s.creatorId] : null}
+            />
           ))}
         </div>
       )}
