@@ -31,3 +31,7 @@ dist-ssr
 *.sln
 *.sw?
 /supabase/.temp
+.env
+/.env*
+/src/routeTree.gen.ts
+package-lock.json
