@@ -42,7 +42,8 @@ export interface Story {
   updatedAt: string;
   category: Category;
   tags: string[];
-  difficulty: Difficulty;
+  /** null = no difficulty level (content-only story) */
+  difficulty: Difficulty | null;
   readingMinutes: number;
   journeyId: string | null;
   creatorId: string | null;
@@ -50,6 +51,7 @@ export interface Story {
   unlockPrice: number;
   tipEnabled: boolean;
   promoted: boolean;
+  viewCount: number;
 }
 
 export interface Journey {
@@ -87,7 +89,7 @@ export const technologies = [
   { name: "Serde", note: "Serialization" },
 ];
 
-const FALLBACK_COVER = "https://placehold.co/1600x900/1a1a1a/f97316?text=Rust+Journey";
+const FALLBACK_COVER = "https://placehold.co/1600x900/1a1a1a/f97316?text=Right2Read";
 
 export function rowToStory(row: Tables<"stories">): Story {
   const r = row as Tables<"stories"> & {
@@ -95,7 +97,13 @@ export function rowToStory(row: Tables<"stories">): Story {
     unlock_price?: number | null;
     tip_enabled?: boolean | null;
     promoted?: boolean | null;
+    view_count?: number | null;
   };
+  const rawDiff = row.difficulty;
+  const difficulty =
+    rawDiff && (["Beginner", "Intermediate", "Advanced"] as string[]).includes(rawDiff)
+      ? (rawDiff as Difficulty)
+      : null;
   return {
     id: row.id,
     title: row.title,
@@ -107,7 +115,7 @@ export function rowToStory(row: Tables<"stories">): Story {
     updatedAt: row.updated_at,
     category: (row.category ?? "Fundamentals") as Category,
     tags: row.tags ?? [],
-    difficulty: (row.difficulty ?? "Beginner") as Difficulty,
+    difficulty,
     readingMinutes: row.reading_minutes ?? 5,
     journeyId: row.journey_id,
     creatorId: row.creator_id,
@@ -115,6 +123,7 @@ export function rowToStory(row: Tables<"stories">): Story {
     unlockPrice: r.unlock_price ?? 0,
     tipEnabled: r.tip_enabled ?? false,
     promoted: r.promoted ?? false,
+    viewCount: r.view_count ?? 0,
   };
 }
 

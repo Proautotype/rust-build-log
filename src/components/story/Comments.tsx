@@ -10,7 +10,7 @@ interface CommentRow {
   body: string;
   created_at: string;
   user_id: string;
-  profiles: {
+  profile: {
     display_name: string | null;
     avatar_url: string | null;
   } | null;
@@ -28,10 +28,28 @@ export function Comments({ storySlug }: { storySlug: string }) {
     setLoading(true);
     const { data, error } = await supabase
       .from("comments")
-      .select("id, body, created_at, user_id, profiles(display_name, avatar_url)")
+      .select("id, body, created_at, user_id")
       .eq("story_slug", storySlug)
       .order("created_at", { ascending: false });
-    if (!error && data) setComments(data as unknown as CommentRow[]);
+    if (error || !data) {
+      setLoading(false);
+      return;
+    }
+    // No FK from comments -> profiles, so fetch profiles separately.
+    const ids = Array.from(new Set(data.map((c) => c.user_id)));
+    let profileMap: Record<string, { display_name: string | null; avatar_url: string | null }> = {};
+    if (ids.length) {
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("id, display_name, avatar_url")
+        .in("id", ids);
+      profileMap = Object.fromEntries(
+        (profs ?? []).map((p) => [p.id, { display_name: p.display_name, avatar_url: p.avatar_url }]),
+      );
+    }
+    setComments(
+      data.map((c) => ({ ...c, profile: profileMap[c.user_id] ?? null })) as CommentRow[],
+    );
     setLoading(false);
   }
 
@@ -128,20 +146,20 @@ export function Comments({ storySlug }: { storySlug: string }) {
             <div key={c.id} className="rounded-lg border border-border/60 bg-card/30 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  {c.profiles?.avatar_url ? (
+                  {c.profile?.avatar_url ? (
                     <img
-                      src={c.profiles.avatar_url}
+                      src={c.profile.avatar_url}
                       alt=""
                       className="h-8 w-8 rounded-full object-cover ring-1 ring-border"
                     />
                   ) : (
                     <div className="h-8 w-8 rounded-full bg-primary/15 text-primary flex items-center justify-center text-xs font-semibold ring-1 ring-primary/30">
-                      {(c.profiles?.display_name ?? "?").slice(0, 1).toUpperCase()}
+                      {(c.profile?.display_name ?? "?").slice(0, 1).toUpperCase()}
                     </div>
                   )}
                   <div>
                     <div className="text-sm font-medium">
-                      {c.profiles?.display_name ?? "Anonymous"}
+                      {c.profile?.display_name ?? "Anonymous"}
                     </div>
                     <div className="text-mono text-[10px] uppercase tracking-widest text-muted-foreground">
                       {formatDateLong(c.created_at)}

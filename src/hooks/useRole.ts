@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 
-export type AppRole = "reader" | "writer" | "admin";
+export type AppRole = "reader" | "writer" | "manager" | "admin";
 
 export function useRole() {
   const { user, loading: authLoading } = useAuth();
@@ -32,11 +32,17 @@ export function useRole() {
     };
   }, [user, authLoading]);
 
+  const isAdmin = roles.includes("admin");
+  const isManager = roles.includes("manager");
+  const isWriter = roles.includes("writer") || isAdmin;
   return {
     roles,
     loading: authLoading || loading,
     isReader: roles.includes("reader"),
-    isWriter: roles.includes("writer") || roles.includes("admin"),
-    isAdmin: roles.includes("admin"),
+    isWriter,
+    isManager,
+    isAdmin,
+    /** Staff = admin or manager. Can view dashboard & approve requests. */
+    isStaff: isAdmin || isManager,
   };
 }
