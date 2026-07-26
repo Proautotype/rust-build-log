@@ -291,6 +291,10 @@ function StoryDetail() {
               <Clock className="h-3.5 w-3.5" />
               {story.readingMinutes} min read
             </span>
+            <span className="inline-flex items-center gap-1.5" title="Views">
+              <Eye className="h-3.5 w-3.5" />
+              {viewCount.toLocaleString()} views
+            </span>
             {story.updatedAt !== story.createdAt ? (
               <span className="inline-flex items-center gap-1.5">
                 <GitCommit className="h-3.5 w-3.5" />
