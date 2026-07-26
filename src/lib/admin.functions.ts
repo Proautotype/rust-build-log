@@ -44,17 +44,17 @@ export const updateSiteSettings = createServerFn({ method: "POST" })
       .limit(1)
       .maybeSingle();
 
-    const payload: Record<string, unknown> = {
+    const payload = {
       adsense_enabled: data.adsense_enabled,
       adsense_client: data.adsense_client?.trim() || null,
       adsense_slot: data.adsense_slot?.trim() || null,
       adsense_global_enabled: data.adsense_global_enabled ?? true,
       updated_at: new Date().toISOString(),
       updated_by: context.userId,
+      ...(data.media_bucket_public !== undefined ? { media_bucket_public: data.media_bucket_public } : {}),
+      ...(data.media_max_mb !== undefined ? { media_max_mb: data.media_max_mb } : {}),
+      ...(data.media_allowed_types !== undefined ? { media_allowed_types: data.media_allowed_types } : {}),
     };
-    if (data.media_bucket_public !== undefined) payload.media_bucket_public = data.media_bucket_public;
-    if (data.media_max_mb !== undefined) payload.media_max_mb = data.media_max_mb;
-    if (data.media_allowed_types !== undefined) payload.media_allowed_types = data.media_allowed_types;
 
     if (existing) {
       const { data: row, error } = await context.supabase
