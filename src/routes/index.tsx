@@ -3,7 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { ArrowRight, Sparkles, GitBranch, BookOpen, Loader2, Search, X } from "lucide-react";
 import { StoryCard } from "@/components/story/StoryCard";
-import { Spotlight, StoryRow } from "@/components/story/StoryShowcase";
+import { Spotlight } from "@/components/story/StoryShowcase";
+import { StoryCollection } from "@/components/story/StoryCollection";
+
 import { heroImage, rowToJourney, rowToStory, technologies } from "@/data/stories";
 import { formatDate } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
