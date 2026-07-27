@@ -394,6 +394,7 @@ export type Database = {
           short_description: string | null
           slug: string
           tags: string[]
+          theme: Json
           tip_enabled: boolean
           title: string
           unlock_price: number
@@ -418,6 +419,7 @@ export type Database = {
           short_description?: string | null
           slug: string
           tags?: string[]
+          theme?: Json
           tip_enabled?: boolean
           title: string
           unlock_price?: number
@@ -442,6 +444,7 @@ export type Database = {
           short_description?: string | null
           slug?: string
           tags?: string[]
+          theme?: Json
           tip_enabled?: boolean
           title?: string
           unlock_price?: number
@@ -595,6 +598,89 @@ export type Database = {
             referencedColumns: ["story_id"]
           },
         ]
+      }
+      template_unlocks: {
+        Row: {
+          created_at: string
+          id: string
+          price_paid: number
+          template_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          price_paid?: number
+          template_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          price_paid?: number
+          template_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "template_unlocks_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      templates: {
+        Row: {
+          blocks: Json
+          card_variant: string
+          created_at: string
+          creator_id: string
+          description: string
+          id: string
+          kind: string
+          name: string
+          preview: string
+          price: number
+          theme: Json
+          updated_at: string
+          uses: number
+          visibility: string
+        }
+        Insert: {
+          blocks?: Json
+          card_variant?: string
+          created_at?: string
+          creator_id: string
+          description?: string
+          id?: string
+          kind?: string
+          name: string
+          preview?: string
+          price?: number
+          theme?: Json
+          updated_at?: string
+          uses?: number
+          visibility?: string
+        }
+        Update: {
+          blocks?: Json
+          card_variant?: string
+          created_at?: string
+          creator_id?: string
+          description?: string
+          id?: string
+          kind?: string
+          name?: string
+          preview?: string
+          price?: number
+          theme?: Json
+          updated_at?: string
+          uses?: number
+          visibility?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
