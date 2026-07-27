@@ -1928,6 +1928,10 @@ function MetaPanel({
         )}
       </div>
 
+      <ThemePanel theme={draft.theme ?? {}} onChange={(theme) => onChange({ theme })} />
+
+      <TemplatePanel draft={draft} onChange={onChange} />
+
       {/* Monetization */}
       <div className="rounded-md border border-border bg-background/60 p-2.5 space-y-2">
         <div className="text-mono text-[10px] uppercase tracking-widest text-muted-foreground">
@@ -2015,9 +2019,11 @@ function PreviewPane({ draft }: { draft: Draft }) {
     .map((t) => t.trim())
     .filter(Boolean);
 
+  const theme = draft.theme ?? {};
+
   return (
-    <div className="container-page py-10">
-      <div className="mx-auto max-w-2xl">
+    <StoryThemeScope theme={theme} className="container-page py-10">
+      <div className={`mx-auto ${themeWidthClass(theme)}`}>
         <div className="text-mono text-[11px] uppercase tracking-widest text-primary">
           {draft.category} · {draft.difficulty}
         </div>
@@ -2045,6 +2051,314 @@ function PreviewPane({ draft }: { draft: Draft }) {
           <ContentRenderer blocks={blocks} />
         </div>
       </div>
+    </StoryThemeScope>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Theme picker                                                       */
+/* ------------------------------------------------------------------ */
+
+const THEME_PRESETS: { label: string; theme: StoryTheme }[] = [
+  { label: "Default", theme: {} },
+  {
+    label: "Rust",
+    theme: { accent: "#f97316", background: "#0d0d0f", text: "#ededed", font: "sans", width: "regular", radius: "md" },
+  },
+  {
+    label: "Editorial",
+    theme: { accent: "#c2410c", background: "#faf7f2", text: "#1c1917", font: "serif", width: "narrow", radius: "sm" },
+  },
+  {
+    label: "Terminal",
+    theme: { accent: "#22c55e", background: "#08110c", text: "#d1fae5", font: "mono", width: "wide", radius: "none" },
+  },
+  {
+    label: "Midnight",
+    theme: { accent: "#6366f1", background: "#0b1020", text: "#e2e8f0", font: "display", width: "regular", radius: "lg" },
+  },
+];
+
+function ThemePanel({
+  theme,
+  onChange,
+}: {
+  theme: StoryTheme;
+  onChange: (theme: StoryTheme) => void;
+}) {
+  const set = (patch: Partial<StoryTheme>) => onChange({ ...theme, ...patch });
+
+  return (
+    <div className="rounded-md border border-border bg-background/60 p-2.5 space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="text-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+          Story theme
+        </span>
+        <button
+          onClick={() => onChange({})}
+          className="text-mono text-[10px] text-muted-foreground hover:text-foreground"
+        >
+          reset
+        </button>
+      </div>
+
+      <div className="flex flex-wrap gap-1.5">
+        {THEME_PRESETS.map((p) => (
+          <button
+            key={p.label}
+            onClick={() => onChange(p.theme)}
+            className="inline-flex items-center gap-1.5 rounded border border-border bg-background px-2 py-1 text-mono text-[10px] text-muted-foreground hover:border-primary/40 hover:text-foreground"
+          >
+            <span
+              className="h-2.5 w-2.5 rounded-full border border-border/60"
+              style={{ backgroundColor: p.theme.accent ?? "var(--primary)" }}
+            />
+            {p.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-3 gap-2">
+        <ThemeColor label="Accent" value={theme.accent} onChange={(v) => set({ accent: v })} />
+        <ThemeColor
+          label="Background"
+          value={theme.background}
+          onChange={(v) => set({ background: v })}
+        />
+        <ThemeColor label="Text" value={theme.text} onChange={(v) => set({ text: v })} />
+      </div>
+
+      <Select
+        label="Font"
+        value={theme.font ?? "sans"}
+        onChange={(v) => set({ font: v as NonNullable<StoryTheme["font"]> })}
+        options={[
+          { value: "sans", label: "Sans" },
+          { value: "serif", label: "Serif" },
+          { value: "mono", label: "Mono" },
+          { value: "display", label: "Display" },
+        ]}
+      />
+      <div className="grid grid-cols-2 gap-2">
+        <Select
+          label="Width"
+          value={theme.width ?? "regular"}
+          onChange={(v) => set({ width: v as NonNullable<StoryTheme["width"]> })}
+          options={[
+            { value: "narrow", label: "Narrow" },
+            { value: "regular", label: "Regular" },
+            { value: "wide", label: "Wide" },
+          ]}
+        />
+        <Select
+          label="Corners"
+          value={theme.radius ?? "md"}
+          onChange={(v) => set({ radius: v as NonNullable<StoryTheme["radius"]> })}
+          options={[
+            { value: "none", label: "Square" },
+            { value: "sm", label: "Subtle" },
+            { value: "md", label: "Rounded" },
+            { value: "lg", label: "Pill" },
+          ]}
+        />
+      </div>
+      <p className="text-mono text-[10px] leading-relaxed text-muted-foreground">
+        The theme applies to this story's reading page. Check it in Preview.
+      </p>
+    </div>
+  );
+}
+
+function ThemeColor({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value?: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <label className="block">
+      <span className="text-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+        {label}
+      </span>
+      <input
+        type="color"
+        value={value ?? "#111111"}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-1 h-7 w-full cursor-pointer rounded border border-border bg-background"
+      />
+    </label>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Templates — save current layout/theme, or apply an existing one    */
+/* ------------------------------------------------------------------ */
+
+function TemplatePanel({
+  draft,
+  onChange,
+}: {
+  draft: Draft;
+  onChange: (patch: Partial<Draft>) => void;
+}) {
+  const saveTemplateFn = useServerFn(saveTemplate);
+  const listMineFn = useServerFn(listMyTemplates);
+  const listSharedFn = useServerFn(listSharedTemplates);
+  const qc = useQueryClient();
+
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [visibility, setVisibility] = useState<"private" | "public">("private");
+  const [price, setPrice] = useState(0);
+  const [cardVariant, setCardVariant] = useState<CardVariant>("poster");
+  const [msg, setMsg] = useState<string | null>(null);
+
+  const mineQ = useQuery({ queryKey: ["templates", "mine"], queryFn: () => listMineFn() });
+  const sharedQ = useQuery({ queryKey: ["templates", "shared"], queryFn: () => listSharedFn() });
+
+  const applicable = [
+    ...(mineQ.data ?? []),
+    ...((sharedQ.data ?? []).filter(
+      (t) => t.unlocked && !t.mine && Array.isArray(t.blocks) && t.blocks.length > 0,
+    ) as unknown as NonNullable<typeof mineQ.data>),
+  ];
+
+  const saveMut = useMutation({
+    mutationFn: () =>
+      saveTemplateFn({
+        data: {
+          kind: "story" as const,
+          name: name.trim() || draft.title || "Untitled template",
+          description,
+          preview: draft.cover,
+          blocks: draft.blocks.map(({ _uid: _u, ...rest }) => rest),
+          theme: (draft.theme ?? {}) as Record<string, unknown>,
+          card_variant: cardVariant,
+          visibility,
+          price: visibility === "public" ? price : 0,
+        },
+      }),
+    onSuccess: () => {
+      setMsg("Template saved ✓");
+      setOpen(false);
+      setName("");
+      setDescription("");
+      qc.invalidateQueries({ queryKey: ["templates"] });
+      setTimeout(() => setMsg(null), 2500);
+    },
+    onError: (e: Error) => setMsg(e.message),
+  });
+
+  const applyTemplate = (id: string) => {
+    const t = applicable.find((x) => x.id === id);
+    if (!t) return;
+    const blocks = (Array.isArray(t.blocks) ? t.blocks : []) as ContentBlock[];
+    if (
+      draft.blocks.length > 0 &&
+      !confirm(`Apply "${t.name}"? This replaces the current blocks and theme.`)
+    ) {
+      return;
+    }
+    onChange({
+      blocks: blocks.map((b) => ({ ...(b as ContentBlock), _uid: uid() })),
+      theme: (t.theme ?? {}) as StoryTheme,
+    });
+    setMsg(`Applied "${t.name}"`);
+    setTimeout(() => setMsg(null), 2500);
+  };
+
+  return (
+    <div className="rounded-md border border-border bg-background/60 p-2.5 space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="inline-flex items-center gap-1.5 text-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+          <LayoutTemplate className="h-3 w-3" /> Templates
+        </span>
+        <button
+          onClick={() => setOpen((o) => !o)}
+          className="inline-flex items-center gap-1 text-mono text-[10px] uppercase tracking-widest text-primary hover:underline"
+        >
+          <Save className="h-3 w-3" /> Save as template
+        </button>
+      </div>
+
+      <label className="block">
+        <span className="text-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+          Apply a template
+        </span>
+        <select
+          value=""
+          onChange={(e) => e.target.value && applyTemplate(e.target.value)}
+          className="mt-1 w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm outline-none focus:border-primary/60"
+        >
+          <option value="">— Choose a template —</option>
+          {applicable.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.name}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      {open ? (
+        <div className="space-y-2 rounded-md border border-border bg-surface/50 p-2">
+          <Input label="Template name" value={name} onChange={setName} />
+          <Textarea label="Description" rows={2} value={description} onChange={setDescription} />
+          <Select
+            label="Card style"
+            value={cardVariant}
+            onChange={(v) => setCardVariant(v as CardVariant)}
+            options={[
+              { value: "poster", label: "Poster" },
+              { value: "row", label: "Compact row" },
+              { value: "feature", label: "Wide feature" },
+              { value: "minimal", label: "Minimal text" },
+            ]}
+          />
+          <Select
+            label="Visibility"
+            value={visibility}
+            onChange={(v) => setVisibility(v as "private" | "public")}
+            options={[
+              { value: "private", label: "Private (only me)" },
+              { value: "public", label: "Shared in marketplace" },
+            ]}
+          />
+          {visibility === "public" ? (
+            <Input
+              label="Price (coins, 0 = free)"
+              type="number"
+              value={String(price)}
+              onChange={(v) => setPrice(Math.max(0, Number(v) || 0))}
+            />
+          ) : null}
+          <div className="flex gap-2">
+            <button
+              onClick={() => saveMut.mutate()}
+              disabled={saveMut.isPending}
+              className="inline-flex items-center gap-1 rounded-md bg-primary px-2.5 py-1 text-mono text-[11px] font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            >
+              {saveMut.isPending ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <Wand2 className="h-3 w-3" />
+              )}
+              Save template
+            </button>
+            <button
+              onClick={() => setOpen(false)}
+              className="rounded-md border border-border px-2.5 py-1 text-mono text-[11px] text-muted-foreground hover:text-foreground"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {msg ? <div className="text-mono text-[10px] text-primary">{msg}</div> : null}
     </div>
   );
 }
