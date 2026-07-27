@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { rowToStory, rowToJourney, type Story, type Journey } from "@/data/stories";
 import { ContentRenderer } from "@/components/story/ContentRenderer";
+import { StoryThemeScope, themeWidthClass } from "@/components/story/StoryThemeScope";
 import { TableOfContents } from "@/components/story/TableOfContents";
 import { DifficultyBadge } from "@/components/story/DifficultyBadge";
 import { StoryCard } from "@/components/story/StoryCard";
@@ -322,7 +323,7 @@ function StoryDetail() {
 
       <div className="container-page py-12">
         <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_240px]">
-          <div className="min-w-0 max-w-2xl">
+          <StoryThemeScope theme={story.theme ?? {}} className={`min-w-0 ${themeWidthClass(story.theme ?? {})}`}>
             <ContentRenderer blocks={previewBlocks} />
 
             {locked && (
@@ -455,7 +456,7 @@ function StoryDetail() {
                 </Link>
               ) : null}
             </div>
-          </div>
+          </StoryThemeScope>
 
           <aside className="hidden lg:block">
             <div className="sticky top-20 space-y-8">
