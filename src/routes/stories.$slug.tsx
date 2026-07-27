@@ -456,7 +456,7 @@ function StoryDetail() {
                 </Link>
               ) : null}
             </div>
-          </div>
+          </StoryThemeScope>
 
           <aside className="hidden lg:block">
             <div className="sticky top-20 space-y-8">
