@@ -75,6 +75,8 @@ export interface Story {
   tipEnabled: boolean;
   promoted: boolean;
   viewCount: number;
+  theme: StoryTheme;
+
 }
 
 export interface Journey {
