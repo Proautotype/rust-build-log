@@ -240,6 +240,13 @@ export function SiteHeader() {
               >
                 AI agents
               </Link>
+              <Link
+                to="/templates"
+                className="px-3 py-1.5 rounded-md text-sm text-primary whitespace-nowrap"
+              >
+                Templates
+              </Link>
+
             </>
           )}
           {user && (
