@@ -33,6 +33,11 @@ import {
   FileCode,
   Upload,
   Film,
+  Columns3,
+  Rows3,
+  LayoutTemplate,
+  Save,
+  Wand2,
 } from "lucide-react";
 import type {
   ContentBlock,
@@ -40,8 +45,12 @@ import type {
   Category,
   Difficulty,
   Monetization,
+  StoryTheme,
+  CardVariant,
 } from "@/data/stories";
 import { allCategories, allDifficulties } from "@/data/stories";
+import { StoryThemeScope, themeWidthClass } from "@/components/story/StoryThemeScope";
+import { listMyTemplates, listSharedTemplates, saveTemplate } from "@/lib/templates.functions";
 import { ContentRenderer } from "@/components/story/ContentRenderer";
 import {
   listMyStories,
@@ -91,6 +100,7 @@ interface Draft {
   unlockPrice: number;
   tipEnabled: boolean;
   promoted: boolean;
+  theme: StoryTheme;
 }
 
 interface JourneyRow {
@@ -124,6 +134,7 @@ const emptyDraft = (): Draft => ({
   unlockPrice: 100,
   tipEnabled: false,
   promoted: false,
+  theme: {},
   blocks: [
     {
       _uid: uid(),
@@ -155,7 +166,9 @@ type PaletteKind =
   | "image"
   | "video"
   | "pdf"
-  | "gallery";
+  | "gallery"
+  | "layout-h"
+  | "layout-v";
 
 function makeBlock(kind: PaletteKind): EditorBlock {
   const _uid = uid();
@@ -208,8 +221,34 @@ function makeBlock(kind: PaletteKind): EditorBlock {
           { src: "https://placehold.co/800x600/1a1a1a/f97316?text=2", alt: "Image 2" },
         ],
       };
+    case "layout-h":
+    case "layout-v":
+      return {
+        _uid,
+        type: "layout",
+        direction: kind === "layout-h" ? "horizontal" : "vertical",
+        gap: "md",
+        align: "stretch",
+        items: [
+          { type: "paragraph", text: "Column one." },
+          { type: "paragraph", text: "Column two." },
+        ],
+      };
   }
 }
+
+/** Child blocks that can be nested inside a layout block. */
+const NESTED_KINDS: PaletteKind[] = [
+  "h3",
+  "paragraph",
+  "list",
+  "quote",
+  "code",
+  "image",
+  "video",
+  "pdf",
+  "gallery",
+];
 
 const PALETTE: {
   kind: PaletteKind;
@@ -227,6 +266,8 @@ const PALETTE: {
   { kind: "video", label: "YouTube", icon: Youtube },
   { kind: "pdf", label: "PDF", icon: FileText },
   { kind: "gallery", label: "Gallery", icon: Images },
+  { kind: "layout-h", label: "Horizontal view", icon: Columns3 },
+  { kind: "layout-v", label: "Vertical view", icon: Rows3 },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -365,6 +406,7 @@ function StudioPage() {
         unlock_price: draft.unlockPrice,
         tip_enabled: draft.tipEnabled,
         promoted: draft.promoted,
+        theme: draft.theme ?? {},
       };
       return saveStoryFn({ data: payload });
     },
@@ -398,6 +440,7 @@ function StudioPage() {
       unlockPrice: (s as { unlock_price?: number }).unlock_price ?? 100,
       tipEnabled: (s as { tip_enabled?: boolean }).tip_enabled ?? false,
       promoted: (s as { promoted?: boolean }).promoted ?? false,
+      theme: ((s as { theme?: StoryTheme }).theme ?? {}) as StoryTheme,
       blocks: (Array.isArray(s.content) ? s.content : []).map((b) => ({
         ...(b as ContentBlock),
         _uid: uid(),
@@ -1226,6 +1269,8 @@ function blockLabel(b: ContentBlock): string {
       return "Gallery";
     case "markdown":
       return "Markdown";
+    case "layout":
+      return b.direction === "horizontal" ? "Horizontal view" : "Vertical view";
     default:
       return "Block";
   }
