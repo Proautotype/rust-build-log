@@ -1536,9 +1536,185 @@ function BlockFields({
           />
         </div>
       );
+    case "layout":
+      return <LayoutFields block={block} onChange={onChange} />;
     default:
       return null;
   }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Layout block (horizontal / vertical view) editor                   */
+/* ------------------------------------------------------------------ */
+
+function LayoutFields({
+  block,
+  onChange,
+}: {
+  block: EditorBlock & { type: "layout" };
+  onChange: (patch: Partial<EditorBlock>) => void;
+}) {
+  const [dropActive, setDropActive] = useState(false);
+  const items = block.items ?? [];
+
+  const setItems = (next: ContentBlock[]) => onChange({ items: next } as Partial<EditorBlock>);
+
+  const addItem = (kind: PaletteKind) => {
+    const { _uid: _u, ...rest } = makeBlock(kind);
+    setItems([...items, rest as ContentBlock]);
+  };
+
+  const patchItem = (i: number, patch: Partial<ContentBlock>) =>
+    setItems(items.map((it, j) => (j === i ? ({ ...it, ...patch } as ContentBlock) : it)));
+
+  const removeItem = (i: number) => setItems(items.filter((_, j) => j !== i));
+
+  const moveItem = (i: number, dir: -1 | 1) => {
+    const j = i + dir;
+    if (j < 0 || j >= items.length) return;
+    const next = [...items];
+    [next[i], next[j]] = [next[j], next[i]];
+    setItems(next);
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="grid gap-2 sm:grid-cols-3">
+        <Select
+          label="Direction"
+          value={block.direction}
+          onChange={(v) => onChange({ direction: v as "horizontal" | "vertical" } as Partial<EditorBlock>)}
+          options={[
+            { value: "horizontal", label: "Horizontal (side by side)" },
+            { value: "vertical", label: "Vertical (stacked)" },
+          ]}
+        />
+        <Select
+          label="Gap"
+          value={block.gap ?? "md"}
+          onChange={(v) => onChange({ gap: v as "sm" | "md" | "lg" } as Partial<EditorBlock>)}
+          options={[
+            { value: "sm", label: "Small" },
+            { value: "md", label: "Medium" },
+            { value: "lg", label: "Large" },
+          ]}
+        />
+        <Select
+          label="Align"
+          value={block.align ?? "stretch"}
+          onChange={(v) =>
+            onChange({ align: v as "start" | "center" | "stretch" } as Partial<EditorBlock>)
+          }
+          options={[
+            { value: "stretch", label: "Stretch" },
+            { value: "start", label: "Top" },
+            { value: "center", label: "Center" },
+          ]}
+        />
+      </div>
+
+      <div
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDropActive(true);
+        }}
+        onDragLeave={() => setDropActive(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setDropActive(false);
+          const kind = e.dataTransfer.getData("application/x-block-kind") as PaletteKind;
+          if (kind && kind !== "layout-h" && kind !== "layout-v") {
+            addItem(kind);
+            return;
+          }
+          const media = e.dataTransfer.getData("application/x-block-media");
+          if (media) {
+            try {
+              const m = JSON.parse(media) as { kind: "image" | "video"; url: string; title?: string };
+              setItems([
+                ...items,
+                m.kind === "image"
+                  ? { type: "image", src: m.url, alt: m.title ?? "", caption: "" }
+                  : { type: "videoFile", src: m.url, title: m.title ?? "" },
+              ]);
+            } catch {
+              /* ignore */
+            }
+          }
+        }}
+        className={`space-y-2 rounded-md border border-dashed p-2 transition ${
+          dropActive ? "border-primary bg-primary/5" : "border-border"
+        }`}
+      >
+        <div
+          className={
+            block.direction === "horizontal"
+              ? "grid gap-2 md:grid-cols-2"
+              : "flex flex-col gap-2"
+          }
+        >
+          {items.map((it, i) => (
+            <div key={i} className="rounded-md border border-border bg-surface/40 p-2">
+              <div className="flex items-center justify-between gap-2 pb-1.5">
+                <span className="text-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                  {blockLabel(it)}
+                </span>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => moveItem(i, -1)}
+                    title="Move earlier"
+                    className="rounded px-1 text-mono text-[11px] text-muted-foreground hover:text-foreground"
+                  >
+                    ↑
+                  </button>
+                  <button
+                    onClick={() => moveItem(i, 1)}
+                    title="Move later"
+                    className="rounded px-1 text-mono text-[11px] text-muted-foreground hover:text-foreground"
+                  >
+                    ↓
+                  </button>
+                  <button
+                    onClick={() => removeItem(i)}
+                    title="Remove"
+                    className="rounded p-1 text-muted-foreground hover:text-destructive"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </div>
+              </div>
+              <BlockFields
+                block={{ ...(it as ContentBlock), _uid: `nested-${i}` } as EditorBlock}
+                onChange={(patch) => patchItem(i, patch as Partial<ContentBlock>)}
+              />
+            </div>
+          ))}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-1.5 pt-1">
+          <span className="text-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+            Add inside
+          </span>
+          {NESTED_KINDS.map((k) => {
+            const meta = PALETTE.find((p) => p.kind === k)!;
+            return (
+              <button
+                key={k}
+                onClick={() => addItem(k)}
+                className="inline-flex items-center gap-1 rounded border border-border bg-background px-2 py-1 text-mono text-[10px] text-muted-foreground hover:border-primary/40 hover:text-foreground"
+              >
+                <meta.icon className="h-3 w-3" /> {meta.label}
+              </button>
+            );
+          })}
+        </div>
+        <p className="text-mono text-[10px] text-muted-foreground">
+          Drop palette blocks or media thumbnails here to nest them in this view.
+        </p>
+      </div>
+    </div>
+  );
 }
 
 function ColorField({
