@@ -146,11 +146,27 @@ function HomePage() {
       ) : (
         <>
           {promotedStories.length > 0 ? (
-            <StoryRow eyebrow="Promoted" title="Featured by writers" stories={promotedStories} />
+            <StoryCollection
+              eyebrow="Promoted"
+              title="Featured by writers"
+              stories={promotedStories}
+              horizontalVariant="feature"
+            />
           ) : null}
-          <StoryRow eyebrow="Premium" title="Paid stories" stories={paidStories} />
-          <StoryRow eyebrow="Trending" title="Top stories" stories={topStories} />
-          <StoryRow eyebrow="Fresh" title="New releases" stories={stories.slice(0, 12)} />
+          <StoryCollection eyebrow="Premium" title="Paid stories" stories={paidStories} />
+          <StoryCollection
+            eyebrow="Trending"
+            title="Top stories"
+            stories={topStories}
+            allowVariantChange
+          />
+          <StoryCollection
+            eyebrow="Fresh"
+            title="New releases"
+            stories={stories.slice(0, 12)}
+            allowVariantChange
+          />
+
         </>
       )}
 
