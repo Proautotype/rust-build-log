@@ -120,9 +120,34 @@ export function ContentRenderer({ blocks }: { blocks: ContentBlock[] }) {
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>{block.markdown}</ReactMarkdown>
               </div>
             );
+          case "layout": {
+            const gap =
+              block.gap === "sm" ? "gap-3" : block.gap === "lg" ? "gap-8" : "gap-5";
+            const align =
+              block.align === "center"
+                ? "items-center"
+                : block.align === "start"
+                  ? "items-start"
+                  : "items-stretch";
+            return (
+              <div
+                key={i}
+                className={`my-6 flex ${
+                  block.direction === "horizontal" ? "flex-col md:flex-row" : "flex-col"
+                } ${gap} ${align}`}
+              >
+                {block.items.map((child, j) => (
+                  <div key={j} className="min-w-0 flex-1">
+                    <ContentRenderer blocks={[child]} />
+                  </div>
+                ))}
+              </div>
+            );
+          }
           default:
             return null;
         }
+
       })}
     </div>
   );
