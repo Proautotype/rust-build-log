@@ -151,6 +151,8 @@ export function rowToStory(row: Tables<"stories">): Story {
     tipEnabled: r.tip_enabled ?? false,
     promoted: r.promoted ?? false,
     viewCount: r.view_count ?? 0,
+    theme: (r.theme ?? {}) as StoryTheme,
+
   };
 }
 
