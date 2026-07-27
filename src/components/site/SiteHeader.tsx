@@ -11,6 +11,8 @@ import {
   LayoutDashboard,
   BarChart3,
   Bot,
+  LayoutTemplate,
+
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
