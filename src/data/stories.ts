@@ -123,6 +123,8 @@ export function rowToStory(row: Tables<"stories">): Story {
     tip_enabled?: boolean | null;
     promoted?: boolean | null;
     view_count?: number | null;
+    theme?: StoryTheme | null;
+
   };
   const rawDiff = row.difficulty;
   const difficulty =
