@@ -18,6 +18,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as StoriesSlugRouteImport } from './routes/stories.$slug'
 import { Route as AuthenticatedUpgradeRouteImport } from './routes/_authenticated/upgrade'
+import { Route as AuthenticatedTemplatesRouteImport } from './routes/_authenticated/templates'
 import { Route as AuthenticatedStudioRouteImport } from './routes/_authenticated/studio'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedCoinsRouteImport } from './routes/_authenticated/coins'
@@ -71,6 +72,11 @@ const StoriesSlugRoute = StoriesSlugRouteImport.update({
 const AuthenticatedUpgradeRoute = AuthenticatedUpgradeRouteImport.update({
   id: '/upgrade',
   path: '/upgrade',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedTemplatesRoute = AuthenticatedTemplatesRouteImport.update({
+  id: '/templates',
+  path: '/templates',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedStudioRoute = AuthenticatedStudioRouteImport.update({
@@ -139,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/coins': typeof AuthenticatedCoinsRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/studio': typeof AuthenticatedStudioRoute
+  '/templates': typeof AuthenticatedTemplatesRoute
   '/upgrade': typeof AuthenticatedUpgradeRoute
   '/stories/$slug': typeof StoriesSlugRoute
   '/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
@@ -159,6 +166,7 @@ export interface FileRoutesByTo {
   '/coins': typeof AuthenticatedCoinsRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/studio': typeof AuthenticatedStudioRoute
+  '/templates': typeof AuthenticatedTemplatesRoute
   '/upgrade': typeof AuthenticatedUpgradeRoute
   '/stories/$slug': typeof StoriesSlugRoute
   '/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
@@ -181,6 +189,7 @@ export interface FileRoutesById {
   '/_authenticated/coins': typeof AuthenticatedCoinsRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/studio': typeof AuthenticatedStudioRoute
+  '/_authenticated/templates': typeof AuthenticatedTemplatesRoute
   '/_authenticated/upgrade': typeof AuthenticatedUpgradeRoute
   '/stories/$slug': typeof StoriesSlugRoute
   '/_authenticated/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
@@ -203,6 +212,7 @@ export interface FileRouteTypes {
     | '/coins'
     | '/profile'
     | '/studio'
+    | '/templates'
     | '/upgrade'
     | '/stories/$slug'
     | '/admin/dashboard'
@@ -223,6 +233,7 @@ export interface FileRouteTypes {
     | '/coins'
     | '/profile'
     | '/studio'
+    | '/templates'
     | '/upgrade'
     | '/stories/$slug'
     | '/admin/dashboard'
@@ -244,6 +255,7 @@ export interface FileRouteTypes {
     | '/_authenticated/coins'
     | '/_authenticated/profile'
     | '/_authenticated/studio'
+    | '/_authenticated/templates'
     | '/_authenticated/upgrade'
     | '/stories/$slug'
     | '/_authenticated/admin/dashboard'
@@ -330,6 +342,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedUpgradeRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/templates': {
+      id: '/_authenticated/templates'
+      path: '/templates'
+      fullPath: '/templates'
+      preLoaderRoute: typeof AuthenticatedTemplatesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/studio': {
       id: '/_authenticated/studio'
       path: '/studio'
@@ -409,6 +428,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCoinsRoute: typeof AuthenticatedCoinsRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedStudioRoute: typeof AuthenticatedStudioRoute
+  AuthenticatedTemplatesRoute: typeof AuthenticatedTemplatesRoute
   AuthenticatedUpgradeRoute: typeof AuthenticatedUpgradeRoute
   AuthenticatedAdminDashboardRoute: typeof AuthenticatedAdminDashboardRoute
   AuthenticatedAdminRequestsRoute: typeof AuthenticatedAdminRequestsRoute
@@ -421,6 +441,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCoinsRoute: AuthenticatedCoinsRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedStudioRoute: AuthenticatedStudioRoute,
+  AuthenticatedTemplatesRoute: AuthenticatedTemplatesRoute,
   AuthenticatedUpgradeRoute: AuthenticatedUpgradeRoute,
   AuthenticatedAdminDashboardRoute: AuthenticatedAdminDashboardRoute,
   AuthenticatedAdminRequestsRoute: AuthenticatedAdminRequestsRoute,
@@ -455,13 +476,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

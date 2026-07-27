@@ -11,6 +11,8 @@ import {
   LayoutDashboard,
   BarChart3,
   Bot,
+  LayoutTemplate,
+
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
@@ -97,6 +99,14 @@ export function SiteHeader() {
               >
                 <Bot className="h-3.5 w-3.5" />
               </Link>
+              <Link
+                to="/templates"
+                title="Story & card templates"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background text-muted-foreground hover:text-foreground"
+              >
+                <LayoutTemplate className="h-3.5 w-3.5" />
+              </Link>
+
             </>
           )}
 
@@ -230,6 +240,13 @@ export function SiteHeader() {
               >
                 AI agents
               </Link>
+              <Link
+                to="/templates"
+                className="px-3 py-1.5 rounded-md text-sm text-primary whitespace-nowrap"
+              >
+                Templates
+              </Link>
+
             </>
           )}
           {user && (

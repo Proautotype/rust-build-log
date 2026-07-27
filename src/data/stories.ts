@@ -27,9 +27,32 @@ export type ContentBlock =
   | { type: "videoFile"; src: string; title: string; poster?: string }
   | { type: "pdf"; title: string; description?: string; sizeKb: number; href: string }
   | { type: "gallery"; images: { src: string; alt: string }[] }
-  | { type: "markdown"; markdown: string; color?: string };
+  | { type: "markdown"; markdown: string; color?: string }
+  | {
+      type: "layout";
+      direction: "horizontal" | "vertical";
+      gap?: "sm" | "md" | "lg";
+      align?: "start" | "center" | "stretch";
+      items: ContentBlock[];
+    };
+
+/** Per-story visual theme applied to the reading surface. */
+export interface StoryTheme {
+  accent?: string;
+  background?: string;
+  text?: string;
+  font?: "sans" | "serif" | "mono" | "display";
+  width?: "narrow" | "regular" | "wide";
+  radius?: "none" | "sm" | "md" | "lg";
+}
+
+/** Card presentation styles available across listings. */
+export type CardVariant = "poster" | "row" | "feature" | "minimal";
+
+export const allCardVariants: CardVariant[] = ["poster", "row", "feature", "minimal"];
 
 export type Monetization = "free" | "tips" | "locked";
+
 
 export interface Story {
   id: string;
@@ -52,6 +75,8 @@ export interface Story {
   tipEnabled: boolean;
   promoted: boolean;
   viewCount: number;
+  theme: StoryTheme;
+
 }
 
 export interface Journey {
@@ -98,6 +123,8 @@ export function rowToStory(row: Tables<"stories">): Story {
     tip_enabled?: boolean | null;
     promoted?: boolean | null;
     view_count?: number | null;
+    theme?: StoryTheme | null;
+
   };
   const rawDiff = row.difficulty;
   const difficulty =
@@ -124,6 +151,8 @@ export function rowToStory(row: Tables<"stories">): Story {
     tipEnabled: r.tip_enabled ?? false,
     promoted: r.promoted ?? false,
     viewCount: r.view_count ?? 0,
+    theme: (r.theme ?? {}) as StoryTheme,
+
   };
 }
 

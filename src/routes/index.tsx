@@ -3,7 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { ArrowRight, Sparkles, GitBranch, BookOpen, Loader2, Search, X } from "lucide-react";
 import { StoryCard } from "@/components/story/StoryCard";
-import { Spotlight, StoryRow } from "@/components/story/StoryShowcase";
+import { Spotlight } from "@/components/story/StoryShowcase";
+import { StoryCollection } from "@/components/story/StoryCollection";
+
 import { heroImage, rowToJourney, rowToStory, technologies } from "@/data/stories";
 import { formatDate } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
@@ -146,11 +148,27 @@ function HomePage() {
       ) : (
         <>
           {promotedStories.length > 0 ? (
-            <StoryRow eyebrow="Promoted" title="Featured by writers" stories={promotedStories} />
+            <StoryCollection
+              eyebrow="Promoted"
+              title="Featured by writers"
+              stories={promotedStories}
+              horizontalVariant="feature"
+            />
           ) : null}
-          <StoryRow eyebrow="Premium" title="Paid stories" stories={paidStories} />
-          <StoryRow eyebrow="Trending" title="Top stories" stories={topStories} />
-          <StoryRow eyebrow="Fresh" title="New releases" stories={stories.slice(0, 12)} />
+          <StoryCollection eyebrow="Premium" title="Paid stories" stories={paidStories} />
+          <StoryCollection
+            eyebrow="Trending"
+            title="Top stories"
+            stories={topStories}
+            allowVariantChange
+          />
+          <StoryCollection
+            eyebrow="Fresh"
+            title="New releases"
+            stories={stories.slice(0, 12)}
+            allowVariantChange
+          />
+
         </>
       )}
 
