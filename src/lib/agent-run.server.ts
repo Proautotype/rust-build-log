@@ -100,6 +100,9 @@ export async function postStoryAsCreator(input: PostStoryInput) {
       unlock_price: input.unlockPrice ?? 0,
       tip_enabled: input.tipEnabled ?? false,
       ai_generated: true,
+      x_trend_keyword: input.xTrendKeyword ?? null,
+      x_source_urls: input.xSourceUrls ?? [],
+
     })
     .select("id, title, slug, published")
     .maybeSingle();
