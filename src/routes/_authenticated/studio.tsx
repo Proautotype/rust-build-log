@@ -38,6 +38,8 @@ import {
   LayoutTemplate,
   Save,
   Wand2,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
 import type {
   ContentBlock,
@@ -124,7 +126,7 @@ const emptyDraft = (): Draft => ({
   slug: "",
   shortDescription: "",
   cover: "",
-  category: "Fundamentals",
+  category: "Tech",
   difficulty: "Beginner",
   readingMinutes: 5,
   tags: "rust",
@@ -277,6 +279,7 @@ const PALETTE: {
 function StudioPage() {
   const [draft, setDraft] = useState<Draft>(() => emptyDraft());
   const [mode, setMode] = useState<"edit" | "markdown" | "preview">("edit");
+  const [expanded, setExpanded] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [aiOpen, setAiOpen] = useState(false);
@@ -469,7 +472,7 @@ function StudioPage() {
       slug: s.slug,
       shortDescription: s.short_description ?? "",
       cover: s.cover ?? "",
-      category: (s.category ?? "Fundamentals") as Category,
+      category: (s.category ?? "Tech") as Category,
       difficulty: (s.difficulty ?? "Beginner") as Difficulty,
       readingMinutes: s.reading_minutes ?? 5,
       tags: (s.tags ?? []).join(", "),
@@ -516,7 +519,7 @@ function StudioPage() {
     <div className="border-t border-border/60">
       {/* Studio header */}
       <div className="border-b border-border/60 bg-surface/40 backdrop-blur">
-        <div className="container-page flex flex-wrap items-center justify-between gap-3 py-4">
+        <div className={`${expanded ? "w-full px-4 sm:px-6" : "container-page"} flex flex-wrap items-center justify-between gap-3 py-4`}>
           <div>
             <div className="text-mono text-[11px] uppercase tracking-widest text-primary">
               Creator Studio {draft.id ? "· editing" : "· new"}
@@ -585,6 +588,18 @@ function StudioPage() {
               </button>
             </div>
             <button
+              onClick={() => setExpanded((v) => !v)}
+              title={expanded ? "Exit full width" : "Expand studio to full width"}
+              className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-mono text-xs text-muted-foreground hover:text-foreground hover:border-border-strong"
+            >
+              {expanded ? (
+                <Minimize2 className="h-3.5 w-3.5" />
+              ) : (
+                <Maximize2 className="h-3.5 w-3.5" />
+              )}
+              {expanded ? "Shrink" : "Expand"}
+            </button>
+            <button
               onClick={resetDraft}
               title="Reset draft"
               className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-mono text-xs text-muted-foreground hover:text-foreground hover:border-border-strong"
@@ -630,7 +645,7 @@ function StudioPage() {
       {mode === "preview" ? (
         <PreviewPane draft={draft} />
       ) : mode === "markdown" ? (
-        <div className="container-page py-6">
+        <div className={`${expanded ? "w-full px-4 sm:px-6" : "container-page"} py-6`}>
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
             <div className="rounded-lg border border-border bg-background p-3">
               <MarkdownField
@@ -652,9 +667,15 @@ function StudioPage() {
           </div>
         </div>
       ) : (
-        <div className="container-page py-6">
-          <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)_280px]">
-            <div className="space-y-3">
+        <div className={`${expanded ? "w-full px-4 sm:px-6" : "container-page"} py-6`}>
+          <div
+            className={`grid gap-6 ${
+              expanded
+                ? "lg:grid-cols-[240px_minmax(0,1fr)_320px] 2xl:grid-cols-[280px_minmax(0,1fr)_360px]"
+                : "lg:grid-cols-[220px_minmax(0,1fr)_280px]"
+            }`}
+          >
+            <div className="space-y-3 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto lg:pr-1 lg:pb-4">
               <Palette />
               <MediaLibrary />
             </div>
@@ -876,7 +897,7 @@ function StoriesDropdown({
 
 function Palette() {
   return (
-    <aside className="lg:sticky lg:top-20 h-fit rounded-lg border border-border bg-surface/60 p-3">
+    <aside className="h-fit rounded-lg border border-border bg-surface/60 p-3">
       <div className="text-mono text-[10px] uppercase tracking-widest text-muted-foreground px-1 pb-2">
         Blocks
       </div>
@@ -994,7 +1015,7 @@ function MediaLibrary() {
   const assets = assetsQuery.data ?? [];
 
   return (
-    <aside className="lg:sticky lg:top-[420px] h-fit rounded-lg border border-border bg-surface/60 p-3">
+    <aside className="h-fit rounded-lg border border-border bg-surface/60 p-3">
       <div className="flex items-center justify-between px-1 pb-2">
         <div className="text-mono text-[10px] uppercase tracking-widest text-muted-foreground">
           Media library
