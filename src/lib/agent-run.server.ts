@@ -192,6 +192,9 @@ export async function runAgent(agent: AgentRow, source: "schedule" | "manual") {
       monetization: agent.monetization,
       unlockPrice: agent.unlock_price,
       tipEnabled: agent.tip_enabled,
+      xTrendKeyword: usedTrend?.keyword ?? null,
+      xSourceUrls: usedTrend ? usedTrend.posts.map((p) => p.url) : [],
+
     });
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
