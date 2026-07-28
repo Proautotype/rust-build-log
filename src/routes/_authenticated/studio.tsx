@@ -1245,9 +1245,6 @@ function Canvas({
             ))}
           </>
         )}
-
-          </>
-        )}
       </div>
     </div>
   );
