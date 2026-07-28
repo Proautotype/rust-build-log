@@ -208,6 +208,9 @@ function AgentsPage() {
       </p>
       {status ? <div className="mt-3 text-mono text-xs text-primary">{status}</div> : null}
 
+      <XSettingsCard />
+
+
       {/* Agents */}
       <div className="mt-8 flex items-center justify-between">
         <h2 className="text-lg font-semibold">Your agents</h2>
