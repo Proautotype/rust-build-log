@@ -1,4 +1,5 @@
 import { generateStory, slugify } from "./agent.server";
+import { TOPICS } from "@/data/topics";
 
 export interface AgentRow {
   id: string;
@@ -15,6 +16,24 @@ export interface AgentRow {
   unlock_price: number;
   tip_enabled: boolean;
   last_run_at: string | null;
+  source_mode?: string | null;
+  x_keywords?: string[] | null;
+  use_reader_interests?: boolean | null;
+  min_engagement?: number | null;
+}
+
+/** Keywords an agent should search X with: its own list, plus reader interests when asked. */
+export function agentKeywords(agent: AgentRow): string[] {
+  const own = (agent.x_keywords ?? []).map((k) => k.trim()).filter(Boolean);
+  const interests = agent.use_reader_interests ? TOPICS.map((t) => t.label) : [];
+  const merged = [...own, ...interests];
+  const seen = new Set<string>();
+  return merged.filter((k) => {
+    const key = k.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 export interface PostStoryInput {
