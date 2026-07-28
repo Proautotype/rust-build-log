@@ -25,6 +25,13 @@ import {
   revokeApiKey,
 } from "@/lib/agent.functions";
 import { listJourneys } from "@/lib/studio.functions";
+import {
+  getMyXSettings,
+  saveMyXSettings,
+  DEFAULT_X_SETTINGS,
+  type WriterXSettings,
+} from "@/lib/x-settings.functions";
+
 
 export const Route = createFileRoute("/_authenticated/agents")({
   head: () => ({
