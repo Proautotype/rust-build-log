@@ -356,6 +356,45 @@ function StudioPage() {
       return { ...d, blocks: next };
     });
 
+  /**
+   * Wrap the selected blocks into a single layout block, keeping their order.
+   * The group lands where the first selected block was.
+   */
+  const groupBlocks = (uids: string[], direction: "horizontal" | "vertical") =>
+    setDraft((d) => {
+      const picked = d.blocks.filter((b) => uids.includes(b._uid));
+      if (picked.length < 2) return d;
+      const firstIndex = d.blocks.findIndex((b) => b._uid === picked[0]._uid);
+      const group: EditorBlock = {
+        _uid: uid(),
+        type: "layout",
+        direction,
+        gap: "md",
+        align: "stretch",
+        items: picked.map(({ _uid: _u, ...rest }) => rest as ContentBlock),
+      };
+      const rest = d.blocks.filter((b) => !uids.includes(b._uid));
+      rest.splice(Math.max(0, Math.min(firstIndex, rest.length)), 0, group);
+      return { ...d, blocks: rest };
+    });
+
+  /** Flatten a layout block back into standalone blocks. */
+  const ungroupBlock = (uidVal: string) =>
+    setDraft((d) => {
+      const i = d.blocks.findIndex((b) => b._uid === uidVal);
+      if (i < 0) return d;
+      const target = d.blocks[i];
+      if (target.type !== "layout") return d;
+      const expanded: EditorBlock[] = target.items.map((it) => ({
+        ...(it as ContentBlock),
+        _uid: uid(),
+      }));
+      const next = [...d.blocks];
+      next.splice(i, 1, ...expanded);
+      return { ...d, blocks: next };
+    });
+
+
   const newDraft = () => {
     if (confirm("Start a fresh draft? Unsaved local changes will be lost.")) setDraft(emptyDraft());
   };
@@ -626,6 +665,8 @@ function StudioPage() {
               onRemove={removeBlock}
               onDuplicate={duplicateBlock}
               onChangeBlock={updateBlock}
+              onGroup={groupBlocks}
+              onUngroup={ungroupBlock}
             />
             <MetaPanel
               draft={draft}
@@ -1067,11 +1108,34 @@ interface CanvasProps {
   onRemove: (uid: string) => void;
   onDuplicate: (uid: string) => void;
   onChangeBlock: (uid: string, patch: Partial<EditorBlock>) => void;
+  onGroup: (uids: string[], direction: "horizontal" | "vertical") => void;
+  onUngroup: (uid: string) => void;
 }
 
-function Canvas({ draft, onInsertAt, onMove, onRemove, onDuplicate, onChangeBlock }: CanvasProps) {
+function Canvas({
+  draft,
+  onInsertAt,
+  onMove,
+  onRemove,
+  onDuplicate,
+  onChangeBlock,
+  onGroup,
+  onUngroup,
+}: CanvasProps) {
   const [dropIndex, setDropIndex] = useState<number | null>(null);
+  const [selected, setSelected] = useState<string[]>([]);
   const dragUid = useRef<string | null>(null);
+
+  const toggleSelect = (uidVal: string) =>
+    setSelected((s) => (s.includes(uidVal) ? s.filter((x) => x !== uidVal) : [...s, uidVal]));
+
+  const group = (direction: "horizontal" | "vertical") => {
+    // Keep canvas order, not click order.
+    const ordered = draft.blocks.filter((b) => selected.includes(b._uid)).map((b) => b._uid);
+    onGroup(ordered, direction);
+    setSelected([]);
+  };
+
 
   const handleDropAt = (index: number, e: React.DragEvent) => {
     e.preventDefault();
@@ -1103,6 +1167,39 @@ function Canvas({ draft, onInsertAt, onMove, onRemove, onDuplicate, onChangeBloc
 
   return (
     <div className="min-w-0">
+      {/* Multi-select grouping toolbar */}
+      <div className="mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-border bg-surface/40 px-3 py-2 sm:flex sm:justify-between">
+        <div className="min-w-0 text-mono text-[11px] text-muted-foreground">
+          {selected.length === 0
+            ? "Tick blocks to group them into a horizontal or vertical view"
+            : `${selected.length} block${selected.length === 1 ? "" : "s"} selected`}
+        </div>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <button
+            onClick={() => group("horizontal")}
+            disabled={selected.length < 2}
+            className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-mono text-[11px] transition hover:border-primary/50 hover:text-primary disabled:opacity-40 disabled:hover:border-border disabled:hover:text-muted-foreground"
+          >
+            <Columns3 className="h-3.5 w-3.5" /> Group across
+          </button>
+          <button
+            onClick={() => group("vertical")}
+            disabled={selected.length < 2}
+            className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-mono text-[11px] transition hover:border-primary/50 hover:text-primary disabled:opacity-40 disabled:hover:border-border disabled:hover:text-muted-foreground"
+          >
+            <Rows3 className="h-3.5 w-3.5" /> Group down
+          </button>
+          {selected.length > 0 ? (
+            <button
+              onClick={() => setSelected([])}
+              className="rounded-md px-2 py-1.5 text-mono text-[11px] text-muted-foreground hover:text-foreground"
+            >
+              Clear
+            </button>
+          ) : null}
+        </div>
+      </div>
+
       <div className="rounded-lg border border-dashed border-border bg-surface/30 p-4">
         {draft.blocks.length === 0 ? (
           <DropSlot
@@ -1126,6 +1223,9 @@ function Canvas({ draft, onInsertAt, onMove, onRemove, onDuplicate, onChangeBloc
                 <BlockEditor
                   block={b}
                   index={i}
+                  selected={selected.includes(b._uid)}
+                  onToggleSelect={() => toggleSelect(b._uid)}
+                  onUngroup={b.type === "layout" ? () => onUngroup(b._uid) : undefined}
                   onRemove={() => onRemove(b._uid)}
                   onDuplicate={() => onDuplicate(b._uid)}
                   onChange={(patch) => onChangeBlock(b._uid, patch)}
@@ -1195,6 +1295,9 @@ function DropSlot({
 function BlockEditor({
   block,
   index,
+  selected,
+  onToggleSelect,
+  onUngroup,
   onRemove,
   onDuplicate,
   onChange,
@@ -1202,15 +1305,31 @@ function BlockEditor({
 }: {
   block: EditorBlock;
   index: number;
+  selected?: boolean;
+  onToggleSelect?: () => void;
+  onUngroup?: () => void;
   onRemove: () => void;
   onDuplicate: () => void;
   onChange: (patch: Partial<EditorBlock>) => void;
   onDragStart: (e: React.DragEvent) => void;
 }) {
   return (
-    <div className="group relative rounded-lg border border-border bg-background p-3 transition hover:border-border-strong">
+    <div
+      className={`group relative rounded-lg border bg-background p-3 transition ${
+        selected ? "border-primary ring-1 ring-primary/40" : "border-border hover:border-border-strong"
+      }`}
+    >
       <div className="flex items-center justify-between gap-2 pb-2">
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          {onToggleSelect ? (
+            <input
+              type="checkbox"
+              checked={!!selected}
+              onChange={onToggleSelect}
+              aria-label={`Select block ${index + 1}`}
+              className="h-3.5 w-3.5 shrink-0 accent-[var(--primary)]"
+            />
+          ) : null}
           <div
             draggable
             onDragStart={onDragStart}
@@ -1219,11 +1338,20 @@ function BlockEditor({
           >
             <GripVertical className="h-4 w-4" />
           </div>
-          <span className="text-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+          <span className="truncate text-mono text-[10px] uppercase tracking-widest text-muted-foreground">
             {String(index + 1).padStart(2, "0")} · {blockLabel(block)}
           </span>
         </div>
-        <div className="flex items-center gap-1 opacity-70 group-hover:opacity-100">
+        <div className="flex shrink-0 items-center gap-1 opacity-70 group-hover:opacity-100">
+          {onUngroup ? (
+            <button
+              onClick={onUngroup}
+              title="Ungroup"
+              className="rounded px-1.5 py-1 text-mono text-[10px] text-muted-foreground hover:bg-accent hover:text-foreground"
+            >
+              Ungroup
+            </button>
+          ) : null}
           <button
             onClick={onDuplicate}
             title="Duplicate"
@@ -1232,6 +1360,7 @@ function BlockEditor({
             <Copy className="h-3.5 w-3.5" />
           </button>
           <button
+
             onClick={onRemove}
             title="Delete"
             className="rounded p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10"

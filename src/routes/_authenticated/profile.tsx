@@ -4,6 +4,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2, Save, PenSquare, ShieldCheck, User as UserIcon, XCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useInterests } from "@/hooks/useInterests";
+import { TopicPicker } from "@/components/feed/TopicPicker";
 import { useRole } from "@/hooks/useRole";
 import {
   getMyWriterRequest,
@@ -24,6 +26,7 @@ export const Route = createFileRoute("/_authenticated/profile")({
 
 function ProfilePage() {
   const { user, profile } = useAuth();
+  const { interests, toggle } = useInterests();
   const { roles, isWriter, isAdmin, loading: rolesLoading } = useRole();
   const qc = useQueryClient();
 
@@ -135,8 +138,18 @@ function ProfilePage() {
         )}
       </div>
 
+      {/* Interests */}
+      <section className="mt-10 rounded-xl border border-border bg-card/40 p-6">
+        <h2 className="text-lg font-semibold">Your topics</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Pick what you want to read. Your home feed reorders around these.
+        </p>
+        <TopicPicker selected={interests} onToggle={toggle} size="lg" className="mt-5" />
+      </section>
+
       {/* Profile edit */}
       <section className="mt-10 rounded-xl border border-border bg-card/40 p-6">
+
         <h2 className="text-lg font-semibold">Public profile</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           This is what other readers see on your stories and comments.
