@@ -1,28 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { DEFAULT_X_SETTINGS, type WriterXSettings } from "./x-settings";
 
-export interface WriterXSettings {
-  enabled: boolean;
-  keywords: string[];
-  use_reader_interests: boolean;
-  min_engagement: number;
-  default_category: string;
-  default_tone: string;
-  auto_publish: boolean;
-  show_on_home: boolean;
-}
+export { DEFAULT_X_SETTINGS };
+export type { WriterXSettings };
 
-export const DEFAULT_X_SETTINGS: WriterXSettings = {
-  enabled: true,
-  keywords: [],
-  use_reader_interests: true,
-  min_engagement: 20,
-  default_category: "social",
-  default_tone: "clear, engaging, factual",
-  auto_publish: false,
-  show_on_home: true,
-};
 
 const settingsInput = z.object({
   enabled: z.boolean(),
