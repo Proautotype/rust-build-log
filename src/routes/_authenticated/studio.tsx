@@ -62,6 +62,9 @@ import {
   deleteMyStory,
 } from "@/lib/studio.functions";
 import { draftStoryWithAi, fetchXTrends, draftStoryFromTrend } from "@/lib/agent.functions";
+import { getMyXSettings, publishStoryFromTrend } from "@/lib/x-settings.functions";
+import { DEFAULT_X_SETTINGS } from "@/lib/x-settings";
+
 import { Bot } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
