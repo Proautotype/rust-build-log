@@ -260,7 +260,7 @@ function AgentsPage() {
                   Run now
                 </button>
                 <button
-                  onClick={() => setForm(a)}
+                  onClick={() => setForm(toForm(a))}
                   className="rounded-md border border-border bg-background px-3 py-1.5 text-mono text-xs hover:border-border-strong"
                 >
                   Edit
