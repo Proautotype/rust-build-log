@@ -1,17 +1,13 @@
 // Types and mappers for stories/journeys. All actual data now lives in Supabase.
 import heroRust from "@/assets/hero-rust.jpg";
 import type { Tables } from "@/integrations/supabase/types";
+import { TOPICS } from "@/data/topics";
 
 export type Difficulty = "Beginner" | "Intermediate" | "Advanced";
 
-export type Category =
-  | "Fundamentals"
-  | "Systems Programming"
-  | "Backend"
-  | "CLI Tools"
-  | "Embedded"
-  | "Web Development"
-  | "Meta";
+// Categories mirror the reader interest topics used at signup, so a story's
+// category feeds directly into personalized feeds.
+export type Category = string;
 
 export type CodeLanguage =
   "rust" | "typescript" | "java" | "kotlin" | "python" | "bash" | "toml" | "text";
@@ -91,15 +87,7 @@ export interface Journey {
 
 export const heroImage = heroRust;
 
-export const allCategories: Category[] = [
-  "Fundamentals",
-  "Systems Programming",
-  "Backend",
-  "CLI Tools",
-  "Embedded",
-  "Web Development",
-  "Meta",
-];
+export const allCategories: Category[] = TOPICS.map((t) => t.label);
 
 export const allDifficulties: Difficulty[] = ["Beginner", "Intermediate", "Advanced"];
 
@@ -140,7 +128,7 @@ export function rowToStory(row: Tables<"stories">): Story {
     content: (Array.isArray(row.content) ? row.content : []) as unknown as ContentBlock[],
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-    category: (row.category ?? "Fundamentals") as Category,
+    category: (row.category ?? "Tech") as Category,
     tags: row.tags ?? [],
     difficulty,
     readingMinutes: row.reading_minutes ?? 5,
