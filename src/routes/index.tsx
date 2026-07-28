@@ -225,6 +225,8 @@ function HomePage() {
             </section>
           ) : null}
 
+          <XTrendsRow />
+
           {forYou.length > 0 ? (
             <StoryCollection
               eyebrow="For you"
@@ -233,6 +235,7 @@ function HomePage() {
               horizontalVariant="feature"
             />
           ) : null}
+
 
           {topicRows.map((row) => (
             <StoryCollection
