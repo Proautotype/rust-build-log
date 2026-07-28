@@ -1167,6 +1167,39 @@ function Canvas({
 
   return (
     <div className="min-w-0">
+      {/* Multi-select grouping toolbar */}
+      <div className="mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-border bg-surface/40 px-3 py-2 sm:flex sm:justify-between">
+        <div className="min-w-0 text-mono text-[11px] text-muted-foreground">
+          {selected.length === 0
+            ? "Tick blocks to group them into a horizontal or vertical view"
+            : `${selected.length} block${selected.length === 1 ? "" : "s"} selected`}
+        </div>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <button
+            onClick={() => group("horizontal")}
+            disabled={selected.length < 2}
+            className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-mono text-[11px] transition hover:border-primary/50 hover:text-primary disabled:opacity-40 disabled:hover:border-border disabled:hover:text-muted-foreground"
+          >
+            <Columns3 className="h-3.5 w-3.5" /> Group across
+          </button>
+          <button
+            onClick={() => group("vertical")}
+            disabled={selected.length < 2}
+            className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-mono text-[11px] transition hover:border-primary/50 hover:text-primary disabled:opacity-40 disabled:hover:border-border disabled:hover:text-muted-foreground"
+          >
+            <Rows3 className="h-3.5 w-3.5" /> Group down
+          </button>
+          {selected.length > 0 ? (
+            <button
+              onClick={() => setSelected([])}
+              className="rounded-md px-2 py-1.5 text-mono text-[11px] text-muted-foreground hover:text-foreground"
+            >
+              Clear
+            </button>
+          ) : null}
+        </div>
+      </div>
+
       <div className="rounded-lg border border-dashed border-border bg-surface/30 p-4">
         {draft.blocks.length === 0 ? (
           <DropSlot
@@ -1190,6 +1223,9 @@ function Canvas({
                 <BlockEditor
                   block={b}
                   index={i}
+                  selected={selected.includes(b._uid)}
+                  onToggleSelect={() => toggleSelect(b._uid)}
+                  onUngroup={b.type === "layout" ? () => onUngroup(b._uid) : undefined}
                   onRemove={() => onRemove(b._uid)}
                   onDuplicate={() => onDuplicate(b._uid)}
                   onChange={(patch) => onChangeBlock(b._uid, patch)}
@@ -1207,6 +1243,9 @@ function Canvas({
                 />
               </div>
             ))}
+          </>
+        )}
+
           </>
         )}
       </div>
