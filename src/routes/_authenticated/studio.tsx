@@ -394,7 +394,6 @@ function StudioPage() {
       return { ...d, blocks: next };
     });
 
-
   const newDraft = () => {
     if (confirm("Start a fresh draft? Unsaved local changes will be lost.")) setDraft(emptyDraft());
   };
@@ -794,7 +793,11 @@ function AiDraftDialog({
             disabled={mut.isPending || topic.trim().length < 3}
             className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-mono text-xs text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
-            {mut.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+            {mut.isPending ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Sparkles className="h-3.5 w-3.5" />
+            )}
             {mut.isPending ? "Writing…" : "Generate draft"}
           </button>
         </div>
@@ -1009,7 +1012,11 @@ function MediaLibrary() {
           disabled={uploading}
           className="inline-flex items-center gap-1 rounded border border-border bg-background px-1.5 py-0.5 text-mono text-[10px] text-muted-foreground hover:text-foreground disabled:opacity-50"
         >
-          {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+          {uploading ? (
+            <Loader2 className="h-3 w-3 animate-spin" />
+          ) : (
+            <Upload className="h-3 w-3" />
+          )}
           Upload
         </button>
         <input
@@ -1045,9 +1052,7 @@ function MediaLibrary() {
         Drop image / video files here
       </div>
 
-      {error ? (
-        <div className="mb-2 text-mono text-[10px] text-destructive">{error}</div>
-      ) : null}
+      {error ? <div className="mb-2 text-mono text-[10px] text-destructive">{error}</div> : null}
 
       {assetsQuery.isLoading ? (
         <div className="text-mono text-[10px] text-muted-foreground">Loading…</div>
@@ -1076,11 +1081,7 @@ function MediaLibrary() {
                 title={`Drag "${a.filename ?? a.kind}" onto the canvas`}
               >
                 {a.kind === "image" ? (
-                  <img
-                    src={a.url}
-                    alt={a.filename ?? ""}
-                    className="h-full w-full object-cover"
-                  />
+                  <img src={a.url} alt={a.filename ?? ""} className="h-full w-full object-cover" />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center bg-surface-2">
                     <Film className="h-5 w-5 text-primary" />
@@ -1104,7 +1105,6 @@ function MediaLibrary() {
     </aside>
   );
 }
-
 
 interface CanvasProps {
   draft: Draft;
@@ -1140,7 +1140,6 @@ function Canvas({
     onGroup(ordered, direction);
     setSelected([]);
   };
-
 
   const handleDropAt = (index: number, e: React.DragEvent) => {
     e.preventDefault();
@@ -1321,7 +1320,9 @@ function BlockEditor({
   return (
     <div
       className={`group relative rounded-lg border bg-background p-3 transition ${
-        selected ? "border-primary ring-1 ring-primary/40" : "border-border hover:border-border-strong"
+        selected
+          ? "border-primary ring-1 ring-primary/40"
+          : "border-border hover:border-border-strong"
       }`}
     >
       <div className="flex items-center justify-between gap-2 pb-2">
@@ -1365,7 +1366,6 @@ function BlockEditor({
             <Copy className="h-3.5 w-3.5" />
           </button>
           <button
-
             onClick={onRemove}
             title="Delete"
             className="rounded p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
@@ -1717,7 +1717,9 @@ function LayoutFields({
         <Select
           label="Direction"
           value={block.direction}
-          onChange={(v) => onChange({ direction: v as "horizontal" | "vertical" } as Partial<EditorBlock>)}
+          onChange={(v) =>
+            onChange({ direction: v as "horizontal" | "vertical" } as Partial<EditorBlock>)
+          }
           options={[
             { value: "horizontal", label: "Horizontal (side by side)" },
             { value: "vertical", label: "Vertical (stacked)" },
@@ -1765,7 +1767,11 @@ function LayoutFields({
           const media = e.dataTransfer.getData("application/x-block-media");
           if (media) {
             try {
-              const m = JSON.parse(media) as { kind: "image" | "video"; url: string; title?: string };
+              const m = JSON.parse(media) as {
+                kind: "image" | "video";
+                url: string;
+                title?: string;
+              };
               setItems([
                 ...items,
                 m.kind === "image"
@@ -1783,9 +1789,7 @@ function LayoutFields({
       >
         <div
           className={
-            block.direction === "horizontal"
-              ? "grid gap-2 md:grid-cols-2"
-              : "flex flex-col gap-2"
+            block.direction === "horizontal" ? "grid gap-2 md:grid-cols-2" : "flex flex-col gap-2"
           }
         >
           {items.map((it, i) => (
@@ -2197,19 +2201,47 @@ const THEME_PRESETS: { label: string; theme: StoryTheme }[] = [
   { label: "Default", theme: {} },
   {
     label: "Rust",
-    theme: { accent: "#f97316", background: "#0d0d0f", text: "#ededed", font: "sans", width: "regular", radius: "md" },
+    theme: {
+      accent: "#f97316",
+      background: "#0d0d0f",
+      text: "#ededed",
+      font: "sans",
+      width: "regular",
+      radius: "md",
+    },
   },
   {
     label: "Editorial",
-    theme: { accent: "#c2410c", background: "#faf7f2", text: "#1c1917", font: "serif", width: "narrow", radius: "sm" },
+    theme: {
+      accent: "#c2410c",
+      background: "#faf7f2",
+      text: "#1c1917",
+      font: "serif",
+      width: "narrow",
+      radius: "sm",
+    },
   },
   {
     label: "Terminal",
-    theme: { accent: "#22c55e", background: "#08110c", text: "#d1fae5", font: "mono", width: "wide", radius: "none" },
+    theme: {
+      accent: "#22c55e",
+      background: "#08110c",
+      text: "#d1fae5",
+      font: "mono",
+      width: "wide",
+      radius: "none",
+    },
   },
   {
     label: "Midnight",
-    theme: { accent: "#6366f1", background: "#0b1020", text: "#e2e8f0", font: "display", width: "regular", radius: "lg" },
+    theme: {
+      accent: "#6366f1",
+      background: "#0b1020",
+      text: "#e2e8f0",
+      font: "display",
+      width: "regular",
+      radius: "lg",
+    },
   },
 ];
 
