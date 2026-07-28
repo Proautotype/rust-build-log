@@ -891,6 +891,11 @@ function XTrendPanel({
 }) {
   const trendsFn = useServerFn(fetchXTrends);
   const draftTrendFn = useServerFn(draftStoryFromTrend);
+  const publishTrendFn = useServerFn(publishStoryFromTrend);
+  const settingsFn = useServerFn(getMyXSettings);
+
+  const settingsQ = useQuery({ queryKey: ["my-x-settings"], queryFn: () => settingsFn({}) });
+  const settings = settingsQ.data ?? DEFAULT_X_SETTINGS;
 
   const [keywords, setKeywords] = useState("");
   const [useInterests, setUseInterests] = useState(true);
@@ -899,6 +904,17 @@ function XTrendPanel({
   const [notConnected, setNotConnected] = useState(false);
   const [notices, setNotices] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [published, setPublished] = useState<string | null>(null);
+  const [hydrated, setHydrated] = useState(false);
+
+  // Seed the panel from the writer's own X settings the first time they load.
+  useEffect(() => {
+    if (hydrated || !settingsQ.data) return;
+    setKeywords(settings.keywords.join(", "));
+    setUseInterests(settings.use_reader_interests);
+    setMinEngagement(settings.min_engagement);
+    setHydrated(true);
+  }, [hydrated, settingsQ.data, settings]);
 
   const search = useMutation({
     mutationFn: () =>
@@ -930,6 +946,20 @@ function XTrendPanel({
     onSuccess: (res) => onApply(res as never),
     onError: (e: Error) => setError(e.message),
   });
+
+  /** Writes the trend into a story on the writer's account and posts it live on R2R. */
+  const publish = useMutation({
+    mutationFn: (trend: TrendView) =>
+      publishTrendFn({
+        data: { keyword: trend.keyword, publish: true, posts: trend.posts.slice(0, 6) },
+      }),
+    onSuccess: (res) => {
+      const story = res as { title?: string } | null;
+      setPublished(`Published "${story?.title ?? "story"}" on R2R.`);
+    },
+    onError: (e: Error) => setError(e.message),
+  });
+
 
   return (
     <div>
