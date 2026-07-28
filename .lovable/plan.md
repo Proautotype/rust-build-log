@@ -1,32 +1,60 @@
-## What I found
+## Short answer
 
-- The analytics view, its permissions, and the page code are all correct. The reason the page is empty is the **data**: the only 3 stories in the database are the original seeded demos with **no creator attached** (`creator_id` is null), so no writer's analytics query can ever match them. All view counts are also still 0.
-- Trending today is a fake formula in the homepage code (`promoted ? 5 : 0` + monetization weight + reading minutes) — no views, no searches.
+Yes. X has a first-class connector in Lovable, and its app-only read access can search recent public posts — enough to detect what's trending for a set of keywords. R2R then feeds those posts to the existing AI writer (`src/lib/agent.server.ts`) and produces an original article that cites the sources, rather than republishing posts.
 
-## Plan
+## How it works
 
-### 1. Clean up + real analytics data
-- Delete the 3 unowned demo stories (and any orphaned journeys/comments referencing them).
-- Add a `story_views` table (story_id, viewer_id nullable, session key, created_at) so views are timestamped, not just a running total, and de-duplicated per session within a window. `increment_story_view` records a row and bumps `stories.view_count`.
-- Extend the `story_analytics` view with recent-window columns (views last 7/30 days) so the creator page can show trend, not just lifetime totals.
-- Analytics page: add explicit empty state ("no published stories yet"), show errors instead of silently rendering zeros, and add a 7-day views column.
+```text
+X search (recent posts, ranked by engagement)
+        ↓
+cluster into "trends" per keyword
+        ↓
+Lovable AI writes an original article + summary + tags
+        ↓
+story row under the creator (draft or published)
+```
 
-### 2. Trending from real signals
-- Add a `story_search_events` table (query text, matched story_id, created_at) written from the landing-page search when a result is clicked/shown.
-- Add a `trending_stories` view scoring each story over a rolling 7-day window:
-  `views*1 + searches*2 + comments*3 + tips*4 + unlocks*5`, with promoted given a small boost.
-- Homepage "Top stories" row reads from this view instead of the hardcoded formula. Falls back to newest stories when there's no activity yet.
+## 1. Connect X
 
-### 3. AI agent that can post (all three modes)
-**a. Studio assistant** — a panel in the Creator Studio where the writer describes a topic and the agent drafts title, slug, summary, tags and content blocks (including markdown blocks) directly into the editor. Writer reviews and publishes. Uses Lovable AI via a server function.
+Connect the X connector (app-only API key). This gives read-only access to recent public post search and user lookup — no posting to X, which we don't need. All calls happen server-side through the connector gateway; nothing hits the browser.
 
-**b. Configurable auto-posting agent** — new `creator_agents` table per writer: enabled flag, topic/prompt, tone, cadence (daily/weekly), publish-vs-draft mode, journey to attach to, monetization defaults. A new "AI Agent" page under the writer's studio to configure it. A scheduled endpoint at `/api/public/agents/run` (protected by a shared secret, called by a cron) generates and inserts stories under that creator's account, logged in an `agent_runs` table so the writer can see what was posted.
+## 2. Trend fetching
 
-**c. API key for external agents** — `agent_api_keys` table (hashed key, label, creator, last used). Writers generate a key in the Studio; an endpoint `POST /api/public/agent/stories` accepts a story payload (or a prompt to generate from), authenticates by key, and posts under that creator. Key is shown once on creation.
+New server-only helper that, given keywords:
+- searches recent public posts (last 24–48h) for each keyword, excluding retweets/replies
+- ranks by engagement (likes + reposts + replies) and recency
+- groups the top posts into 3–5 candidate "trends" with a short label
+- returns post text, author handle, permalink and metrics
 
-All agent-created stories are marked with an `ai_generated` flag and shown with an "AI-assisted" badge in the Studio list and analytics.
+Results are cached briefly in the database so cron runs and Studio previews don't burn X rate limits. Repeated 4xx stops the loop; 429 backs off on `Retry-After`.
 
-### Technical notes
-- New tables get GRANTs + RLS scoped to `auth.uid()`; search/view event tables allow anonymous inserts only.
-- Agent generation runs server-side through Lovable AI (no key handling for you).
-- Cron secret and API key hashing handled server-side; keys never stored in plaintext.
+## 3. Manual: "Pull from X" in the Studio
+
+New panel next to the existing AI Draft control:
+- keyword/hashtag input, pre-filled from the writer's agent topic or from the R2R signup interest topics
+- shows the fetched trends with engagement counts and links
+- writer picks one → AI generates title, summary, tags and markdown, loaded straight into the editor
+- a "Sources" list of the X permalinks is appended to the draft so the story attributes what it's based on
+- writer reviews and publishes as usual
+
+## 4. Scheduled: X as an agent source
+
+Extend the existing `creator_agents` config with:
+- source mode: `topic` (today's behaviour) or `x_trends`
+- X keywords list, plus an option "use my readers' interest topics" that falls back to the R2R topic list
+- optional minimum-engagement threshold so quiet days produce nothing instead of filler
+
+The existing `/api/public/agents/run` cron endpoint gains the X branch: for each due agent in `x_trends` mode it fetches trends, skips any trend already used (deduped by a stored trend key), generates the story, and posts as draft or published according to `auto_publish`. Every run is logged in `agent_runs` with the trend label and source links, and stories keep the existing `ai_generated` flag / "AI-assisted" badge.
+
+## 5. Content & safety guardrails
+
+- The article is original prose about the topic; posts are used as source material and quoted sparingly with attribution and a link back to X.
+- Prompt instructs the model to attribute claims, avoid presenting rumours as fact, and skip trends that are abusive, graphic or purely spam.
+- Nothing auto-publishes unless the writer has already enabled auto-publish.
+
+## Technical notes
+
+- New table `agent_trend_sources` (agent/creator, trend key, label, source post URLs, used_at) for dedupe and audit, with GRANTs + RLS scoped to `auth.uid()`.
+- Additional columns on `creator_agents` for source mode, keywords and engagement threshold.
+- X calls live in a `.server.ts` helper called from a `createServerFn` (Studio) and from the cron route — the connector key is never exposed to the client.
+- If the X connection is missing or rate-limited, the Studio panel shows the real provider error and the scheduled agent logs a `skipped` run instead of failing silently.
