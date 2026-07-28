@@ -18,7 +18,8 @@ export function XTrendsRow() {
 
   const stories = data?.stories ?? [];
   const trends = data?.trends ?? [];
-  if (stories.length === 0 && trends.length === 0) return null;
+  const connected = data?.connected ?? false;
+  if (!data) return null;
 
   return (
     <section className="container-page py-8">
@@ -26,6 +27,23 @@ export function XTrendsRow() {
         <Flame className="h-3.5 w-3.5" /> Trending on X
       </div>
       <h2 className="mt-2 text-3xl font-display md:text-4xl">Straight from the timeline</h2>
+
+      {stories.length === 0 && trends.length === 0 ? (
+        <div className="mt-6 rounded-xl border border-dashed border-border bg-surface p-8 text-center">
+          <p className="text-sm text-muted-foreground">
+            {connected
+              ? "No X trends surfaced yet — writers can pick keywords to show here in Agents → Your X trends."
+              : "X isn't connected yet. Once it is, live trends and stories written from them appear here."}
+          </p>
+          <Link
+            to="/agents"
+            className="mt-4 inline-flex items-center gap-1 text-mono text-xs text-primary hover:underline"
+          >
+            Configure X trends <ArrowUpRight className="h-3 w-3" />
+          </Link>
+        </div>
+      ) : null}
+
 
       {stories.length > 0 ? (
         <div className="mt-6 -mx-4 flex snap-x gap-4 overflow-x-auto px-4 pb-2">
