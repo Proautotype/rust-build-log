@@ -1041,21 +1041,37 @@ function XTrendPanel({
                     {t.posts.length} posts · {t.engagement} engagement
                   </div>
                 </div>
-                <button
-                  onClick={() => {
-                    setError(null);
-                    draft.mutate(t);
-                  }}
-                  disabled={draft.isPending}
-                  className="shrink-0 rounded-md bg-primary px-3 py-1.5 text-mono text-xs text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-                >
-                  {draft.isPending ? "Writing…" : "Write it"}
-                </button>
+                <div className="flex shrink-0 flex-col gap-1.5">
+                  <button
+                    onClick={() => {
+                      setError(null);
+                      draft.mutate(t);
+                    }}
+                    disabled={draft.isPending}
+                    className="rounded-md bg-primary px-3 py-1.5 text-mono text-xs text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                  >
+                    {draft.isPending ? "Writing…" : "Write it"}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setError(null);
+                      setPublished(null);
+                      publish.mutate(t);
+                    }}
+                    disabled={publish.isPending}
+                    className="rounded-md border border-border bg-background px-3 py-1.5 text-mono text-xs hover:border-border-strong disabled:opacity-50"
+                  >
+                    {publish.isPending ? "Publishing…" : "Publish on R2R"}
+                  </button>
+                </div>
               </div>
             </li>
           ))}
         </ul>
       ) : null}
+
+      {published ? <div className="mt-3 text-xs text-primary">{published}</div> : null}
+
 
       {!search.isPending && !notConnected && search.isSuccess && trends.length === 0 ? (
         <div className="mt-4 text-xs text-muted-foreground">
