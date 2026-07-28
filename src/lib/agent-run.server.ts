@@ -53,7 +53,10 @@ export interface PostStoryInput {
   monetization?: "free" | "tips" | "locked";
   unlockPrice?: number;
   tipEnabled?: boolean;
+  xTrendKeyword?: string | null;
+  xSourceUrls?: string[];
 }
+
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function uniqueSlug(supabaseAdmin: any, base: string): Promise<string> {
