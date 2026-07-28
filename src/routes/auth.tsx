@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Terminal, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
+import { TopicPicker } from "@/components/feed/TopicPicker";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -32,15 +33,19 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  /** Signup is two steps: pick topics, then create the account. */
+  const [step, setStep] = useState<"topics" | "form">("form");
+  const [picked, setPicked] = useState<string[]>([]);
 
   // If already signed in, bounce to destination
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       if (data.user) {
-        navigate({ to: isSafePath(redirectParam) ? redirectParam : "/studio", replace: true });
+        navigate({ to: isSafePath(redirectParam) ? redirectParam : "/", replace: true });
       }
     });
   }, [navigate, redirectParam]);
+
 
   async function handleEmail(e: React.FormEvent) {
     e.preventDefault();
@@ -58,12 +63,21 @@ function AuthPage() {
           },
         });
         if (error) throw error;
+        // Keep the picks locally; they sync to the profile on first sign-in.
+        if (picked.length) {
+          try {
+            localStorage.setItem("r2r.interests", JSON.stringify(picked));
+          } catch {
+            /* ignore */
+          }
+        }
         setInfo("Account created. You can now sign in.");
         setMode("signin");
+        setStep("form");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate({ to: isSafePath(redirectParam) ? redirectParam : "/studio", replace: true });
+        navigate({ to: isSafePath(redirectParam) ? redirectParam : "/", replace: true });
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
@@ -71,6 +85,7 @@ function AuthPage() {
       setLoading(false);
     }
   }
+
 
   async function handleGoogle() {
     setError(null);
@@ -81,62 +96,85 @@ function AuthPage() {
       });
       if (result.error) throw result.error;
       if (result.redirected) return;
-      navigate({ to: isSafePath(redirectParam) ? redirectParam : "/studio", replace: true });
+      navigate({ to: isSafePath(redirectParam) ? redirectParam : "/", replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Google sign-in failed");
       setLoading(false);
     }
   }
 
+  const showTopics = mode === "signup" && step === "topics";
+
   return (
     <div className="container-page py-16 md:py-24">
-      <div className="mx-auto max-w-md">
+      <div className={`mx-auto ${showTopics ? "max-w-2xl" : "max-w-md"}`}>
         <Link to="/" className="inline-flex items-center gap-2 group">
           <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/15 text-primary ring-1 ring-primary/30">
             <Terminal className="h-3.5 w-3.5" />
           </span>
           <span className="text-mono text-sm font-semibold tracking-tight">
-            rust<span className="text-primary">.</span>journey
+            right2<span className="text-primary">read</span>
           </span>
         </Link>
 
         <h1 className="mt-8 text-3xl md:text-4xl font-display tracking-tight">
-          {mode === "signin" ? "Welcome back" : "Create your account"}
+          {showTopics
+            ? "What do you want to read?"
+            : mode === "signin"
+              ? "Welcome back"
+              : "Create your account"}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          {mode === "signin"
-            ? "Sign in to open the Creator Studio and comment on stories."
-            : "Set up a creator profile to publish stories and join the conversation."}
+          {showTopics
+            ? "Pick a few topics so your feed feels like yours. You can change these any time."
+            : mode === "signin"
+              ? "Sign in to comment, unlock stories and open the Creator Studio."
+              : "Set up your profile to comment, follow topics and publish stories."}
         </p>
 
+        {showTopics ? (
+          <div className="mt-8">
+            <TopicPicker
+              selected={picked}
+              size="lg"
+              onToggle={(id) =>
+                setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]))
+              }
+            />
+            <div className="mt-6 flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setStep("form")}
+                className="inline-flex items-center justify-center rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              >
+                {picked.length ? `Continue with ${picked.length} topic${picked.length === 1 ? "" : "s"}` : "Continue"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setStep("form")}
+                className="text-sm text-muted-foreground hover:text-foreground"
+              >
+                Skip for now
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
         <div className="mt-8 space-y-3">
-          {/* <button
-            onClick={handleGoogle}
-            disabled={loading}
-            className="w-full inline-flex items-center justify-center gap-2 rounded-md border border-border bg-background px-4 py-2.5 text-sm font-medium hover:bg-accent disabled:opacity-50"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden>
-              <path
-                fill="#EA4335"
-                d="M12 10.2v3.9h5.5c-.2 1.4-1.6 4.1-5.5 4.1-3.3 0-6-2.7-6-6.1s2.7-6.1 6-6.1c1.9 0 3.2.8 3.9 1.5l2.7-2.6C16.9 3.3 14.7 2.3 12 2.3 6.8 2.3 2.6 6.5 2.6 11.9S6.8 21.5 12 21.5c6.9 0 9.5-4.8 9.5-7.3 0-.5 0-.9-.1-1.3H12z"
-              />
-            </svg>
-            Continue with Google
-          </button> */}
-
           <div className="relative py-2">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-border/70" />
             </div>
             <div className="relative flex justify-center">
               <span className="bg-background px-2 text-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-                or with email
+                with email
               </span>
             </div>
           </div>
         </div>
 
         <form onSubmit={handleEmail} className="mt-2 space-y-3">
+
           {mode === "signup" && (
             <div>
               <label className="text-mono text-[11px] uppercase tracking-widest text-muted-foreground">
@@ -205,14 +243,19 @@ function AuthPage() {
             onClick={() => {
               setError(null);
               setInfo(null);
-              setMode(mode === "signin" ? "signup" : "signin");
+              const next = mode === "signin" ? "signup" : "signin";
+              setMode(next);
+              setStep(next === "signup" ? "topics" : "form");
             }}
             className="text-primary hover:underline"
           >
             {mode === "signin" ? "Create one" : "Sign in"}
           </button>
         </p>
+          </>
+        )}
       </div>
     </div>
+
   );
 }

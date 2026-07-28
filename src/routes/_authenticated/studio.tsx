@@ -356,6 +356,45 @@ function StudioPage() {
       return { ...d, blocks: next };
     });
 
+  /**
+   * Wrap the selected blocks into a single layout block, keeping their order.
+   * The group lands where the first selected block was.
+   */
+  const groupBlocks = (uids: string[], direction: "horizontal" | "vertical") =>
+    setDraft((d) => {
+      const picked = d.blocks.filter((b) => uids.includes(b._uid));
+      if (picked.length < 2) return d;
+      const firstIndex = d.blocks.findIndex((b) => b._uid === picked[0]._uid);
+      const group: EditorBlock = {
+        _uid: uid(),
+        type: "layout",
+        direction,
+        gap: "md",
+        align: "stretch",
+        items: picked.map(({ _uid: _u, ...rest }) => rest as ContentBlock),
+      };
+      const rest = d.blocks.filter((b) => !uids.includes(b._uid));
+      rest.splice(Math.max(0, Math.min(firstIndex, rest.length)), 0, group);
+      return { ...d, blocks: rest };
+    });
+
+  /** Flatten a layout block back into standalone blocks. */
+  const ungroupBlock = (uidVal: string) =>
+    setDraft((d) => {
+      const i = d.blocks.findIndex((b) => b._uid === uidVal);
+      if (i < 0) return d;
+      const target = d.blocks[i];
+      if (target.type !== "layout") return d;
+      const expanded: EditorBlock[] = target.items.map((it) => ({
+        ...(it as ContentBlock),
+        _uid: uid(),
+      }));
+      const next = [...d.blocks];
+      next.splice(i, 1, ...expanded);
+      return { ...d, blocks: next };
+    });
+
+
   const newDraft = () => {
     if (confirm("Start a fresh draft? Unsaved local changes will be lost.")) setDraft(emptyDraft());
   };
@@ -626,6 +665,8 @@ function StudioPage() {
               onRemove={removeBlock}
               onDuplicate={duplicateBlock}
               onChangeBlock={updateBlock}
+              onGroup={groupBlocks}
+              onUngroup={ungroupBlock}
             />
             <MetaPanel
               draft={draft}
@@ -1067,11 +1108,34 @@ interface CanvasProps {
   onRemove: (uid: string) => void;
   onDuplicate: (uid: string) => void;
   onChangeBlock: (uid: string, patch: Partial<EditorBlock>) => void;
+  onGroup: (uids: string[], direction: "horizontal" | "vertical") => void;
+  onUngroup: (uid: string) => void;
 }
 
-function Canvas({ draft, onInsertAt, onMove, onRemove, onDuplicate, onChangeBlock }: CanvasProps) {
+function Canvas({
+  draft,
+  onInsertAt,
+  onMove,
+  onRemove,
+  onDuplicate,
+  onChangeBlock,
+  onGroup,
+  onUngroup,
+}: CanvasProps) {
   const [dropIndex, setDropIndex] = useState<number | null>(null);
+  const [selected, setSelected] = useState<string[]>([]);
   const dragUid = useRef<string | null>(null);
+
+  const toggleSelect = (uidVal: string) =>
+    setSelected((s) => (s.includes(uidVal) ? s.filter((x) => x !== uidVal) : [...s, uidVal]));
+
+  const group = (direction: "horizontal" | "vertical") => {
+    // Keep canvas order, not click order.
+    const ordered = draft.blocks.filter((b) => selected.includes(b._uid)).map((b) => b._uid);
+    onGroup(ordered, direction);
+    setSelected([]);
+  };
+
 
   const handleDropAt = (index: number, e: React.DragEvent) => {
     e.preventDefault();

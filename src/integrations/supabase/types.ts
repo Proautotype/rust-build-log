@@ -309,7 +309,9 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          interests: string[]
           is_pro: boolean
+          onboarded: boolean
           updated_at: string
         }
         Insert: {
@@ -320,7 +322,9 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id: string
+          interests?: string[]
           is_pro?: boolean
+          onboarded?: boolean
           updated_at?: string
         }
         Update: {
@@ -331,7 +335,9 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
+          interests?: string[]
           is_pro?: boolean
+          onboarded?: boolean
           updated_at?: string
         }
         Relationships: []

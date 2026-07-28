@@ -9,9 +9,9 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Hind", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-  --font-display: "Instrument Serif", ui-serif, Georgia, serif;
+  --font-display: "Archivo Black", ui-sans-serif, system-ui, sans-serif;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -43,44 +43,45 @@
 }
 
 :root {
-  --radius: 0.5rem;
+  --radius: 0.75rem;
 
-  /* Dark-first developer palette (GitHub-inspired, rust-accented) */
-  --background: oklch(0.16 0.012 260);
-  --foreground: oklch(0.94 0.008 250);
-  --surface: oklch(0.19 0.013 260);
-  --surface-2: oklch(0.22 0.014 260);
-  --card: oklch(0.19 0.013 260);
-  --card-foreground: oklch(0.94 0.008 250);
-  --popover: oklch(0.2 0.014 260);
-  --popover-foreground: oklch(0.94 0.008 250);
+  /* Charcoal & Ember — warm neutral greys with an ember accent */
+  --background: oklch(0.19 0.002 60);
+  --foreground: oklch(0.95 0.004 70);
+  --surface: oklch(0.235 0.003 60);
+  --surface-2: oklch(0.285 0.004 60);
+  --card: oklch(0.235 0.003 60);
+  --card-foreground: oklch(0.95 0.004 70);
+  --popover: oklch(0.25 0.003 60);
+  --popover-foreground: oklch(0.95 0.004 70);
 
-  --primary: oklch(0.72 0.19 45);
-  --primary-foreground: oklch(0.14 0.02 40);
+  --primary: oklch(0.66 0.17 39);
+  --primary-foreground: oklch(0.16 0.02 40);
 
-  --secondary: oklch(0.25 0.015 260);
-  --secondary-foreground: oklch(0.94 0.008 250);
+  --secondary: oklch(0.3 0.004 60);
+  --secondary-foreground: oklch(0.95 0.004 70);
 
-  --muted: oklch(0.23 0.014 260);
-  --muted-foreground: oklch(0.68 0.015 250);
+  --muted: oklch(0.28 0.004 60);
+  --muted-foreground: oklch(0.7 0.006 70);
 
-  --accent: oklch(0.28 0.02 260);
-  --accent-foreground: oklch(0.96 0.005 250);
+  --accent: oklch(0.33 0.006 60);
+  --accent-foreground: oklch(0.97 0.003 70);
 
-  --destructive: oklch(0.62 0.22 25);
+  --destructive: oklch(0.6 0.21 25);
   --destructive-foreground: oklch(0.98 0 0);
 
-  --border: oklch(0.28 0.014 260);
-  --border-strong: oklch(0.36 0.014 260);
-  --input: oklch(0.26 0.014 260);
-  --ring: oklch(0.72 0.19 45);
+  --border: oklch(0.33 0.004 60);
+  --border-strong: oklch(0.43 0.005 60);
+  --input: oklch(0.3 0.004 60);
+  --ring: oklch(0.66 0.17 39);
 
-  --rust: oklch(0.72 0.19 45);
-  --rust-glow: oklch(0.78 0.17 50);
-  --success: oklch(0.72 0.16 155);
-  --warning: oklch(0.82 0.16 85);
-  --info: oklch(0.72 0.14 240);
+  --rust: oklch(0.66 0.17 39);
+  --rust-glow: oklch(0.74 0.15 45);
+  --success: oklch(0.72 0.15 155);
+  --warning: oklch(0.82 0.15 85);
+  --info: oklch(0.72 0.12 240);
 }
+
 
 @layer base {
   * {
@@ -104,6 +105,14 @@
   code, pre, kbd, samp {
     font-family: var(--font-mono);
   }
+
+  /* Archivo Black is a single heavy weight — tighten it so headlines read cleanly */
+  .font-display {
+    font-weight: 400;
+    letter-spacing: -0.025em;
+    line-height: 1.05;
+  }
+
 
   ::selection {
     background-color: color-mix(in oklab, var(--rust) 40%, transparent);
