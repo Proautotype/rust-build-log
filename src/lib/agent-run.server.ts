@@ -53,7 +53,10 @@ export interface PostStoryInput {
   monetization?: "free" | "tips" | "locked";
   unlockPrice?: number;
   tipEnabled?: boolean;
+  xTrendKeyword?: string | null;
+  xSourceUrls?: string[];
 }
+
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function uniqueSlug(supabaseAdmin: any, base: string): Promise<string> {
@@ -97,6 +100,9 @@ export async function postStoryAsCreator(input: PostStoryInput) {
       unlock_price: input.unlockPrice ?? 0,
       tip_enabled: input.tipEnabled ?? false,
       ai_generated: true,
+      x_trend_keyword: input.xTrendKeyword ?? null,
+      x_source_urls: input.xSourceUrls ?? [],
+
     })
     .select("id, title, slug, published")
     .maybeSingle();
@@ -186,6 +192,9 @@ export async function runAgent(agent: AgentRow, source: "schedule" | "manual") {
       monetization: agent.monetization,
       unlockPrice: agent.unlock_price,
       tipEnabled: agent.tip_enabled,
+      xTrendKeyword: usedTrend?.keyword ?? null,
+      xSourceUrls: usedTrend ? usedTrend.posts.map((p) => p.url) : [],
+
     });
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

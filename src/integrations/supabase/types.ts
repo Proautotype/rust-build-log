@@ -483,6 +483,8 @@ export type Database = {
           unlock_price: number
           updated_at: string
           view_count: number
+          x_source_urls: string[]
+          x_trend_keyword: string | null
         }
         Insert: {
           ai_generated?: boolean
@@ -508,6 +510,8 @@ export type Database = {
           unlock_price?: number
           updated_at?: string
           view_count?: number
+          x_source_urls?: string[]
+          x_trend_keyword?: string | null
         }
         Update: {
           ai_generated?: boolean
@@ -533,6 +537,8 @@ export type Database = {
           unlock_price?: number
           updated_at?: string
           view_count?: number
+          x_source_urls?: string[]
+          x_trend_keyword?: string | null
         }
         Relationships: [
           {
@@ -816,6 +822,48 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      writer_x_settings: {
+        Row: {
+          auto_publish: boolean
+          created_at: string
+          creator_id: string
+          default_category: string
+          default_tone: string
+          enabled: boolean
+          keywords: string[]
+          min_engagement: number
+          show_on_home: boolean
+          updated_at: string
+          use_reader_interests: boolean
+        }
+        Insert: {
+          auto_publish?: boolean
+          created_at?: string
+          creator_id: string
+          default_category?: string
+          default_tone?: string
+          enabled?: boolean
+          keywords?: string[]
+          min_engagement?: number
+          show_on_home?: boolean
+          updated_at?: string
+          use_reader_interests?: boolean
+        }
+        Update: {
+          auto_publish?: boolean
+          created_at?: string
+          creator_id?: string
+          default_category?: string
+          default_tone?: string
+          enabled?: boolean
+          keywords?: string[]
+          min_engagement?: number
+          show_on_home?: boolean
+          updated_at?: string
+          use_reader_interests?: boolean
         }
         Relationships: []
       }

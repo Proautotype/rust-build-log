@@ -25,6 +25,13 @@ import {
   revokeApiKey,
 } from "@/lib/agent.functions";
 import { listJourneys } from "@/lib/studio.functions";
+import {
+  getMyXSettings,
+  saveMyXSettings,
+  DEFAULT_X_SETTINGS,
+  type WriterXSettings,
+} from "@/lib/x-settings.functions";
+
 
 export const Route = createFileRoute("/_authenticated/agents")({
   head: () => ({
@@ -207,6 +214,9 @@ function AgentsPage() {
         either on a schedule, or on demand from your own bot via the API.
       </p>
       {status ? <div className="mt-3 text-mono text-xs text-primary">{status}</div> : null}
+
+      <XSettingsCard />
+
 
       {/* Agents */}
       <div className="mt-8 flex items-center justify-between">
@@ -613,6 +623,129 @@ function Field({
         {label}
       </div>
       {children}
+    </div>
+  );
+}
+
+/** Per-writer X trend preferences: keywords, thresholds and publishing defaults. */
+function XSettingsCard() {
+  const qc = useQueryClient();
+  const getFn = useServerFn(getMyXSettings);
+  const saveFn = useServerFn(saveMyXSettings);
+  const settingsQ = useQuery({ queryKey: ["my-x-settings"], queryFn: () => getFn({}) });
+  const [draft, setDraft] = useState<WriterXSettings | null>(null);
+  const s = draft ?? settingsQ.data ?? DEFAULT_X_SETTINGS;
+
+  const save = useMutation({
+    mutationFn: () =>
+      saveFn({
+        data: {
+          ...s,
+          keywords: s.keywords.map((k) => k.trim()).filter(Boolean).slice(0, 5),
+        },
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["my-x-settings"] }),
+  });
+
+  const patch = (p: Partial<WriterXSettings>) => setDraft({ ...s, ...p });
+
+  return (
+    <div className="mt-8 rounded-xl border border-border bg-card p-5">
+      <h2 className="text-lg font-semibold">Your X trends</h2>
+      <p className="mt-1 text-sm text-muted-foreground">
+        These defaults drive the “Trending on X” tab in the Studio and the trends shown on the R2R
+        home page.
+      </p>
+
+      <div className="mt-4 grid gap-4 md:grid-cols-2">
+        <label className="block">
+          <span className="text-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+            Keywords (comma separated, max 5)
+          </span>
+          <input
+            value={s.keywords.join(", ")}
+            onChange={(e) => patch({ keywords: e.target.value.split(",").map((k) => k.trim()) })}
+            placeholder="afrobeats, elections, ai agents"
+            className="mt-1.5 w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
+          />
+        </label>
+        <label className="block">
+          <span className="text-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+            Default category
+          </span>
+          <input
+            value={s.default_category}
+            onChange={(e) => patch({ default_category: e.target.value })}
+            className="mt-1.5 w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
+          />
+        </label>
+        <label className="block">
+          <span className="text-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+            Default tone
+          </span>
+          <input
+            value={s.default_tone}
+            onChange={(e) => patch({ default_tone: e.target.value })}
+            className="mt-1.5 w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
+          />
+        </label>
+        <label className="block">
+          <span className="text-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+            Minimum engagement
+          </span>
+          <input
+            type="number"
+            min={0}
+            value={s.min_engagement}
+            onChange={(e) => patch({ min_engagement: Number(e.target.value) || 0 })}
+            className="mt-1.5 w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
+          />
+        </label>
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={s.enabled}
+            onChange={(e) => patch({ enabled: e.target.checked })}
+          />
+          Enable X trends for me
+        </label>
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={s.use_reader_interests}
+            onChange={(e) => patch({ use_reader_interests: e.target.checked })}
+          />
+          Use reader interests too
+        </label>
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={s.auto_publish}
+            onChange={(e) => patch({ auto_publish: e.target.checked })}
+          />
+          Publish trend stories straight away
+        </label>
+        <label className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={s.show_on_home}
+            onChange={(e) => patch({ show_on_home: e.target.checked })}
+          />
+          Show my keywords on the home page
+        </label>
+      </div>
+
+      <button
+        onClick={() => save.mutate()}
+        disabled={save.isPending || settingsQ.isLoading}
+        className="mt-4 inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-mono text-xs text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+      >
+        {save.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+        {save.isSuccess && !save.isPending ? "Saved" : "Save X settings"}
+      </button>
     </div>
   );
 }

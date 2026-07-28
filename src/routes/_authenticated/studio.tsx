@@ -62,6 +62,9 @@ import {
   deleteMyStory,
 } from "@/lib/studio.functions";
 import { draftStoryWithAi, fetchXTrends, draftStoryFromTrend } from "@/lib/agent.functions";
+import { getMyXSettings, publishStoryFromTrend } from "@/lib/x-settings.functions";
+import { DEFAULT_X_SETTINGS } from "@/lib/x-settings";
+
 import { Bot } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -891,6 +894,11 @@ function XTrendPanel({
 }) {
   const trendsFn = useServerFn(fetchXTrends);
   const draftTrendFn = useServerFn(draftStoryFromTrend);
+  const publishTrendFn = useServerFn(publishStoryFromTrend);
+  const settingsFn = useServerFn(getMyXSettings);
+
+  const settingsQ = useQuery({ queryKey: ["my-x-settings"], queryFn: () => settingsFn({}) });
+  const settings = settingsQ.data ?? DEFAULT_X_SETTINGS;
 
   const [keywords, setKeywords] = useState("");
   const [useInterests, setUseInterests] = useState(true);
@@ -899,6 +907,17 @@ function XTrendPanel({
   const [notConnected, setNotConnected] = useState(false);
   const [notices, setNotices] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [published, setPublished] = useState<string | null>(null);
+  const [hydrated, setHydrated] = useState(false);
+
+  // Seed the panel from the writer's own X settings the first time they load.
+  useEffect(() => {
+    if (hydrated || !settingsQ.data) return;
+    setKeywords(settings.keywords.join(", "));
+    setUseInterests(settings.use_reader_interests);
+    setMinEngagement(settings.min_engagement);
+    setHydrated(true);
+  }, [hydrated, settingsQ.data, settings]);
 
   const search = useMutation({
     mutationFn: () =>
@@ -930,6 +949,20 @@ function XTrendPanel({
     onSuccess: (res) => onApply(res as never),
     onError: (e: Error) => setError(e.message),
   });
+
+  /** Writes the trend into a story on the writer's account and posts it live on R2R. */
+  const publish = useMutation({
+    mutationFn: (trend: TrendView) =>
+      publishTrendFn({
+        data: { keyword: trend.keyword, publish: true, posts: trend.posts.slice(0, 6) },
+      }),
+    onSuccess: (res) => {
+      const story = res as { title?: string } | null;
+      setPublished(`Published "${story?.title ?? "story"}" on R2R.`);
+    },
+    onError: (e: Error) => setError(e.message),
+  });
+
 
   return (
     <div>
@@ -1008,21 +1041,37 @@ function XTrendPanel({
                     {t.posts.length} posts · {t.engagement} engagement
                   </div>
                 </div>
-                <button
-                  onClick={() => {
-                    setError(null);
-                    draft.mutate(t);
-                  }}
-                  disabled={draft.isPending}
-                  className="shrink-0 rounded-md bg-primary px-3 py-1.5 text-mono text-xs text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-                >
-                  {draft.isPending ? "Writing…" : "Write it"}
-                </button>
+                <div className="flex shrink-0 flex-col gap-1.5">
+                  <button
+                    onClick={() => {
+                      setError(null);
+                      draft.mutate(t);
+                    }}
+                    disabled={draft.isPending}
+                    className="rounded-md bg-primary px-3 py-1.5 text-mono text-xs text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                  >
+                    {draft.isPending ? "Writing…" : "Write it"}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setError(null);
+                      setPublished(null);
+                      publish.mutate(t);
+                    }}
+                    disabled={publish.isPending}
+                    className="rounded-md border border-border bg-background px-3 py-1.5 text-mono text-xs hover:border-border-strong disabled:opacity-50"
+                  >
+                    {publish.isPending ? "Publishing…" : "Publish on R2R"}
+                  </button>
+                </div>
               </div>
             </li>
           ))}
         </ul>
       ) : null}
+
+      {published ? <div className="mt-3 text-xs text-primary">{published}</div> : null}
+
 
       {!search.isPending && !notConnected && search.isSuccess && trends.length === 0 ? (
         <div className="mt-4 text-xs text-muted-foreground">
