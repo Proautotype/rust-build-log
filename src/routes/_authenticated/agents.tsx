@@ -61,6 +61,10 @@ type AgentForm = {
   monetization: "free" | "tips" | "locked";
   unlock_price: number;
   tip_enabled: boolean;
+  source_mode: "topic" | "x_trends";
+  x_keywords: string[];
+  use_reader_interests: boolean;
+  min_engagement: number;
 };
 
 const emptyAgent = (): AgentForm => ({
@@ -75,6 +79,20 @@ const emptyAgent = (): AgentForm => ({
   monetization: "free",
   unlock_price: 0,
   tip_enabled: false,
+  source_mode: "topic",
+  x_keywords: [],
+  use_reader_interests: false,
+  min_engagement: 0,
+});
+
+/** Rows from the database may predate the X fields; fill the gaps. */
+const toForm = (row: AgentForm): AgentForm => ({
+  ...emptyAgent(),
+  ...row,
+  source_mode: row.source_mode === "x_trends" ? "x_trends" : "topic",
+  x_keywords: row.x_keywords ?? [],
+  use_reader_interests: row.use_reader_interests ?? false,
+  min_engagement: row.min_engagement ?? 0,
 });
 
 function AgentsPage() {
