@@ -6,6 +6,8 @@ import { StoryCard } from "@/components/story/StoryCard";
 import { Spotlight } from "@/components/story/StoryShowcase";
 import { StoryCollection } from "@/components/story/StoryCollection";
 import { TopicPicker } from "@/components/feed/TopicPicker";
+import { XTrendsRow } from "@/components/feed/XTrendsRow";
+
 
 import { heroImage, rowToJourney, rowToStory, type Story } from "@/data/stories";
 import { TOPIC_BY_ID, topicScore } from "@/data/topics";
