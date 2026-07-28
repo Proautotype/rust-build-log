@@ -835,7 +835,7 @@ function StoriesDropdown({
           >
             <Plus className="h-3.5 w-3.5" /> New story
           </button>
-          <div className="my-1 border-t border-border" />
+          <div className="my-1 border-t border-border z-1000" />
           {stories.length === 0 ? (
             <div className="px-2 py-2 text-mono text-[11px] text-muted-foreground">
               No cloud stories yet.
@@ -924,6 +924,11 @@ function MediaLibrary() {
   const [dropActive, setDropActive] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
+  let BUCKET_NAME = import.meta.env.VITE_SUPABASE_BUCKET;
+  if (!BUCKET_NAME) {
+    BUCKET_NAME = "right2read";
+  }
+
   const assetsQuery = useQuery({
     queryKey: ["media-assets", user?.id],
     enabled: !!user,
@@ -958,12 +963,12 @@ function MediaLibrary() {
         const safe = file.name.replace(/[^a-zA-Z0-9._-]+/g, "-");
         const path = `${user.id}/${Date.now()}-${safe}`;
         const { error: upErr } = await supabase.storage
-          .from("media")
+          .from(BUCKET_NAME)
           .upload(path, file, { cacheControl: "31536000", upsert: false });
         if (upErr) throw upErr;
         // Long-lived signed URL (bucket is private for admin policy reasons).
         const { data: signed, error: sErr } = await supabase.storage
-          .from("media")
+          .from(BUCKET_NAME)
           .createSignedUrl(path, 60 * 60 * 24 * 365 * 10);
         if (sErr || !signed) throw sErr ?? new Error("Failed to sign URL");
         const { error: insErr } = await supabase.from("media_assets").insert({
@@ -986,7 +991,7 @@ function MediaLibrary() {
 
   const removeAsset = async (asset: MediaAsset) => {
     if (!confirm("Delete this media file?")) return;
-    await supabase.storage.from("media").remove([asset.path]);
+    await supabase.storage.from(BUCKET_NAME).remove([asset.path]);
     await supabase.from("media_assets").delete().eq("id", asset.id);
     qc.invalidateQueries({ queryKey: ["media-assets", user?.id] });
   };
