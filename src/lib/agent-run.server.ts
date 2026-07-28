@@ -1,4 +1,5 @@
 import { generateStory, slugify } from "./agent.server";
+import { TOPICS } from "@/data/topics";
 
 export interface AgentRow {
   id: string;
@@ -15,6 +16,24 @@ export interface AgentRow {
   unlock_price: number;
   tip_enabled: boolean;
   last_run_at: string | null;
+  source_mode?: string | null;
+  x_keywords?: string[] | null;
+  use_reader_interests?: boolean | null;
+  min_engagement?: number | null;
+}
+
+/** Keywords an agent should search X with: its own list, plus reader interests when asked. */
+export function agentKeywords(agent: AgentRow): string[] {
+  const own = (agent.x_keywords ?? []).map((k) => k.trim()).filter(Boolean);
+  const interests = agent.use_reader_interests ? TOPICS.map((t) => t.label) : [];
+  const merged = [...own, ...interests];
+  const seen = new Set<string>();
+  return merged.filter((k) => {
+    const key = k.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 export interface PostStoryInput {
@@ -102,13 +121,55 @@ async function logRun(entry: {
 /** Generate + post one story for an agent. */
 export async function runAgent(agent: AgentRow, source: "schedule" | "manual") {
   try {
-    if (!agent.topic?.trim()) throw new Error("This agent has no topic configured.");
+    const useX = (agent.source_mode ?? "topic") === "x_trends";
 
-    const generated = await generateStory({
-      topic: agent.topic,
-      tone: agent.tone,
-      category: agent.category,
-    });
+    let generated: Awaited<ReturnType<typeof generateStory>>;
+    let usedTrend: import("./x-trends.server").Trend | null = null;
+
+    if (useX) {
+      const { fetchTrends, trendBriefing, trendSourcesMarkdown } = await import("./x-trends.server");
+      const keywords = agentKeywords(agent);
+      if (keywords.length === 0) throw new Error("This agent has no X keywords configured.");
+
+      const { trends, errors } = await fetchTrends({
+        keywords,
+        minEngagement: agent.min_engagement ?? 0,
+      });
+      if (trends.length === 0) {
+        throw new Error(errors[0] ?? "No trending posts matched this agent's keywords.");
+      }
+
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: used } = await (supabaseAdmin as any)
+        .from("agent_trend_sources")
+        .select("trend_key")
+        .eq("creator_id", agent.creator_id);
+      const usedKeys = new Set(((used ?? []) as { trend_key: string }[]).map((r) => r.trend_key));
+
+      usedTrend = trends.find((t) => !usedKeys.has(t.key)) ?? null;
+      if (!usedTrend) throw new Error("All current trends have already been covered.");
+
+      generated = await generateStory({
+        topic: `What is trending on X about "${usedTrend.keyword}"`,
+        tone: agent.tone,
+        category: agent.category,
+        extraInstructions: [
+          trendBriefing(usedTrend),
+          ``,
+          `Write an ORIGINAL article explaining the trend, why it matters and what readers should take from it.`,
+          `Do not copy post text verbatim; paraphrase and attribute by @handle where you reference someone.`,
+        ].join("\n"),
+      });
+      generated = { ...generated, markdown: generated.markdown + trendSourcesMarkdown(usedTrend) };
+    } else {
+      if (!agent.topic?.trim()) throw new Error("This agent has no topic configured.");
+      generated = await generateStory({
+        topic: agent.topic,
+        tone: agent.tone,
+        category: agent.category,
+      });
+    }
 
     const story = await postStoryAsCreator({
       creatorId: agent.creator_id,
@@ -134,13 +195,27 @@ export async function runAgent(agent: AgentRow, source: "schedule" | "manual") {
       .update({ last_run_at: new Date().toISOString() })
       .eq("id", agent.id);
 
+    if (usedTrend) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabaseAdmin as any).from("agent_trend_sources").insert({
+        creator_id: agent.creator_id,
+        agent_id: agent.id,
+        story_id: story?.id ?? null,
+        trend_key: usedTrend.key,
+        label: usedTrend.label.slice(0, 200),
+        source_urls: usedTrend.posts.map((p) => p.url),
+      });
+    }
+
     await logRun({
       creator_id: agent.creator_id,
       agent_id: agent.id,
       source,
       status: "ok",
       story_id: story?.id ?? null,
-      message: story ? `${agent.auto_publish ? "Published" : "Drafted"} "${story.title}"` : null,
+      message: story
+        ? `${agent.auto_publish ? "Published" : "Drafted"} "${story.title}"${usedTrend ? ` from X trend "${usedTrend.keyword}"` : ""}`
+        : null,
     });
 
     return { ok: true as const, story };

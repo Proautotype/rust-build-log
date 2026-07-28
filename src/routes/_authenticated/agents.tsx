@@ -61,6 +61,10 @@ type AgentForm = {
   monetization: "free" | "tips" | "locked";
   unlock_price: number;
   tip_enabled: boolean;
+  source_mode: "topic" | "x_trends";
+  x_keywords: string[];
+  use_reader_interests: boolean;
+  min_engagement: number;
 };
 
 const emptyAgent = (): AgentForm => ({
@@ -75,6 +79,20 @@ const emptyAgent = (): AgentForm => ({
   monetization: "free",
   unlock_price: 0,
   tip_enabled: false,
+  source_mode: "topic",
+  x_keywords: [],
+  use_reader_interests: false,
+  min_engagement: 0,
+});
+
+/** Rows from the database may predate the X fields; fill the gaps. */
+const toForm = (row: AgentForm): AgentForm => ({
+  ...emptyAgent(),
+  ...row,
+  source_mode: row.source_mode === "x_trends" ? "x_trends" : "topic",
+  x_keywords: row.x_keywords ?? [],
+  use_reader_interests: row.use_reader_interests ?? false,
+  min_engagement: row.min_engagement ?? 0,
 });
 
 function AgentsPage() {
@@ -242,7 +260,7 @@ function AgentsPage() {
                   Run now
                 </button>
                 <button
-                  onClick={() => setForm(a)}
+                  onClick={() => setForm(toForm(a))}
                   className="rounded-md border border-border bg-background px-3 py-1.5 text-mono text-xs hover:border-border-strong"
                 >
                   Edit
@@ -281,15 +299,78 @@ function AgentsPage() {
                 onChange={(e) => setForm({ ...form, category: e.target.value })}
               />
             </Field>
-            <Field label="Topic / brief" className="md:col-span-2">
-              <textarea
-                rows={3}
+            <Field label="Content source" className="md:col-span-2">
+              <select
                 className={inputCls}
-                placeholder="e.g. Practical Rust tips for backend developers moving from Go"
-                value={form.topic}
-                onChange={(e) => setForm({ ...form, topic: e.target.value })}
-              />
+                value={form.source_mode}
+                onChange={(e) =>
+                  setForm({ ...form, source_mode: e.target.value as AgentForm["source_mode"] })
+                }
+              >
+                <option value="topic">My topic / brief</option>
+                <option value="x_trends">Trending on X</option>
+              </select>
             </Field>
+
+            {form.source_mode === "topic" ? (
+              <Field label="Topic / brief" className="md:col-span-2">
+                <textarea
+                  rows={3}
+                  className={inputCls}
+                  placeholder="e.g. Practical Rust tips for backend developers moving from Go"
+                  value={form.topic}
+                  onChange={(e) => setForm({ ...form, topic: e.target.value })}
+                />
+              </Field>
+            ) : (
+              <>
+                <Field label="X keywords (comma separated, max 5)" className="md:col-span-2">
+                  <input
+                    className={inputCls}
+                    placeholder="rust, ai agents, web performance"
+                    value={form.x_keywords.join(", ")}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        x_keywords: e.target.value
+                          .split(",")
+                          .map((k) => k.trim())
+                          .filter(Boolean)
+                          .slice(0, 5),
+                      })
+                    }
+                  />
+                </Field>
+                <Field label="Minimum engagement per post">
+                  <input
+                    type="number"
+                    min={0}
+                    className={inputCls}
+                    value={form.min_engagement}
+                    onChange={(e) =>
+                      setForm({ ...form, min_engagement: Number(e.target.value) || 0 })
+                    }
+                  />
+                </Field>
+                <Field label="Also use reader interests">
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={form.use_reader_interests}
+                      onChange={(e) =>
+                        setForm({ ...form, use_reader_interests: e.target.checked })
+                      }
+                    />
+                    Fall back to the site&apos;s signup topics
+                  </label>
+                </Field>
+                <p className="text-xs text-muted-foreground md:col-span-2">
+                  The agent searches recent high-engagement public posts, writes an original
+                  article about the trend and links back to the source posts. Requires the X
+                  connector.
+                </p>
+              </>
+            )}
             <Field label="Tone">
               <input
                 className={inputCls}

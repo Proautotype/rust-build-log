@@ -61,7 +61,7 @@ import {
   createJourney,
   deleteMyStory,
 } from "@/lib/studio.functions";
-import { draftStoryWithAi } from "@/lib/agent.functions";
+import { draftStoryWithAi, fetchXTrends, draftStoryFromTrend } from "@/lib/agent.functions";
 import { Bot } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -740,6 +740,7 @@ function AiDraftDialog({
   }) => void;
 }) {
   const draftFn = useServerFn(draftStoryWithAi);
+  const [tab, setTab] = useState<"topic" | "x">("topic");
   const [topic, setTopic] = useState("");
   const [tone, setTone] = useState("practical, friendly");
   const [extra, setExtra] = useState("");
@@ -754,74 +755,290 @@ function AiDraftDialog({
     onError: (e: Error) => setError(e.message),
   });
 
+  const tabCls = (active: boolean) =>
+    `rounded-md px-3 py-1.5 text-mono text-xs ${
+      active
+        ? "bg-primary text-primary-foreground"
+        : "border border-border bg-background text-muted-foreground hover:border-border-strong"
+    }`;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4">
-      <div className="w-full max-w-lg rounded-xl border border-border bg-card p-6">
+      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border border-border bg-card p-6">
         <div className="flex items-center gap-2">
           <Bot className="h-5 w-5 text-primary" />
           <h2 className="text-lg font-semibold">Draft with AI</h2>
         </div>
         <p className="mt-1 text-sm text-muted-foreground">
-          Describe what to write about. The draft lands in the Markdown editor for you to edit.
+          The draft lands in the Markdown editor for you to edit before publishing.
         </p>
 
-        <label className="mt-4 block text-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-          Topic
-        </label>
-        <textarea
-          rows={3}
-          autoFocus
-          value={topic}
-          onChange={(e) => setTopic(e.target.value)}
-          placeholder="e.g. Ownership and borrowing in Rust, explained for JavaScript developers"
-          className="mt-1.5 w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
-        />
-
-        <label className="mt-3 block text-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-          Tone
-        </label>
-        <input
-          value={tone}
-          onChange={(e) => setTone(e.target.value)}
-          className="mt-1.5 w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
-        />
-
-        <label className="mt-3 block text-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-          Extra instructions (optional)
-        </label>
-        <textarea
-          rows={2}
-          value={extra}
-          onChange={(e) => setExtra(e.target.value)}
-          placeholder="Include a code example with error handling…"
-          className="mt-1.5 w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
-        />
-
-        {error ? <div className="mt-3 text-xs text-destructive">{error}</div> : null}
-
-        <div className="mt-5 flex justify-end gap-2">
-          <button
-            onClick={onClose}
-            className="rounded-md border border-border bg-background px-4 py-2 text-mono text-xs"
-          >
-            Cancel
+        <div className="mt-4 flex gap-2">
+          <button className={tabCls(tab === "topic")} onClick={() => setTab("topic")}>
+            My topic
           </button>
-          <button
-            onClick={() => {
-              setError(null);
-              mut.mutate();
-            }}
-            disabled={mut.isPending || topic.trim().length < 3}
-            className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-mono text-xs text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-          >
-            {mut.isPending ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Sparkles className="h-3.5 w-3.5" />
-            )}
-            {mut.isPending ? "Writing…" : "Generate draft"}
+          <button className={tabCls(tab === "x")} onClick={() => setTab("x")}>
+            Trending on X
           </button>
         </div>
+
+        {tab === "x" ? (
+          <XTrendPanel
+            tone={tone}
+            category={defaultCategory}
+            onApply={onApply}
+            onClose={onClose}
+          />
+        ) : (
+          <>
+            <label className="mt-4 block text-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              Topic
+            </label>
+            <textarea
+              rows={3}
+              autoFocus
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+              placeholder="e.g. Ownership and borrowing in Rust, explained for JavaScript developers"
+              className="mt-1.5 w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
+            />
+
+            <label className="mt-3 block text-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              Tone
+            </label>
+            <input
+              value={tone}
+              onChange={(e) => setTone(e.target.value)}
+              className="mt-1.5 w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
+            />
+
+            <label className="mt-3 block text-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              Extra instructions (optional)
+            </label>
+            <textarea
+              rows={2}
+              value={extra}
+              onChange={(e) => setExtra(e.target.value)}
+              placeholder="Include a code example with error handling…"
+              className="mt-1.5 w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
+            />
+
+            {error ? <div className="mt-3 text-xs text-destructive">{error}</div> : null}
+
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                onClick={onClose}
+                className="rounded-md border border-border bg-background px-4 py-2 text-mono text-xs"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setError(null);
+                  mut.mutate();
+                }}
+                disabled={mut.isPending || topic.trim().length < 3}
+                className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-mono text-xs text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              >
+                {mut.isPending ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="h-3.5 w-3.5" />
+                )}
+                {mut.isPending ? "Writing…" : "Generate draft"}
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+interface TrendPostView {
+  author: string;
+  text: string;
+  url: string;
+  likes: number;
+  reposts: number;
+}
+interface TrendView {
+  key: string;
+  keyword: string;
+  label: string;
+  engagement: number;
+  posts: TrendPostView[];
+}
+
+/** Finds high-engagement X posts, then turns the chosen trend into an original draft. */
+function XTrendPanel({
+  tone,
+  category,
+  onApply,
+  onClose,
+}: {
+  tone: string;
+  category: string;
+  onApply: (res: {
+    title: string;
+    slug: string;
+    shortDescription: string;
+    tags: string[];
+    readingMinutes: number;
+    markdown: string;
+  }) => void;
+  onClose: () => void;
+}) {
+  const trendsFn = useServerFn(fetchXTrends);
+  const draftTrendFn = useServerFn(draftStoryFromTrend);
+
+  const [keywords, setKeywords] = useState("");
+  const [useInterests, setUseInterests] = useState(true);
+  const [minEngagement, setMinEngagement] = useState(20);
+  const [trends, setTrends] = useState<TrendView[]>([]);
+  const [notConnected, setNotConnected] = useState(false);
+  const [notices, setNotices] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  const search = useMutation({
+    mutationFn: () =>
+      trendsFn({
+        data: {
+          keywords: keywords
+            .split(",")
+            .map((k) => k.trim())
+            .filter(Boolean)
+            .slice(0, 5),
+          useReaderInterests: useInterests,
+          minEngagement,
+        },
+      }),
+    onSuccess: (res) => {
+      const r = res as { connected: boolean; trends: TrendView[]; errors: string[] };
+      setNotConnected(!r.connected);
+      setTrends(r.trends ?? []);
+      setNotices(r.errors ?? []);
+    },
+    onError: (e: Error) => setError(e.message),
+  });
+
+  const draft = useMutation({
+    mutationFn: (trend: TrendView) =>
+      draftTrendFn({
+        data: { keyword: trend.keyword, tone, category, posts: trend.posts.slice(0, 6) },
+      }),
+    onSuccess: (res) => onApply(res as never),
+    onError: (e: Error) => setError(e.message),
+  });
+
+  return (
+    <div>
+      <label className="mt-4 block text-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+        Keywords (comma separated)
+      </label>
+      <input
+        autoFocus
+        value={keywords}
+        onChange={(e) => setKeywords(e.target.value)}
+        placeholder="rust, ai agents, web performance"
+        className="mt-1.5 w-full rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
+      />
+
+      <div className="mt-3 flex flex-wrap items-center gap-4">
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={useInterests}
+            onChange={(e) => setUseInterests(e.target.checked)}
+          />
+          Use reader interests too
+        </label>
+        <label className="flex items-center gap-2 text-sm">
+          Min engagement
+          <input
+            type="number"
+            min={0}
+            value={minEngagement}
+            onChange={(e) => setMinEngagement(Number(e.target.value) || 0)}
+            className="w-20 rounded-md border border-border bg-background px-2 py-1 text-sm"
+          />
+        </label>
+      </div>
+
+      <button
+        onClick={() => {
+          setError(null);
+          search.mutate();
+        }}
+        disabled={search.isPending}
+        className="mt-3 inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-2 text-mono text-xs hover:border-border-strong disabled:opacity-50"
+      >
+        {search.isPending ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        ) : (
+          <Sparkles className="h-3.5 w-3.5" />
+        )}
+        {search.isPending ? "Searching X…" : "Find trends"}
+      </button>
+
+      {notConnected ? (
+        <div className="mt-4 rounded-md border border-border bg-background p-3 text-xs text-muted-foreground">
+          X is not connected yet. Ask an admin to add the X connector, then trends will show up
+          here.
+        </div>
+      ) : null}
+
+      {notices.map((n) => (
+        <div key={n} className="mt-2 text-xs text-muted-foreground">
+          {n}
+        </div>
+      ))}
+
+      {trends.length > 0 ? (
+        <ul className="mt-4 space-y-2">
+          {trends.map((t) => (
+            <li key={t.key} className="rounded-md border border-border bg-background p-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-mono text-[11px] uppercase tracking-widest text-primary">
+                    {t.keyword}
+                  </div>
+                  <p className="mt-1 line-clamp-2 text-sm">{t.label}</p>
+                  <div className="mt-1 text-mono text-[10px] text-muted-foreground">
+                    {t.posts.length} posts · {t.engagement} engagement
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setError(null);
+                    draft.mutate(t);
+                  }}
+                  disabled={draft.isPending}
+                  className="shrink-0 rounded-md bg-primary px-3 py-1.5 text-mono text-xs text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                >
+                  {draft.isPending ? "Writing…" : "Write it"}
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
+      {!search.isPending && !notConnected && search.isSuccess && trends.length === 0 ? (
+        <div className="mt-4 text-xs text-muted-foreground">
+          No trends matched. Try broader keywords or a lower engagement threshold.
+        </div>
+      ) : null}
+
+      {error ? <div className="mt-3 text-xs text-destructive">{error}</div> : null}
+
+      <div className="mt-5 flex justify-end">
+        <button
+          onClick={onClose}
+          className="rounded-md border border-border bg-background px-4 py-2 text-mono text-xs"
+        >
+          Close
+        </button>
       </div>
     </div>
   );

@@ -109,6 +109,71 @@ export type Database = {
           },
         ]
       }
+      agent_trend_sources: {
+        Row: {
+          agent_id: string | null
+          created_at: string
+          creator_id: string
+          id: string
+          label: string
+          source_urls: string[]
+          story_id: string | null
+          trend_key: string
+          used_at: string
+        }
+        Insert: {
+          agent_id?: string | null
+          created_at?: string
+          creator_id: string
+          id?: string
+          label?: string
+          source_urls?: string[]
+          story_id?: string | null
+          trend_key: string
+          used_at?: string
+        }
+        Update: {
+          agent_id?: string | null
+          created_at?: string
+          creator_id?: string
+          id?: string
+          label?: string
+          source_urls?: string[]
+          story_id?: string | null
+          trend_key?: string
+          used_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_trend_sources_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "creator_agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_trend_sources_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "stories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_trend_sources_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "story_analytics"
+            referencedColumns: ["story_id"]
+          },
+          {
+            foreignKeyName: "agent_trend_sources_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "trending_stories"
+            referencedColumns: ["story_id"]
+          },
+        ]
+      }
       coin_transactions: {
         Row: {
           amount: number
@@ -177,13 +242,17 @@ export type Database = {
           id: string
           journey_id: string | null
           last_run_at: string | null
+          min_engagement: number
           monetization: Database["public"]["Enums"]["story_monetization"]
           name: string
+          source_mode: string
           tip_enabled: boolean
           tone: string
           topic: string
           unlock_price: number
           updated_at: string
+          use_reader_interests: boolean
+          x_keywords: string[]
         }
         Insert: {
           auto_publish?: boolean
@@ -195,13 +264,17 @@ export type Database = {
           id?: string
           journey_id?: string | null
           last_run_at?: string | null
+          min_engagement?: number
           monetization?: Database["public"]["Enums"]["story_monetization"]
           name?: string
+          source_mode?: string
           tip_enabled?: boolean
           tone?: string
           topic?: string
           unlock_price?: number
           updated_at?: string
+          use_reader_interests?: boolean
+          x_keywords?: string[]
         }
         Update: {
           auto_publish?: boolean
@@ -213,13 +286,17 @@ export type Database = {
           id?: string
           journey_id?: string | null
           last_run_at?: string | null
+          min_engagement?: number
           monetization?: Database["public"]["Enums"]["story_monetization"]
           name?: string
+          source_mode?: string
           tip_enabled?: boolean
           tone?: string
           topic?: string
           unlock_price?: number
           updated_at?: string
+          use_reader_interests?: boolean
+          x_keywords?: string[]
         }
         Relationships: [
           {

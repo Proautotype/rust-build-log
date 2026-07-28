@@ -33,6 +33,91 @@ export const draftStoryWithAi = createServerFn({ method: "POST" })
   });
 
 /* ------------------------------------------------------------------ */
+/*  X trends                                                           */
+/* ------------------------------------------------------------------ */
+
+export const fetchXTrends = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        keywords: z.array(z.string().max(80)).max(5),
+        useReaderInterests: z.boolean().optional(),
+        minEngagement: z.number().int().min(0).max(1000000).optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data }) => {
+    const { fetchTrends, isXConnected } = await import("./x-trends.server");
+    if (!isXConnected()) {
+      return { connected: false as const, trends: [], errors: [] as string[] };
+    }
+    const { TOPICS } = await import("@/data/topics");
+    const keywords = [
+      ...data.keywords.map((k) => k.trim()).filter(Boolean),
+      ...(data.useReaderInterests ? TOPICS.map((t) => t.label) : []),
+    ].slice(0, 5);
+
+    const { trends, errors } = await fetchTrends({
+      keywords,
+      minEngagement: data.minEngagement ?? 0,
+    });
+    return { connected: true as const, trends, errors };
+  });
+
+/** Draft a story from one selected X trend, with a sources section appended. */
+export const draftStoryFromTrend = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        keyword: z.string().min(1).max(80),
+        tone: z.string().max(120).optional(),
+        category: z.string().max(80).optional(),
+        posts: z
+          .array(
+            z.object({
+              author: z.string().max(80),
+              text: z.string().max(2000),
+              url: z.string().max(300),
+              likes: z.number().int().min(0),
+              reposts: z.number().int().min(0),
+            }),
+          )
+          .max(10),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data }): Promise<AgentDraft> => {
+    const { generateStory } = await import("./agent.server");
+    const briefing = data.posts
+      .map(
+        (p) =>
+          `- @${p.author} (${p.likes} likes, ${p.reposts} reposts): ${p.text.replace(/\s+/g, " ").trim()} [${p.url}]`,
+      )
+      .join("\n");
+
+    const draft = await generateStory({
+      topic: `What is trending on X about "${data.keyword}"`,
+      tone: data.tone,
+      category: data.category,
+      extraInstructions: [
+        `These are the highest-engagement recent public posts on X about "${data.keyword}":`,
+        briefing,
+        ``,
+        `Write an ORIGINAL article explaining the trend, why it matters and what readers should take from it.`,
+        `Do not copy post text verbatim; paraphrase and attribute by @handle where you reference someone.`,
+      ].join("\n"),
+    });
+
+    const sources = data.posts.map((p) => `- [@${p.author} on X](${p.url})`).join("\n");
+    return {
+      ...draft,
+      markdown: `${draft.markdown}\n\n## Sources\n\nBased on public posts on X:\n\n${sources}\n`,
+    };
+  });
+
+/* ------------------------------------------------------------------ */
 /*  Agent configuration                                                */
 /* ------------------------------------------------------------------ */
 
@@ -49,6 +134,10 @@ const agentInput = z.object({
   monetization: z.enum(["free", "tips", "locked"]),
   unlock_price: z.number().int().min(0).max(100000),
   tip_enabled: z.boolean(),
+  source_mode: z.enum(["topic", "x_trends"]).default("topic"),
+  x_keywords: z.array(z.string().max(80)).max(5).default([]),
+  use_reader_interests: z.boolean().default(false),
+  min_engagement: z.number().int().min(0).max(1000000).default(0),
 });
 
 export const listMyAgents = createServerFn({ method: "GET" })
