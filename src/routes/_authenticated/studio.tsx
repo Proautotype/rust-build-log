@@ -1295,6 +1295,9 @@ function DropSlot({
 function BlockEditor({
   block,
   index,
+  selected,
+  onToggleSelect,
+  onUngroup,
   onRemove,
   onDuplicate,
   onChange,
@@ -1302,15 +1305,31 @@ function BlockEditor({
 }: {
   block: EditorBlock;
   index: number;
+  selected?: boolean;
+  onToggleSelect?: () => void;
+  onUngroup?: () => void;
   onRemove: () => void;
   onDuplicate: () => void;
   onChange: (patch: Partial<EditorBlock>) => void;
   onDragStart: (e: React.DragEvent) => void;
 }) {
   return (
-    <div className="group relative rounded-lg border border-border bg-background p-3 transition hover:border-border-strong">
+    <div
+      className={`group relative rounded-lg border bg-background p-3 transition ${
+        selected ? "border-primary ring-1 ring-primary/40" : "border-border hover:border-border-strong"
+      }`}
+    >
       <div className="flex items-center justify-between gap-2 pb-2">
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          {onToggleSelect ? (
+            <input
+              type="checkbox"
+              checked={!!selected}
+              onChange={onToggleSelect}
+              aria-label={`Select block ${index + 1}`}
+              className="h-3.5 w-3.5 shrink-0 accent-[var(--primary)]"
+            />
+          ) : null}
           <div
             draggable
             onDragStart={onDragStart}
@@ -1319,11 +1338,20 @@ function BlockEditor({
           >
             <GripVertical className="h-4 w-4" />
           </div>
-          <span className="text-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+          <span className="truncate text-mono text-[10px] uppercase tracking-widest text-muted-foreground">
             {String(index + 1).padStart(2, "0")} · {blockLabel(block)}
           </span>
         </div>
-        <div className="flex items-center gap-1 opacity-70 group-hover:opacity-100">
+        <div className="flex shrink-0 items-center gap-1 opacity-70 group-hover:opacity-100">
+          {onUngroup ? (
+            <button
+              onClick={onUngroup}
+              title="Ungroup"
+              className="rounded px-1.5 py-1 text-mono text-[10px] text-muted-foreground hover:bg-accent hover:text-foreground"
+            >
+              Ungroup
+            </button>
+          ) : null}
           <button
             onClick={onDuplicate}
             title="Duplicate"
@@ -1332,6 +1360,7 @@ function BlockEditor({
             <Copy className="h-3.5 w-3.5" />
           </button>
           <button
+
             onClick={onRemove}
             title="Delete"
             className="rounded p-1 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
