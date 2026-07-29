@@ -1,9 +1,19 @@
 /**
- * Reads trending public posts from X through the Lovable connector gateway.
- * Server-only: the connection key never reaches the browser.
+ * Reads trending public posts from X.
+ *
+ * Each writer brings their own X API bearer token (stored encrypted), so R2R
+ * does not pay for X access. A workspace-level X connector, if one is ever
+ * connected, is used as an optional house fallback.
+ *
+ * Server-only: tokens never reach the browser.
  */
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/x";
+const X_API_URL = "https://api.x.com";
+
+export type XAuth =
+  | { mode: "token"; token: string; creatorId?: string }
+  | { mode: "gateway" };
 
 export interface TrendPost {
   id: string;
@@ -26,15 +36,34 @@ export interface Trend {
 }
 
 export class XNotConnectedError extends Error {
-  constructor() {
-    super("X is not connected yet. Connect the X connector to pull trending posts.");
+  constructor(message?: string) {
+    super(
+      message ??
+        "X isn't connected yet. Add your own X API token in Agents → Your X access to pull trending posts.",
+    );
     this.name = "XNotConnectedError";
   }
 }
 
-export function isXConnected() {
+/** True when a house (workspace-level) X connection exists. */
+export function isHouseXConnected() {
   return Boolean(process.env.LOVABLE_API_KEY && process.env.X_API_KEY);
 }
+
+/** Back-compat alias. */
+export function isXConnected() {
+  return isHouseXConnected();
+}
+
+/** The X credentials a given writer should use: their own token, else the house one. */
+export async function resolveXAuthForCreator(creatorId: string): Promise<XAuth | null> {
+  const { getWriterXToken } = await import("./x-credentials.server");
+  const token = await getWriterXToken(creatorId);
+  if (token) return { mode: "token", token, creatorId };
+  if (isHouseXConnected()) return { mode: "gateway" };
+  return null;
+}
+
 
 interface XUser {
   id: string;
