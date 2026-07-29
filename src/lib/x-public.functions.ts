@@ -86,16 +86,19 @@ export const getHomeXTrends = createServerFn({ method: "GET" }).handler(async ()
 
   // Use the house connection when one exists, otherwise borrow the token of an
   // opted-in writer so the public row still has a source.
-  let auth = isHouseXConnected() ? ({ mode: "gateway" } as const) : null;
+  let auth: import("./x-trends.server").XAuth | null = isHouseXConnected()
+    ? { mode: "gateway" }
+    : null;
   if (!auth) {
     for (const row of rows) {
       const resolved = await resolveXAuthForCreator(row.creator_id);
       if (resolved) {
-        auth = resolved as typeof auth;
+        auth = resolved;
         break;
       }
     }
   }
+
 
   if (!auth) {
     return { connected: false as const, trends: [] as HomeTrend[], stories };
