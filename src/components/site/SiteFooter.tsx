@@ -1,3 +1,5 @@
+import { Link } from "@tanstack/react-router";
+
 export function SiteFooter() {
   return (
     <footer className="border-t border-border/70 mt-24">
@@ -8,6 +10,14 @@ export function SiteFooter() {
             // every reader has the right to a good story.
           </span>
         </div>
+        <nav className="flex items-center gap-4 text-mono text-xs text-muted-foreground">
+          <Link to="/privacy" className="hover:text-foreground transition-colors">
+            Privacy
+          </Link>
+          <Link to="/terms" className="hover:text-foreground transition-colors">
+            Terms
+          </Link>
+        </nav>
         <div className="text-mono text-xs text-muted-foreground">
           © {new Date().getFullYear()} Right2Read — Built in public.
         </div>
