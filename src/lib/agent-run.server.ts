@@ -133,17 +133,32 @@ export async function runAgent(agent: AgentRow, source: "schedule" | "manual") {
     let usedTrend: import("./x-trends.server").Trend | null = null;
 
     if (useX) {
-      const { fetchTrends, trendBriefing, trendSourcesMarkdown } = await import("./x-trends.server");
+      const { fetchTrends, trendBriefing, trendSourcesMarkdown, resolveXAuthForCreator } =
+        await import("./x-trends.server");
       const keywords = agentKeywords(agent);
       if (keywords.length === 0) throw new Error("This agent has no X keywords configured.");
+
+      const auth = await resolveXAuthForCreator(agent.creator_id);
+      if (!auth) {
+        await logRun({
+          creator_id: agent.creator_id,
+          agent_id: agent.id,
+          source,
+          status: "skipped",
+          message: "X isn't connected — add your own X API token in Agents → Your X access.",
+        });
+        return { ok: false as const, error: "X isn't connected for this writer." };
+      }
 
       const { trends, errors } = await fetchTrends({
         keywords,
         minEngagement: agent.min_engagement ?? 0,
+        auth,
       });
       if (trends.length === 0) {
         throw new Error(errors[0] ?? "No trending posts matched this agent's keywords.");
       }
+
 
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

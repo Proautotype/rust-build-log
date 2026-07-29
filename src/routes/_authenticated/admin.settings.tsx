@@ -34,6 +34,8 @@ function SettingsPage() {
   const [bucketPublic, setBucketPublic] = useState(false);
   const [maxMb, setMaxMb] = useState(25);
   const [allowedTypes, setAllowedTypes] = useState("image/*,video/mp4,video/webm,application/pdf");
+  const [xSetupPrice, setXSetupPrice] = useState(500);
+
   const [status, setStatus] = useState<string | null>(null);
 
   useEffect(() => {
@@ -46,6 +48,7 @@ function SettingsPage() {
           media_bucket_public?: boolean | null;
           media_max_mb?: number | null;
           media_allowed_types?: string | null;
+          x_setup_price_coins?: number | null;
         }
       | null
       | undefined;
@@ -57,8 +60,10 @@ function SettingsPage() {
       setBucketPublic(!!s.media_bucket_public);
       setMaxMb(s.media_max_mb ?? 25);
       setAllowedTypes(s.media_allowed_types ?? "image/*,video/mp4,video/webm,application/pdf");
+      setXSetupPrice(s.x_setup_price_coins ?? 500);
     }
   }, [settingsQuery.data]);
+
 
   const save = useMutation({
     mutationFn: () =>
@@ -71,6 +76,8 @@ function SettingsPage() {
           media_bucket_public: bucketPublic,
           media_max_mb: maxMb,
           media_allowed_types: allowedTypes.trim(),
+          x_setup_price_coins: xSetupPrice,
+
         },
       }),
     onSuccess: () => {
@@ -246,6 +253,17 @@ function SettingsPage() {
             className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-mono outline-none focus:ring-1 focus:ring-primary"
           />
         </Field>
+
+        <Field label="X access setup price (coins)">
+          <input
+            type="number"
+            min={0}
+            value={xSetupPrice}
+            onChange={(e) => setXSetupPrice(Math.max(0, Number(e.target.value) || 0))}
+            className="w-32 rounded-md border border-border bg-background px-3 py-2 text-sm text-mono outline-none focus:ring-1 focus:ring-primary"
+          />
+        </Field>
+
 
         <div className="flex items-center gap-3 pt-2">
           <button

@@ -431,6 +431,7 @@ export type Database = {
           media_max_mb: number
           updated_at: string
           updated_by: string | null
+          x_setup_price_coins: number
         }
         Insert: {
           adsense_client?: string | null
@@ -443,6 +444,7 @@ export type Database = {
           media_max_mb?: number
           updated_at?: string
           updated_by?: string | null
+          x_setup_price_coins?: number
         }
         Update: {
           adsense_client?: string | null
@@ -455,6 +457,7 @@ export type Database = {
           media_max_mb?: number
           updated_at?: string
           updated_by?: string | null
+          x_setup_price_coins?: number
         }
         Relationships: []
       }
@@ -825,6 +828,36 @@ export type Database = {
         }
         Relationships: []
       }
+      writer_x_credentials: {
+        Row: {
+          created_at: string
+          creator_id: string
+          status: string
+          token_ciphertext: string
+          token_last4: string
+          updated_at: string
+          verified_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          creator_id: string
+          status?: string
+          token_ciphertext: string
+          token_last4?: string
+          updated_at?: string
+          verified_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          creator_id?: string
+          status?: string
+          token_ciphertext?: string
+          token_last4?: string
+          updated_at?: string
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       writer_x_settings: {
         Row: {
           auto_publish: boolean
@@ -864,6 +897,45 @@ export type Database = {
           show_on_home?: boolean
           updated_at?: string
           use_reader_interests?: boolean
+        }
+        Relationships: []
+      }
+      x_setup_requests: {
+        Row: {
+          admin_note: string
+          contact_email: string
+          created_at: string
+          id: string
+          notes: string
+          price_coins: number
+          status: string
+          updated_at: string
+          user_id: string
+          x_handle: string
+        }
+        Insert: {
+          admin_note?: string
+          contact_email: string
+          created_at?: string
+          id?: string
+          notes?: string
+          price_coins?: number
+          status?: string
+          updated_at?: string
+          user_id: string
+          x_handle?: string
+        }
+        Update: {
+          admin_note?: string
+          contact_email?: string
+          created_at?: string
+          id?: string
+          notes?: string
+          price_coins?: number
+          status?: string
+          updated_at?: string
+          user_id?: string
+          x_handle?: string
         }
         Relationships: []
       }

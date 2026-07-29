@@ -56,27 +56,27 @@ export const getHomeXTrends = createServerFn({ method: "GET" }).handler(async ()
 
   const stories = (storyRows ?? []) as HomeTrendStory[];
 
-  const { isXConnected, fetchTrends } = await import("./x-trends.server");
-  if (!isXConnected()) {
-    return { connected: false as const, trends: [] as HomeTrend[], stories };
-  }
+  const { isHouseXConnected, fetchTrends, resolveXAuthForCreator } = await import(
+    "./x-trends.server"
+  );
 
   if (cache && Date.now() - cache.at < CACHE_MS) {
     return { connected: true as const, trends: cache.trends, stories };
   }
 
-  // Keywords writers opted into showing publicly.
+  // Writers who opted into showing their keywords publicly.
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: settings } = await (supabaseAdmin as any)
     .from("writer_x_settings")
-    .select("keywords")
+    .select("creator_id, keywords")
     .eq("enabled", true)
     .eq("show_on_home", true);
 
+  const rows = (settings ?? []) as { creator_id: string; keywords: string[] | null }[];
   const keywords = Array.from(
     new Set(
-      ((settings ?? []) as { keywords: string[] | null }[])
+      rows
         .flatMap((s) => s.keywords ?? [])
         .map((k) => k.trim())
         .filter(Boolean)
@@ -84,12 +84,37 @@ export const getHomeXTrends = createServerFn({ method: "GET" }).handler(async ()
     ),
   ).slice(0, 4);
 
+  // Use the house connection when one exists, otherwise borrow the token of an
+  // opted-in writer so the public row still has a source.
+  let auth: import("./x-trends.server").XAuth | null = isHouseXConnected()
+    ? { mode: "gateway" }
+    : null;
+  if (!auth) {
+    for (const row of rows) {
+      const resolved = await resolveXAuthForCreator(row.creator_id);
+      if (resolved) {
+        auth = resolved;
+        break;
+      }
+    }
+  }
+
+
+  if (!auth) {
+    return { connected: false as const, trends: [] as HomeTrend[], stories };
+  }
   if (keywords.length === 0) {
     return { connected: true as const, trends: [] as HomeTrend[], stories };
   }
 
   try {
-    const { trends } = await fetchTrends({ keywords, minEngagement: 0, postsPerTrend: 4 });
+    const { trends } = await fetchTrends({
+      keywords,
+      minEngagement: 0,
+      postsPerTrend: 4,
+      auth,
+    });
+
     const mapped: HomeTrend[] = trends.slice(0, 8).map((t) => ({
       key: t.key,
       keyword: t.keyword,
