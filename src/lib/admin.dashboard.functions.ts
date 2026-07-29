@@ -121,7 +121,8 @@ export const setUserBanned = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const { error } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
       .from("profiles")
       .update({ banned: data.banned })
       .eq("id", data.userId);
@@ -142,14 +143,15 @@ export const adjustUserCoins = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const { data: p } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: p } = await supabaseAdmin
       .from("profiles")
       .select("coin_balance")
       .eq("id", data.userId)
       .maybeSingle();
     const next = Math.max(0, (p?.coin_balance ?? 0) + data.delta);
-    await context.supabase.from("profiles").update({ coin_balance: next }).eq("id", data.userId);
-    await context.supabase.from("coin_transactions").insert({
+    await supabaseAdmin.from("profiles").update({ coin_balance: next }).eq("id", data.userId);
+    await supabaseAdmin.from("coin_transactions").insert({
       user_id: data.userId,
       amount: data.delta,
       kind: "admin_adjust",
@@ -158,6 +160,7 @@ export const adjustUserCoins = createServerFn({ method: "POST" })
     });
     return { balance: next };
   });
+
 
 export const listAllStoriesForAdmin = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
