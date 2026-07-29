@@ -54,6 +54,10 @@ export const updateSiteSettings = createServerFn({ method: "POST" })
       ...(data.media_bucket_public !== undefined ? { media_bucket_public: data.media_bucket_public } : {}),
       ...(data.media_max_mb !== undefined ? { media_max_mb: data.media_max_mb } : {}),
       ...(data.media_allowed_types !== undefined ? { media_allowed_types: data.media_allowed_types } : {}),
+      ...(data.x_setup_price_coins !== undefined
+        ? { x_setup_price_coins: data.x_setup_price_coins }
+        : {}),
+
     };
 
     if (existing) {
