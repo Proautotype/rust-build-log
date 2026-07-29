@@ -25,6 +25,8 @@ import {
   revokeApiKey,
 } from "@/lib/agent.functions";
 import { listJourneys } from "@/lib/studio.functions";
+import { XAccessCard } from "@/components/agents/XAccessCard";
+
 import {
   getMyXSettings,
   saveMyXSettings,
