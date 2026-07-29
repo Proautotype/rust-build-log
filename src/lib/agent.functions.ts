@@ -47,9 +47,10 @@ export const fetchXTrends = createServerFn({ method: "POST" })
       })
       .parse(input),
   )
-  .handler(async ({ data }) => {
-    const { fetchTrends, isXConnected } = await import("./x-trends.server");
-    if (!isXConnected()) {
+  .handler(async ({ data, context }) => {
+    const { fetchTrends, resolveXAuthForCreator } = await import("./x-trends.server");
+    const auth = await resolveXAuthForCreator(context.userId);
+    if (!auth) {
       return { connected: false as const, trends: [], errors: [] as string[] };
     }
     const { TOPICS } = await import("@/data/topics");
@@ -58,12 +59,22 @@ export const fetchXTrends = createServerFn({ method: "POST" })
       ...(data.useReaderInterests ? TOPICS.map((t) => t.label) : []),
     ].slice(0, 5);
 
-    const { trends, errors } = await fetchTrends({
-      keywords,
-      minEngagement: data.minEngagement ?? 0,
-    });
-    return { connected: true as const, trends, errors };
+    try {
+      const { trends, errors } = await fetchTrends({
+        keywords,
+        minEngagement: data.minEngagement ?? 0,
+        auth,
+      });
+      return { connected: true as const, trends, errors };
+    } catch (e) {
+      return {
+        connected: false as const,
+        trends: [],
+        errors: [e instanceof Error ? e.message : "Unknown X error"],
+      };
+    }
   });
+
 
 /** Draft a story from one selected X trend, with a sources section appended. */
 export const draftStoryFromTrend = createServerFn({ method: "POST" })

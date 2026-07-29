@@ -1,9 +1,19 @@
 /**
- * Reads trending public posts from X through the Lovable connector gateway.
- * Server-only: the connection key never reaches the browser.
+ * Reads trending public posts from X.
+ *
+ * Each writer brings their own X API bearer token (stored encrypted), so R2R
+ * does not pay for X access. A workspace-level X connector, if one is ever
+ * connected, is used as an optional house fallback.
+ *
+ * Server-only: tokens never reach the browser.
  */
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/x";
+const X_API_URL = "https://api.x.com";
+
+export type XAuth =
+  | { mode: "token"; token: string; creatorId?: string }
+  | { mode: "gateway" };
 
 export interface TrendPost {
   id: string;
@@ -26,15 +36,34 @@ export interface Trend {
 }
 
 export class XNotConnectedError extends Error {
-  constructor() {
-    super("X is not connected yet. Connect the X connector to pull trending posts.");
+  constructor(message?: string) {
+    super(
+      message ??
+        "X isn't connected yet. Add your own X API token in Agents → Your X access to pull trending posts.",
+    );
     this.name = "XNotConnectedError";
   }
 }
 
-export function isXConnected() {
+/** True when a house (workspace-level) X connection exists. */
+export function isHouseXConnected() {
   return Boolean(process.env.LOVABLE_API_KEY && process.env.X_API_KEY);
 }
+
+/** Back-compat alias. */
+export function isXConnected() {
+  return isHouseXConnected();
+}
+
+/** The X credentials a given writer should use: their own token, else the house one. */
+export async function resolveXAuthForCreator(creatorId: string): Promise<XAuth | null> {
+  const { getWriterXToken } = await import("./x-credentials.server");
+  const token = await getWriterXToken(creatorId);
+  if (token) return { mode: "token", token, creatorId };
+  if (isHouseXConnected()) return { mode: "gateway" };
+  return null;
+}
+
 
 interface XUser {
   id: string;
@@ -68,11 +97,11 @@ function trendLabel(keyword: string, top: TrendPost | undefined) {
   return snippet ? `${keyword} — ${snippet}` : keyword;
 }
 
-async function searchKeyword(keyword: string, maxResults: number): Promise<TrendPost[]> {
-  const lovableKey = process.env.LOVABLE_API_KEY;
-  const connectionKey = process.env.X_API_KEY;
-  if (!lovableKey || !connectionKey) throw new XNotConnectedError();
-
+async function searchKeyword(
+  keyword: string,
+  maxResults: number,
+  auth: XAuth,
+): Promise<TrendPost[]> {
   const query = `${keyword} -is:retweet -is:reply lang:en`;
   const params = new URLSearchParams({
     query,
@@ -82,13 +111,21 @@ async function searchKeyword(keyword: string, maxResults: number): Promise<Trend
     "user.fields": "username",
   });
 
-  const response = await fetch(`${GATEWAY_URL}/2/tweets/search/recent?${params.toString()}`, {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${lovableKey}`,
-      "X-Connection-Api-Key": connectionKey,
-    },
-  });
+  let url: string;
+  const headers: Record<string, string> = {};
+  if (auth.mode === "token") {
+    url = `${X_API_URL}/2/tweets/search/recent?${params.toString()}`;
+    headers.Authorization = `Bearer ${auth.token}`;
+  } else {
+    const lovableKey = process.env.LOVABLE_API_KEY;
+    const connectionKey = process.env.X_API_KEY;
+    if (!lovableKey || !connectionKey) throw new XNotConnectedError();
+    url = `${GATEWAY_URL}/2/tweets/search/recent?${params.toString()}`;
+    headers.Authorization = `Bearer ${lovableKey}`;
+    headers["X-Connection-Api-Key"] = connectionKey;
+  }
+
+  const response = await fetch(url, { method: "GET", headers });
 
   if (!response.ok) {
     const body = await response.text();
@@ -98,8 +135,18 @@ async function searchKeyword(keyword: string, maxResults: number): Promise<Trend
         `X rate limit reached${retry ? ` — retry in ${retry}s` : ""}. Try fewer keywords.`,
       );
     }
+    if ((response.status === 401 || response.status === 403) && auth.mode === "token") {
+      if (auth.creatorId) {
+        const { markWriterXInvalid } = await import("./x-credentials.server");
+        await markWriterXInvalid(auth.creatorId);
+      }
+      throw new XNotConnectedError(
+        "Your X token was rejected. Reconnect your X access in Agents → Your X access.",
+      );
+    }
     throw new Error(`X request failed [${response.status}]: ${body.slice(0, 500)}`);
   }
+
 
   const payload = (await response.json()) as {
     data?: XPost[];
@@ -136,7 +183,9 @@ export async function fetchTrends(opts: {
   keywords: string[];
   minEngagement?: number;
   postsPerTrend?: number;
+  auth?: XAuth;
 }): Promise<{ trends: Trend[]; errors: string[] }> {
+  const auth: XAuth = opts.auth ?? { mode: "gateway" };
   const keywords = opts.keywords
     .map((k) => k.trim())
     .filter(Boolean)
@@ -153,7 +202,8 @@ export async function fetchTrends(opts: {
       break;
     }
     try {
-      const posts = (await searchKeyword(keyword, 25))
+      const posts = (await searchKeyword(keyword, 25, auth))
+
         .filter((p) => p.engagement >= (opts.minEngagement ?? 0))
         .sort((a, b) => b.engagement - a.engagement)
         .slice(0, opts.postsPerTrend ?? 6);

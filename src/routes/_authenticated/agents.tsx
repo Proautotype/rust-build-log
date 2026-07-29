@@ -25,6 +25,8 @@ import {
   revokeApiKey,
 } from "@/lib/agent.functions";
 import { listJourneys } from "@/lib/studio.functions";
+import { XAccessCard } from "@/components/agents/XAccessCard";
+
 import {
   getMyXSettings,
   saveMyXSettings,
@@ -215,7 +217,10 @@ function AgentsPage() {
       </p>
       {status ? <div className="mt-3 text-mono text-xs text-primary">{status}</div> : null}
 
+      <XAccessCard />
+
       <XSettingsCard />
+
 
 
       {/* Agents */}

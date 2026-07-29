@@ -2,6 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
+import { XSetupTab } from "@/components/admin/XSetupTab";
+
 import {
   Users,
   BookText,
@@ -39,7 +41,7 @@ export const Route = createFileRoute("/_authenticated/admin/dashboard")({
   component: AdminDashboard,
 });
 
-type Tab = "overview" | "users" | "content" | "comments" | "ledger";
+type Tab = "overview" | "users" | "content" | "comments" | "ledger" | "xsetup";
 
 function AdminDashboard() {
   const { isStaff, isAdmin, loading } = useRole();
@@ -72,7 +74,9 @@ function AdminDashboard() {
     { id: "content", label: "Stories" },
     { id: "comments", label: "Comments" },
     { id: "ledger", label: "Ledger" },
+    { id: "xsetup", label: "X setup" },
   ];
+
 
   return (
     <div className="container-page py-10 md:py-14">
@@ -112,6 +116,8 @@ function AdminDashboard() {
         {tab === "content" && <StoriesTab />}
         {tab === "comments" && <CommentsTab />}
         {tab === "ledger" && <LedgerTab />}
+        {tab === "xsetup" && <XSetupTab />}
+
       </div>
     </div>
   );
