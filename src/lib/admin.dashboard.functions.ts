@@ -1,29 +1,24 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertRole } from "@/lib/roles";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function assertStaff(context: { supabase: any; userId: string }) {
-  const [{ data: isAdmin }, { data: isManager }] = await Promise.all([
-    context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" }),
-    context.supabase.rpc("has_role", { _user_id: context.userId, _role: "manager" }),
-  ]);
-  if (!isAdmin && !isManager) throw new Error("Forbidden");
+  await assertRole(context.supabase, context.userId, ["admin", "manager"]);
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function assertAdmin(context: { supabase: any; userId: string }) {
-  const { data } = await context.supabase.rpc("has_role", {
-    _user_id: context.userId,
-    _role: "admin",
-  });
-  if (!data) throw new Error("Forbidden");
+  await assertRole(context.supabase, context.userId, ["admin"]);
 }
+
 
 export const getAdminMetrics = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertStaff(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const [users, stories, publishedStories, journeys, comments, pending, coinsAgg, unlocks] =
       await Promise.all([
         context.supabase.from("profiles").select("id", { count: "exact", head: true }),
@@ -38,9 +33,10 @@ export const getAdminMetrics = createServerFn({ method: "GET" })
           .from("writer_requests")
           .select("id", { count: "exact", head: true })
           .eq("status", "pending"),
-        context.supabase.from("profiles").select("coin_balance"),
+        supabaseAdmin.from("profiles").select("coin_balance"),
         context.supabase.from("story_unlocks").select("id", { count: "exact", head: true }),
       ]);
+
 
     const coinsInCirculation = (coinsAgg.data ?? []).reduce(
       (a: number, r: { coin_balance: number }) => a + (r.coin_balance ?? 0),
@@ -64,7 +60,8 @@ export const listUsersForAdmin = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ search: z.string().optional() }).parse(input))
   .handler(async ({ data, context }) => {
     await assertStaff(context);
-    let q = context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    let q = supabaseAdmin
       .from("profiles")
       .select("id, display_name, avatar_url, bio, is_pro, coin_balance, banned, created_at")
       .order("created_at", { ascending: false })
@@ -74,6 +71,7 @@ export const listUsersForAdmin = createServerFn({ method: "POST" })
     }
     const { data: profiles, error } = await q;
     if (error) throw new Error(error.message);
+
     const ids = (profiles ?? []).map((p) => p.id);
     let roleMap: Record<string, string[]> = {};
     if (ids.length) {
@@ -123,7 +121,8 @@ export const setUserBanned = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const { error } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
       .from("profiles")
       .update({ banned: data.banned })
       .eq("id", data.userId);
@@ -144,14 +143,15 @@ export const adjustUserCoins = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const { data: p } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: p } = await supabaseAdmin
       .from("profiles")
       .select("coin_balance")
       .eq("id", data.userId)
       .maybeSingle();
     const next = Math.max(0, (p?.coin_balance ?? 0) + data.delta);
-    await context.supabase.from("profiles").update({ coin_balance: next }).eq("id", data.userId);
-    await context.supabase.from("coin_transactions").insert({
+    await supabaseAdmin.from("profiles").update({ coin_balance: next }).eq("id", data.userId);
+    await supabaseAdmin.from("coin_transactions").insert({
       user_id: data.userId,
       amount: data.delta,
       kind: "admin_adjust",
@@ -160,6 +160,7 @@ export const adjustUserCoins = createServerFn({ method: "POST" })
     });
     return { balance: next };
   });
+
 
 export const listAllStoriesForAdmin = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])

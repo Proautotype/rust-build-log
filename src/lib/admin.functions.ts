@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertRole } from "@/lib/roles";
 
 export const getSiteSettings = createServerFn({ method: "GET" }).handler(async () => {
   // Public read is allowed by RLS; use the shared anon client.
@@ -32,11 +33,7 @@ export const updateSiteSettings = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { data: isAdmin } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
-    if (!isAdmin) throw new Error("Forbidden");
+    await assertRole(context.supabase, context.userId, ["admin"]);
 
     const { data: existing } = await context.supabase
       .from("site_settings")
@@ -79,7 +76,8 @@ export const updateSiteSettings = createServerFn({ method: "POST" })
 export const upgradeToPro = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
       .from("profiles")
       .update({ is_pro: true })
       .eq("id", context.userId)
@@ -92,7 +90,8 @@ export const upgradeToPro = createServerFn({ method: "POST" })
 export const downgradeFromPro = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
       .from("profiles")
       .update({ is_pro: false })
       .eq("id", context.userId)
