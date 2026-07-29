@@ -39,7 +39,7 @@ export const Route = createFileRoute("/_authenticated/admin/dashboard")({
   component: AdminDashboard,
 });
 
-type Tab = "overview" | "users" | "content" | "comments" | "ledger";
+type Tab = "overview" | "users" | "content" | "comments" | "ledger" | "xsetup";
 
 function AdminDashboard() {
   const { isStaff, isAdmin, loading } = useRole();
