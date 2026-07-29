@@ -22,12 +22,9 @@ async function addCoins(supabase: any, userId: string, delta: number) {
 export const getMyCoinState = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const { supabaseAdmin: admin } = await import("@/integrations/supabase/client.server");
     const [{ data: profile }, { data: unlocks }, { data: tx }] = await Promise.all([
-      context.supabase
-        .from("profiles")
-        .select("coin_balance")
-        .eq("id", context.userId)
-        .maybeSingle(),
+      admin.from("profiles").select("coin_balance").eq("id", context.userId).maybeSingle(),
       context.supabase.from("story_unlocks").select("story_id").eq("user_id", context.userId),
       context.supabase
         .from("coin_transactions")
@@ -49,8 +46,9 @@ export const purchaseCoins = createServerFn({ method: "POST" })
     z.object({ amount: z.number().int().min(50).max(10000) }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    const balance = await addCoins(context.supabase, context.userId, data.amount);
-    await context.supabase.from("coin_transactions").insert({
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const balance = await addCoins(supabaseAdmin, context.userId, data.amount);
+    await supabaseAdmin.from("coin_transactions").insert({
       user_id: context.userId,
       amount: data.amount,
       kind: "purchase",
@@ -85,7 +83,7 @@ export const unlockStory = createServerFn({ method: "POST" })
       .maybeSingle();
     if (existing) return { ok: true, alreadyUnlocked: true };
 
-    const { data: buyer } = await context.supabase
+    const { data: buyer } = await supabaseAdmin
       .from("profiles")
       .select("coin_balance")
       .eq("id", context.userId)
@@ -95,9 +93,9 @@ export const unlockStory = createServerFn({ method: "POST" })
     }
 
     // Debit buyer, credit writer
-    await addCoins(context.supabase, context.userId, -story.unlock_price);
+    await addCoins(supabaseAdmin, context.userId, -story.unlock_price);
     if (story.creator_id) {
-      await addCoins(context.supabase, story.creator_id, story.unlock_price);
+      await addCoins(supabaseAdmin, story.creator_id, story.unlock_price);
     }
 
     await context.supabase.from("story_unlocks").insert({
@@ -106,7 +104,7 @@ export const unlockStory = createServerFn({ method: "POST" })
       price_paid: story.unlock_price,
     });
 
-    await context.supabase.from("coin_transactions").insert([
+    await supabaseAdmin.from("coin_transactions").insert([
       {
         user_id: context.userId,
         amount: -story.unlock_price,
@@ -152,7 +150,7 @@ export const tipStory = createServerFn({ method: "POST" })
     if (!story.creator_id) throw new Error("This story has no creator to tip");
     if (story.creator_id === context.userId) throw new Error("You can't tip yourself");
 
-    const { data: buyer } = await context.supabase
+    const { data: buyer } = await supabaseAdmin
       .from("profiles")
       .select("coin_balance")
       .eq("id", context.userId)
@@ -161,10 +159,10 @@ export const tipStory = createServerFn({ method: "POST" })
       throw new Error("Not enough coins. Top up first.");
     }
 
-    await addCoins(context.supabase, context.userId, -data.amount);
-    await addCoins(context.supabase, story.creator_id, data.amount);
+    await addCoins(supabaseAdmin, context.userId, -data.amount);
+    await addCoins(supabaseAdmin, story.creator_id, data.amount);
 
-    await context.supabase.from("coin_transactions").insert([
+    await supabaseAdmin.from("coin_transactions").insert([
       {
         user_id: context.userId,
         amount: -data.amount,
