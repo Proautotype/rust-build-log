@@ -76,6 +76,8 @@ function SettingsPage() {
           media_bucket_public: bucketPublic,
           media_max_mb: maxMb,
           media_allowed_types: allowedTypes.trim(),
+          x_setup_price_coins: xSetupPrice,
+
         },
       }),
     onSuccess: () => {
