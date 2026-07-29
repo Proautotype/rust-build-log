@@ -904,19 +904,10 @@ export type Database = {
       }
     }
     Functions: {
-      has_role: {
-        Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
-        }
-        Returns: boolean
+      increment_story_view: {
+        Args: { _session_key?: string; _story_id: string }
+        Returns: undefined
       }
-      increment_story_view:
-        | { Args: { _story_id: string }; Returns: undefined }
-        | {
-            Args: { _session_key?: string; _story_id: string }
-            Returns: undefined
-          }
     }
     Enums: {
       app_role: "reader" | "writer" | "admin" | "manager"
