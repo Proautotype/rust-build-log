@@ -114,6 +114,8 @@ function AdminDashboard() {
         {tab === "content" && <StoriesTab />}
         {tab === "comments" && <CommentsTab />}
         {tab === "ledger" && <LedgerTab />}
+        {tab === "xsetup" && <XSetupTab />}
+
       </div>
     </div>
   );
