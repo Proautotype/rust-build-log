@@ -60,7 +60,8 @@ export const listUsersForAdmin = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ search: z.string().optional() }).parse(input))
   .handler(async ({ data, context }) => {
     await assertStaff(context);
-    let q = context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    let q = supabaseAdmin
       .from("profiles")
       .select("id, display_name, avatar_url, bio, is_pro, coin_balance, banned, created_at")
       .order("created_at", { ascending: false })
@@ -70,6 +71,7 @@ export const listUsersForAdmin = createServerFn({ method: "POST" })
     }
     const { data: profiles, error } = await q;
     if (error) throw new Error(error.message);
+
     const ids = (profiles ?? []).map((p) => p.id);
     let roleMap: Record<string, string[]> = {};
     if (ids.length) {
