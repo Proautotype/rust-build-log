@@ -44,18 +44,24 @@ export function useAuth() {
   useEffect(() => {
     if (!user) return;
     let mounted = true;
-    supabase
-      .from("profiles")
-      .select("id, display_name, avatar_url, bio, is_pro")
-      .eq("id", user.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (mounted && data) setProfile({ ...data, coin_balance: 0, banned: false } as Profile);
-      });
+    void (async () => {
+      const [{ data }, coins] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("id, display_name, avatar_url, bio, is_pro")
+          .eq("id", user.id)
+          .maybeSingle(),
+        getMyCoinState().catch(() => null),
+      ]);
+      if (mounted && data) {
+        setProfile({ ...data, coin_balance: coins?.balance ?? 0, banned: false } as Profile);
+      }
+    })();
     return () => {
       mounted = false;
     };
   }, [user]);
+
 
   return { session, user, profile, loading };
 }
