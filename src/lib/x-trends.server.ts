@@ -97,11 +97,11 @@ function trendLabel(keyword: string, top: TrendPost | undefined) {
   return snippet ? `${keyword} — ${snippet}` : keyword;
 }
 
-async function searchKeyword(keyword: string, maxResults: number): Promise<TrendPost[]> {
-  const lovableKey = process.env.LOVABLE_API_KEY;
-  const connectionKey = process.env.X_API_KEY;
-  if (!lovableKey || !connectionKey) throw new XNotConnectedError();
-
+async function searchKeyword(
+  keyword: string,
+  maxResults: number,
+  auth: XAuth,
+): Promise<TrendPost[]> {
   const query = `${keyword} -is:retweet -is:reply lang:en`;
   const params = new URLSearchParams({
     query,
@@ -111,13 +111,21 @@ async function searchKeyword(keyword: string, maxResults: number): Promise<Trend
     "user.fields": "username",
   });
 
-  const response = await fetch(`${GATEWAY_URL}/2/tweets/search/recent?${params.toString()}`, {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${lovableKey}`,
-      "X-Connection-Api-Key": connectionKey,
-    },
-  });
+  let url: string;
+  const headers: Record<string, string> = {};
+  if (auth.mode === "token") {
+    url = `${X_API_URL}/2/tweets/search/recent?${params.toString()}`;
+    headers.Authorization = `Bearer ${auth.token}`;
+  } else {
+    const lovableKey = process.env.LOVABLE_API_KEY;
+    const connectionKey = process.env.X_API_KEY;
+    if (!lovableKey || !connectionKey) throw new XNotConnectedError();
+    url = `${GATEWAY_URL}/2/tweets/search/recent?${params.toString()}`;
+    headers.Authorization = `Bearer ${lovableKey}`;
+    headers["X-Connection-Api-Key"] = connectionKey;
+  }
+
+  const response = await fetch(url, { method: "GET", headers });
 
   if (!response.ok) {
     const body = await response.text();
@@ -127,8 +135,18 @@ async function searchKeyword(keyword: string, maxResults: number): Promise<Trend
         `X rate limit reached${retry ? ` — retry in ${retry}s` : ""}. Try fewer keywords.`,
       );
     }
+    if ((response.status === 401 || response.status === 403) && auth.mode === "token") {
+      if (auth.creatorId) {
+        const { markWriterXInvalid } = await import("./x-credentials.server");
+        await markWriterXInvalid(auth.creatorId);
+      }
+      throw new XNotConnectedError(
+        "Your X token was rejected. Reconnect your X access in Agents → Your X access.",
+      );
+    }
     throw new Error(`X request failed [${response.status}]: ${body.slice(0, 500)}`);
   }
+
 
   const payload = (await response.json()) as {
     data?: XPost[];
