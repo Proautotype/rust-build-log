@@ -72,7 +72,9 @@ function AdminDashboard() {
     { id: "content", label: "Stories" },
     { id: "comments", label: "Comments" },
     { id: "ledger", label: "Ledger" },
+    { id: "xsetup", label: "X setup" },
   ];
+
 
   return (
     <div className="container-page py-10 md:py-14">
