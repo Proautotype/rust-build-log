@@ -9,8 +9,9 @@ export const getSiteSettings = createServerFn({ method: "GET" }).handler(async (
   const { data, error } = await supabase
     .from("site_settings")
     .select(
-      "id, adsense_enabled, adsense_client, adsense_slot, adsense_global_enabled, media_bucket_public, media_max_mb, media_allowed_types",
+      "id, adsense_enabled, adsense_client, adsense_slot, adsense_global_enabled, media_bucket_public, media_max_mb, media_allowed_types, x_setup_price_coins",
     )
+
     .limit(1)
     .maybeSingle();
   if (error) throw new Error(error.message);
