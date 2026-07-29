@@ -48,6 +48,7 @@ function SettingsPage() {
           media_bucket_public?: boolean | null;
           media_max_mb?: number | null;
           media_allowed_types?: string | null;
+          x_setup_price_coins?: number | null;
         }
       | null
       | undefined;
@@ -59,8 +60,10 @@ function SettingsPage() {
       setBucketPublic(!!s.media_bucket_public);
       setMaxMb(s.media_max_mb ?? 25);
       setAllowedTypes(s.media_allowed_types ?? "image/*,video/mp4,video/webm,application/pdf");
+      setXSetupPrice(s.x_setup_price_coins ?? 500);
     }
   }, [settingsQuery.data]);
+
 
   const save = useMutation({
     mutationFn: () =>
