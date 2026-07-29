@@ -1,24 +1,18 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertRole } from "@/lib/roles";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function assertStaff(context: { supabase: any; userId: string }) {
-  const [{ data: isAdmin }, { data: isManager }] = await Promise.all([
-    context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" }),
-    context.supabase.rpc("has_role", { _user_id: context.userId, _role: "manager" }),
-  ]);
-  if (!isAdmin && !isManager) throw new Error("Forbidden");
+  await assertRole(context.supabase, context.userId, ["admin", "manager"]);
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function assertAdmin(context: { supabase: any; userId: string }) {
-  const { data } = await context.supabase.rpc("has_role", {
-    _user_id: context.userId,
-    _role: "admin",
-  });
-  if (!data) throw new Error("Forbidden");
+  await assertRole(context.supabase, context.userId, ["admin"]);
 }
+
 
 export const getAdminMetrics = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
