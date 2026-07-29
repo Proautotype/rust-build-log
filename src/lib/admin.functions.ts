@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertRole } from "@/lib/roles";
 
 export const getSiteSettings = createServerFn({ method: "GET" }).handler(async () => {
   // Public read is allowed by RLS; use the shared anon client.
@@ -32,11 +33,7 @@ export const updateSiteSettings = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { data: isAdmin } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
-    if (!isAdmin) throw new Error("Forbidden");
+    await assertRole(context.supabase, context.userId, ["admin"]);
 
     const { data: existing } = await context.supabase
       .from("site_settings")

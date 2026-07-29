@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { assertRole } from "@/lib/roles";
 
 export const getMyWriterRequest = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -54,11 +55,7 @@ export const cancelMyWriterRequest = createServerFn({ method: "POST" })
 export const listWriterRequests = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data: isAdmin } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
-    if (!isAdmin) throw new Error("Forbidden");
+    await assertRole(context.supabase, context.userId, ["admin", "manager"]);
     const { data, error } = await context.supabase
       .from("writer_requests")
       .select("*")
@@ -87,11 +84,7 @@ export const reviewWriterRequest = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { data: isAdmin } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
-    if (!isAdmin) throw new Error("Forbidden");
+    await assertRole(context.supabase, context.userId, ["admin", "manager"]);
     const { data: row, error } = await context.supabase
       .from("writer_requests")
       .update({ status: data.decision })
