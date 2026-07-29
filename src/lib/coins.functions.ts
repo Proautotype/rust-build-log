@@ -61,6 +61,7 @@ export const unlockStory = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ storyId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: story, error } = await context.supabase
       .from("stories")
       .select("id, creator_id, monetization, unlock_price, title")
@@ -98,7 +99,7 @@ export const unlockStory = createServerFn({ method: "POST" })
       await addCoins(supabaseAdmin, story.creator_id, story.unlock_price);
     }
 
-    await context.supabase.from("story_unlocks").insert({
+    await supabaseAdmin.from("story_unlocks").insert({
       user_id: context.userId,
       story_id: story.id,
       price_paid: story.unlock_price,
@@ -138,6 +139,7 @@ export const tipStory = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: story, error } = await context.supabase
       .from("stories")
       .select("id, creator_id, tip_enabled, monetization, title")

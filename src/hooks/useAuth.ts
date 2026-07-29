@@ -46,11 +46,11 @@ export function useAuth() {
     let mounted = true;
     supabase
       .from("profiles")
-      .select("id, display_name, avatar_url, bio, is_pro, coin_balance, banned")
+      .select("id, display_name, avatar_url, bio, is_pro")
       .eq("id", user.id)
       .maybeSingle()
       .then(({ data }) => {
-        if (mounted && data) setProfile(data as Profile);
+        if (mounted && data) setProfile({ ...data, coin_balance: 0, banned: false } as Profile);
       });
     return () => {
       mounted = false;

@@ -76,7 +76,8 @@ export const updateSiteSettings = createServerFn({ method: "POST" })
 export const upgradeToPro = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
       .from("profiles")
       .update({ is_pro: true })
       .eq("id", context.userId)
@@ -89,7 +90,8 @@ export const upgradeToPro = createServerFn({ method: "POST" })
 export const downgradeFromPro = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data, error } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
       .from("profiles")
       .update({ is_pro: false })
       .eq("id", context.userId)

@@ -28,6 +28,7 @@ import { WriterCard, type WriterInfo } from "@/components/story/WriterCard";
 import { AdSlot } from "@/components/ads/AdSlot";
 import { formatDateLong } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
+import { recordStoryView } from "@/lib/story-views.functions";
 import { useAuth } from "@/hooks/useAuth";
 import { getMyCoinState, unlockStory, tipStory } from "@/lib/coins.functions";
 
@@ -205,11 +206,9 @@ function StoryDetail() {
   useEffect(() => {
     let cancelled = false;
     // Fire-and-forget view counter. Won't retry on failure.
-    supabase
-      .rpc("increment_story_view", { _story_id: story.id })
-      .then(({ data }) => {
-        if (!cancelled && typeof data === "number") setViewCount(data);
-      });
+    void recordStoryView({ data: { storyId: story.id } }).then((res) => {
+      if (!cancelled && typeof res?.viewCount === "number") setViewCount(res.viewCount);
+    });
     return () => {
       cancelled = true;
     };
