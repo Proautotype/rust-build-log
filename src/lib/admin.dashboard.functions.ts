@@ -18,6 +18,7 @@ export const getAdminMetrics = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertStaff(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const [users, stories, publishedStories, journeys, comments, pending, coinsAgg, unlocks] =
       await Promise.all([
         context.supabase.from("profiles").select("id", { count: "exact", head: true }),
@@ -32,9 +33,10 @@ export const getAdminMetrics = createServerFn({ method: "GET" })
           .from("writer_requests")
           .select("id", { count: "exact", head: true })
           .eq("status", "pending"),
-        context.supabase.from("profiles").select("coin_balance"),
+        supabaseAdmin.from("profiles").select("coin_balance"),
         context.supabase.from("story_unlocks").select("id", { count: "exact", head: true }),
       ]);
+
 
     const coinsInCirculation = (coinsAgg.data ?? []).reduce(
       (a: number, r: { coin_balance: number }) => a + (r.coin_balance ?? 0),
