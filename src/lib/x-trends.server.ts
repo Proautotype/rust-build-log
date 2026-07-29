@@ -183,7 +183,9 @@ export async function fetchTrends(opts: {
   keywords: string[];
   minEngagement?: number;
   postsPerTrend?: number;
+  auth?: XAuth;
 }): Promise<{ trends: Trend[]; errors: string[] }> {
+  const auth: XAuth = opts.auth ?? { mode: "gateway" };
   const keywords = opts.keywords
     .map((k) => k.trim())
     .filter(Boolean)
@@ -200,7 +202,8 @@ export async function fetchTrends(opts: {
       break;
     }
     try {
-      const posts = (await searchKeyword(keyword, 25))
+      const posts = (await searchKeyword(keyword, 25, auth))
+
         .filter((p) => p.engagement >= (opts.minEngagement ?? 0))
         .sort((a, b) => b.engagement - a.engagement)
         .slice(0, opts.postsPerTrend ?? 6);
