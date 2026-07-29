@@ -254,6 +254,17 @@ function SettingsPage() {
           />
         </Field>
 
+        <Field label="X access setup price (coins)">
+          <input
+            type="number"
+            min={0}
+            value={xSetupPrice}
+            onChange={(e) => setXSetupPrice(Math.max(0, Number(e.target.value) || 0))}
+            className="w-32 rounded-md border border-border bg-background px-3 py-2 text-sm text-mono outline-none focus:ring-1 focus:ring-primary"
+          />
+        </Field>
+
+
         <div className="flex items-center gap-3 pt-2">
           <button
             onClick={() => save.mutate()}
