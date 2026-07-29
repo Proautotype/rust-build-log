@@ -34,6 +34,8 @@ function SettingsPage() {
   const [bucketPublic, setBucketPublic] = useState(false);
   const [maxMb, setMaxMb] = useState(25);
   const [allowedTypes, setAllowedTypes] = useState("image/*,video/mp4,video/webm,application/pdf");
+  const [xSetupPrice, setXSetupPrice] = useState(500);
+
   const [status, setStatus] = useState<string | null>(null);
 
   useEffect(() => {
