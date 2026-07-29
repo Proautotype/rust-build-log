@@ -215,7 +215,10 @@ function AgentsPage() {
       </p>
       {status ? <div className="mt-3 text-mono text-xs text-primary">{status}</div> : null}
 
+      <XAccessCard />
+
       <XSettingsCard />
+
 
 
       {/* Agents */}
