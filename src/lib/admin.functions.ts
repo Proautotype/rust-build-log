@@ -30,6 +30,8 @@ export const updateSiteSettings = createServerFn({ method: "POST" })
         media_bucket_public: z.boolean().optional(),
         media_max_mb: z.number().int().min(1).max(1024).optional(),
         media_allowed_types: z.string().max(2000).optional(),
+        x_setup_price_coins: z.number().int().min(0).max(100000).optional(),
+
       })
       .parse(input),
   )
