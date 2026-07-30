@@ -980,6 +980,25 @@ export type Database = {
         Args: { _session_key?: string; _story_id: string }
         Returns: undefined
       }
+      my_story_analytics: {
+        Args: never
+        Returns: {
+          comment_count: number
+          creator_id: string
+          published: boolean
+          searches_7d: number
+          slug: string
+          story_id: string
+          tip_count: number
+          tip_revenue: number
+          title: string
+          unlock_count: number
+          unlock_revenue: number
+          view_count: number
+          views_30d: number
+          views_7d: number
+        }[]
+      }
     }
     Enums: {
       app_role: "reader" | "writer" | "admin" | "manager"
