@@ -28,7 +28,6 @@ import { WriterCard, type WriterInfo } from "@/components/story/WriterCard";
 import { AdSlot } from "@/components/ads/AdSlot";
 import { formatDateLong } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
-import { recordStoryView } from "@/lib/story-views.functions";
 import { useAuth } from "@/hooks/useAuth";
 import { getMyCoinState, unlockStory, tipStory } from "@/lib/coins.functions";
 
@@ -173,7 +172,6 @@ function StoryDetail() {
   const coinStateFn = useServerFn(getMyCoinState);
   const unlockFn = useServerFn(unlockStory);
   const tipFn = useServerFn(tipStory);
-  const recordStoryViewFn = useServerFn(recordStoryView);
   const qc = useQueryClient();
 
   const coinState = useQuery({
@@ -221,11 +219,18 @@ function StoryDetail() {
     } catch {
       sessionKey = undefined;
     }
-    // Fire-and-forget view counter. Won't retry on failure.
-    void recordStoryViewFn({ data: { storyId: story.id, sessionKey } })
-      .then((res) => {
+    // Fire-and-forget view counter via the public endpoint so signed-out
+    // readers are counted too. Won't retry on failure.
+    void fetch("/api/public/story-view", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ storyId: story.id, sessionKey }),
+    })
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`View tracking failed (${res.status})`);
+        const json = (await res.json()) as { viewCount?: number | null };
         if (cancelled) return;
-        if (typeof res?.viewCount === "number") setViewCount(res.viewCount);
+        if (typeof json?.viewCount === "number") setViewCount(json.viewCount);
         // Keep listings/analytics in sync with the new count.
         void qc.invalidateQueries({ queryKey: ["public-stories"] });
         void qc.invalidateQueries({ queryKey: ["home-data"] });
@@ -237,7 +242,8 @@ function StoryDetail() {
     return () => {
       cancelled = true;
     };
-  }, [story.id, qc, recordStoryViewFn]);
+  }, [story.id, qc]);
+
 
   const authorName = writer?.display_name ?? null;
   const shareUrl =
