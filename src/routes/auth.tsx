@@ -46,7 +46,6 @@ function AuthPage() {
     });
   }, [navigate, redirectParam]);
 
-
   async function handleEmail(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -58,7 +57,7 @@ function AuthPage() {
           email,
           password,
           options: {
-            emailRedirectTo: window.location.origin,
+            emailRedirectTo: import.meta.env.VITE_EMAIL_REDIRECT || window.location.origin,
             data: { display_name: displayName || email.split("@")[0] },
           },
         });
@@ -85,7 +84,6 @@ function AuthPage() {
       setLoading(false);
     }
   }
-
 
   async function handleGoogle() {
     setError(null);
@@ -147,7 +145,9 @@ function AuthPage() {
                 onClick={() => setStep("form")}
                 className="inline-flex items-center justify-center rounded-md bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
               >
-                {picked.length ? `Continue with ${picked.length} topic${picked.length === 1 ? "" : "s"}` : "Continue"}
+                {picked.length
+                  ? `Continue with ${picked.length} topic${picked.length === 1 ? "" : "s"}`
+                  : "Continue"}
               </button>
               <button
                 type="button"
@@ -160,102 +160,100 @@ function AuthPage() {
           </div>
         ) : (
           <>
-        <div className="mt-8 space-y-3">
-          <div className="relative py-2">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border/70" />
+            <div className="mt-8 space-y-3">
+              <div className="relative py-2">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-border/70" />
+                </div>
+                <div className="relative flex justify-center">
+                  <span className="bg-background px-2 text-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                    with email
+                  </span>
+                </div>
+              </div>
             </div>
-            <div className="relative flex justify-center">
-              <span className="bg-background px-2 text-mono text-[10px] uppercase tracking-widest text-muted-foreground">
-                with email
-              </span>
-            </div>
-          </div>
-        </div>
 
-        <form onSubmit={handleEmail} className="mt-2 space-y-3">
+            <form onSubmit={handleEmail} className="mt-2 space-y-3">
+              {mode === "signup" && (
+                <div>
+                  <label className="text-mono text-[11px] uppercase tracking-widest text-muted-foreground">
+                    Display name
+                  </label>
+                  <input
+                    type="text"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                    placeholder="Ada Lovelace"
+                    className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+              )}
+              <div>
+                <label className="text-mono text-[11px] uppercase tracking-widest text-muted-foreground">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary"
+                />
+              </div>
+              <div>
+                <label className="text-mono text-[11px] uppercase tracking-widest text-muted-foreground">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  required
+                  minLength={6}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary"
+                />
+              </div>
 
-          {mode === "signup" && (
-            <div>
-              <label className="text-mono text-[11px] uppercase tracking-widest text-muted-foreground">
-                Display name
-              </label>
-              <input
-                type="text"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="Ada Lovelace"
-                className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary"
-              />
-            </div>
-          )}
-          <div>
-            <label className="text-mono text-[11px] uppercase tracking-widest text-muted-foreground">
-              Email
-            </label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary"
-            />
-          </div>
-          <div>
-            <label className="text-mono text-[11px] uppercase tracking-widest text-muted-foreground">
-              Password
-            </label>
-            <input
-              type="password"
-              required
-              minLength={6}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary"
-            />
-          </div>
+              {error && (
+                <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                  {error}
+                </div>
+              )}
+              {info && (
+                <div className="rounded-md border border-primary/40 bg-primary/10 px-3 py-2 text-xs text-primary">
+                  {info}
+                </div>
+              )}
 
-          {error && (
-            <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
-              {error}
-            </div>
-          )}
-          {info && (
-            <div className="rounded-md border border-primary/40 bg-primary/10 px-3 py-2 text-xs text-primary">
-              {info}
-            </div>
-          )}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              >
+                {loading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                {mode === "signin" ? "Sign in" : "Create account"}
+              </button>
+            </form>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-          >
-            {loading && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-            {mode === "signin" ? "Sign in" : "Create account"}
-          </button>
-        </form>
-
-        <p className="mt-6 text-center text-sm text-muted-foreground">
-          {mode === "signin" ? "Don't have an account?" : "Already have an account?"}{" "}
-          <button
-            type="button"
-            onClick={() => {
-              setError(null);
-              setInfo(null);
-              const next = mode === "signin" ? "signup" : "signin";
-              setMode(next);
-              setStep(next === "signup" ? "topics" : "form");
-            }}
-            className="text-primary hover:underline"
-          >
-            {mode === "signin" ? "Create one" : "Sign in"}
-          </button>
-        </p>
+            <p className="mt-6 text-center text-sm text-muted-foreground">
+              {mode === "signin" ? "Don't have an account?" : "Already have an account?"}{" "}
+              <button
+                type="button"
+                onClick={() => {
+                  setError(null);
+                  setInfo(null);
+                  const next = mode === "signin" ? "signup" : "signin";
+                  setMode(next);
+                  setStep(next === "signup" ? "topics" : "form");
+                }}
+                className="text-primary hover:underline"
+              >
+                {mode === "signin" ? "Create one" : "Sign in"}
+              </button>
+            </p>
           </>
         )}
       </div>
     </div>
-
   );
 }
