@@ -173,6 +173,7 @@ function StoryDetail() {
   const coinStateFn = useServerFn(getMyCoinState);
   const unlockFn = useServerFn(unlockStory);
   const tipFn = useServerFn(tipStory);
+  const recordStoryViewFn = useServerFn(recordStoryView);
   const qc = useQueryClient();
 
   const coinState = useQuery({
@@ -221,18 +222,22 @@ function StoryDetail() {
       sessionKey = undefined;
     }
     // Fire-and-forget view counter. Won't retry on failure.
-    void recordStoryView({ data: { storyId: story.id, sessionKey } }).then((res) => {
-      if (cancelled) return;
-      if (typeof res?.viewCount === "number") setViewCount(res.viewCount);
-      // Keep listings/analytics in sync with the new count.
-      void qc.invalidateQueries({ queryKey: ["public-stories"] });
-      void qc.invalidateQueries({ queryKey: ["home-data"] });
-      void qc.invalidateQueries({ queryKey: ["my-story-analytics"] });
-    });
+    void recordStoryViewFn({ data: { storyId: story.id, sessionKey } })
+      .then((res) => {
+        if (cancelled) return;
+        if (typeof res?.viewCount === "number") setViewCount(res.viewCount);
+        // Keep listings/analytics in sync with the new count.
+        void qc.invalidateQueries({ queryKey: ["public-stories"] });
+        void qc.invalidateQueries({ queryKey: ["home-data"] });
+        void qc.invalidateQueries({ queryKey: ["my-story-analytics"] });
+      })
+      .catch((error: unknown) => {
+        console.error("Story view tracking failed", error);
+      });
     return () => {
       cancelled = true;
     };
-  }, [story.id, qc]);
+  }, [story.id, qc, recordStoryViewFn]);
 
   const authorName = writer?.display_name ?? null;
   const shareUrl =
