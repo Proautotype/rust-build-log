@@ -28,7 +28,6 @@ import { WriterCard, type WriterInfo } from "@/components/story/WriterCard";
 import { AdSlot } from "@/components/ads/AdSlot";
 import { formatDateLong } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
-import { recordStoryView } from "@/lib/story-views.functions";
 import { useAuth } from "@/hooks/useAuth";
 import { getMyCoinState, unlockStory, tipStory } from "@/lib/coins.functions";
 
@@ -173,7 +172,6 @@ function StoryDetail() {
   const coinStateFn = useServerFn(getMyCoinState);
   const unlockFn = useServerFn(unlockStory);
   const tipFn = useServerFn(tipStory);
-  const recordStoryViewFn = useServerFn(recordStoryView);
   const qc = useQueryClient();
 
   const coinState = useQuery({
