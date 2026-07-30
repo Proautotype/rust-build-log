@@ -204,15 +204,35 @@ function StoryDetail() {
 
   const [viewCount, setViewCount] = useState(story.viewCount);
   useEffect(() => {
+    setViewCount(story.viewCount);
+  }, [story.viewCount]);
+  useEffect(() => {
     let cancelled = false;
+    // Stable per-browser key so repeat reads within 6h aren't double counted.
+    let sessionKey: string | undefined;
+    try {
+      const k = "r2r_view_session";
+      sessionKey = localStorage.getItem(k) ?? undefined;
+      if (!sessionKey) {
+        sessionKey = crypto.randomUUID();
+        localStorage.setItem(k, sessionKey);
+      }
+    } catch {
+      sessionKey = undefined;
+    }
     // Fire-and-forget view counter. Won't retry on failure.
-    void recordStoryView({ data: { storyId: story.id } }).then((res) => {
-      if (!cancelled && typeof res?.viewCount === "number") setViewCount(res.viewCount);
+    void recordStoryView({ data: { storyId: story.id, sessionKey } }).then((res) => {
+      if (cancelled) return;
+      if (typeof res?.viewCount === "number") setViewCount(res.viewCount);
+      // Keep listings/analytics in sync with the new count.
+      void qc.invalidateQueries({ queryKey: ["public-stories"] });
+      void qc.invalidateQueries({ queryKey: ["home-data"] });
+      void qc.invalidateQueries({ queryKey: ["my-story-analytics"] });
     });
     return () => {
       cancelled = true;
     };
-  }, [story.id]);
+  }, [story.id, qc]);
 
   const authorName = writer?.display_name ?? null;
   const shareUrl =
