@@ -20,11 +20,7 @@ export const getMyStoryAnalytics = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<StoryAnalyticsRow[]> => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const supa = context.supabase as any;
-    const { data, error } = await supa
-      .from("story_analytics")
-      .select("*")
-      .eq("creator_id", context.userId)
-      .order("view_count", { ascending: false });
+    const { data, error } = await supa.rpc("my_story_analytics");
     if (error) throw new Error(error.message);
     return (data ?? []) as StoryAnalyticsRow[];
   });
