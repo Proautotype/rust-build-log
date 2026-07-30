@@ -400,9 +400,38 @@ function StudioPage() {
       return { ...d, blocks: next };
     });
 
+  /** Append (or replace with) blocks parsed from an uploaded document. */
+  const importBlocks = (
+    blocks: ContentBlock[],
+    opts: { replace: boolean; title: string | null },
+  ) =>
+    setDraft((d) => {
+      const incoming: EditorBlock[] = blocks.map((b) => ({ ...b, _uid: uid() }));
+      const isEmpty =
+        d.blocks.length === 0 ||
+        (d.blocks.length === 1 &&
+          d.blocks[0].type === "markdown" &&
+          !d.blocks[0].markdown.trim());
+      return {
+        ...d,
+        title: !d.title.trim() && opts.title ? opts.title : d.title,
+        slug:
+          !d.slug.trim() && opts.title
+            ? opts.title
+                .toLowerCase()
+                .replace(/[^a-z0-9\s-]/g, "")
+                .trim()
+                .replace(/\s+/g, "-")
+                .slice(0, 60)
+            : d.slug,
+        blocks: opts.replace || isEmpty ? incoming : [...d.blocks, ...incoming],
+      };
+    });
+
   const newDraft = () => {
     if (confirm("Start a fresh draft? Unsaved local changes will be lost.")) setDraft(emptyDraft());
   };
+
 
   const resetDraft = () => {
     if (confirm("Discard the current draft and start fresh?")) setDraft(emptyDraft());
