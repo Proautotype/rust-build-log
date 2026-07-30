@@ -54,6 +54,8 @@ import { allCategories, allDifficulties } from "@/data/stories";
 import { StoryThemeScope, themeWidthClass } from "@/components/story/StoryThemeScope";
 import { listMyTemplates, listSharedTemplates, saveTemplate } from "@/lib/templates.functions";
 import { ContentRenderer } from "@/components/story/ContentRenderer";
+import { ImportDocButton } from "@/components/studio/ImportDocDialog";
+
 import {
   listMyStories,
   listJourneys,
