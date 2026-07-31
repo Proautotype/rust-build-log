@@ -26,6 +26,8 @@ import { Comments } from "@/components/story/Comments";
 import { ShareButton } from "@/components/story/ShareButton";
 import { WriterCard, type WriterInfo } from "@/components/story/WriterCard";
 import { AdSlot } from "@/components/ads/AdSlot";
+import { StoryActions } from "@/components/story/StoryActions";
+import { ListenBar } from "@/components/story/ListenBar";
 import { formatDateLong } from "@/lib/format";
 import { supabase } from "@/integrations/backend/client";
 import { useAuth } from "@/hooks/useAuth";
