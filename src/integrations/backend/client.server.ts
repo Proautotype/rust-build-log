@@ -4,9 +4,10 @@ import type { Database } from "@/integrations/supabase/types";
 import { SUPABASE_URL, createSupabaseFetch } from "./config";
 
 function createBackendAdminClient() {
-  const key = process.env.R2R_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const key =
+    import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!key) {
-    const message = "Missing R2R_SERVICE_ROLE_KEY environment variable.";
+    const message = "Missing SERVICE_ROLE_KEY environment variable.";
     console.error(`[Backend] ${message}`);
     throw new Error(message);
   }
