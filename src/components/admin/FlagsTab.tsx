@@ -5,6 +5,20 @@ import { Flag, Loader2, CheckCircle2, BellRing } from "lucide-react";
 import { listFlagQueue, resolveAdminNotification } from "@/lib/admin.dashboard.functions";
 import { formatDateLong } from "@/lib/format";
 
+interface Notification {
+  id: string;
+  message: string;
+  resolved: boolean;
+  created_at: string;
+}
+
+interface FlagRow {
+  id: string;
+  story_id: string;
+  reason: string;
+  created_at: string;
+}
+
 export function FlagsTab() {
   const qc = useQueryClient();
   const listFn = useServerFn(listFlagQueue);
@@ -27,8 +41,11 @@ export function FlagsTab() {
     return <div className="text-sm text-destructive">{(q.error as Error).message}</div>;
   }
 
-  const { notifications, flags, titles, threshold } = q.data!;
-  const open = notifications.filter((n) => !n.resolved);
+  const notifications = (q.data!.notifications ?? []) as Notification[];
+  const flags = (q.data!.flags ?? []) as FlagRow[];
+  const titles = (q.data!.titles ?? {}) as Record<string, string>;
+  const threshold = q.data!.threshold;
+  const open = notifications.filter((n: Notification) => !n.resolved);
 
   return (
     <div className="space-y-8">
