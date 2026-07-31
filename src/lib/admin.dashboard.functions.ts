@@ -222,3 +222,65 @@ export const adminDeleteComment = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+export const listFlagQueue = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertStaff(context);
+    const { supabaseAdmin } = await import("@/integrations/backend/client.server");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const admin = supabaseAdmin as any;
+    const [{ data: notifications }, { data: flags }, { data: settings }] = await Promise.all([
+      admin
+        .from("admin_notifications")
+        .select("id, kind, story_id, message, resolved, created_at")
+        .order("created_at", { ascending: false })
+        .limit(50),
+      admin
+        .from("story_flags")
+        .select("id, story_id, reporter_id, reason, created_at")
+        .order("created_at", { ascending: false })
+        .limit(100),
+      admin.from("site_settings").select("flag_threshold").limit(1).maybeSingle(),
+    ]);
+
+    const storyIds = Array.from(
+      new Set([
+        ...(notifications ?? []).map((n: { story_id: string | null }) => n.story_id),
+        ...(flags ?? []).map((f: { story_id: string }) => f.story_id),
+      ]),
+    ).filter(Boolean) as string[];
+
+    let titles: Record<string, string> = {};
+    if (storyIds.length > 0) {
+      const { data: stories } = await admin
+        .from("stories")
+        .select("id, title, slug, flag_count, like_count")
+        .in("id", storyIds);
+      titles = Object.fromEntries(
+        (stories ?? []).map((s: { id: string; title: string }) => [s.id, s.title]),
+      );
+    }
+
+    return {
+      threshold: settings?.flag_threshold ?? 3,
+      notifications: notifications ?? [],
+      flags: flags ?? [],
+      titles,
+    };
+  });
+
+export const resolveAdminNotification = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    await assertStaff(context);
+    const { supabaseAdmin } = await import("@/integrations/backend/client.server");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabaseAdmin as any)
+      .from("admin_notifications")
+      .update({ resolved: true })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
