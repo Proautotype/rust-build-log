@@ -33,6 +33,10 @@ export function AdSlot({ className, slot, format = "auto", globalOnly = false }:
   const { data: settings } = useSiteSettings();
   const { profile } = useAuth();
   const ref = useRef<HTMLModElement | null>(null);
+  // Ad decisions depend on client-only state (settings cache, session), so the
+  // server must render nothing to avoid a hydration mismatch.
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => setHydrated(true), []);
 
   const client = settings?.adsense_client ?? null;
   const resolvedSlot = slot ?? settings?.adsense_slot ?? null;
@@ -41,16 +45,17 @@ export function AdSlot({ className, slot, format = "auto", globalOnly = false }:
   const isPro = !!profile?.is_pro;
 
   useEffect(() => {
-    if (!enabled || !globalAllowed || isPro) return;
+    if (!hydrated || !enabled || !globalAllowed || isPro) return;
     ensureAdsScript(client!);
     try {
       (window.adsbygoogle = window.adsbygoogle || []).push({});
     } catch {
       /* AdSense will retry */
     }
-  }, [enabled, globalAllowed, isPro, client, resolvedSlot]);
+  }, [hydrated, enabled, globalAllowed, isPro, client, resolvedSlot]);
 
-  if (!enabled || !globalAllowed || isPro) return null;
+  if (!hydrated || !enabled || !globalAllowed || isPro) return null;
+
 
   return (
     <div className={className}>
