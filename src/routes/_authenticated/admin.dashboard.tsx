@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { XSetupTab } from "@/components/admin/XSetupTab";
+import { FlagsTab } from "@/components/admin/FlagsTab";
 
 import {
   Users,
@@ -41,7 +42,7 @@ export const Route = createFileRoute("/_authenticated/admin/dashboard")({
   component: AdminDashboard,
 });
 
-type Tab = "overview" | "users" | "content" | "comments" | "ledger" | "xsetup";
+type Tab = "overview" | "users" | "content" | "flags" | "comments" | "ledger" | "xsetup";
 
 function AdminDashboard() {
   const { isStaff, isAdmin, loading } = useRole();
@@ -72,6 +73,7 @@ function AdminDashboard() {
     { id: "overview", label: "Overview" },
     { id: "users", label: "Users" },
     { id: "content", label: "Stories" },
+    { id: "flags", label: "Flags" },
     { id: "comments", label: "Comments" },
     { id: "ledger", label: "Ledger" },
     { id: "xsetup", label: "X setup" },
@@ -114,6 +116,7 @@ function AdminDashboard() {
         {tab === "overview" && <OverviewTab />}
         {tab === "users" && <UsersTab />}
         {tab === "content" && <StoriesTab />}
+        {tab === "flags" && <FlagsTab />}
         {tab === "comments" && <CommentsTab />}
         {tab === "ledger" && <LedgerTab />}
         {tab === "xsetup" && <XSetupTab />}
