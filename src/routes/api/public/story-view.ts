@@ -22,7 +22,7 @@ export const Route = createFileRoute("/api/public/story-view")({
           return Response.json({ error: "Invalid request" }, { status: 400 });
         }
 
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { supabaseAdmin } = await import("@/integrations/backend/client.server");
         const { error: incrementError } = await supabaseAdmin.rpc("increment_story_view", {
           _story_id: parsed.storyId,
           _session_key: parsed.sessionKey,

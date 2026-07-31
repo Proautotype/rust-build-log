@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireSupabaseAuth } from "@/integrations/backend/auth-middleware";
 import { assertRole } from "@/lib/roles";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -18,7 +18,7 @@ export const getAdminMetrics = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertStaff(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { supabaseAdmin } = await import("@/integrations/backend/client.server");
     const [users, stories, publishedStories, journeys, comments, pending, coinsAgg, unlocks] =
       await Promise.all([
         context.supabase.from("profiles").select("id", { count: "exact", head: true }),
@@ -60,7 +60,7 @@ export const listUsersForAdmin = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ search: z.string().optional() }).parse(input))
   .handler(async ({ data, context }) => {
     await assertStaff(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { supabaseAdmin } = await import("@/integrations/backend/client.server");
     let q = supabaseAdmin
       .from("profiles")
       .select("id, display_name, avatar_url, bio, is_pro, coin_balance, banned, created_at")
@@ -121,7 +121,7 @@ export const setUserBanned = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { supabaseAdmin } = await import("@/integrations/backend/client.server");
     const { error } = await supabaseAdmin
       .from("profiles")
       .update({ banned: data.banned })
@@ -143,7 +143,7 @@ export const adjustUserCoins = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { supabaseAdmin } = await import("@/integrations/backend/client.server");
     const { data: p } = await supabaseAdmin
       .from("profiles")
       .select("coin_balance")

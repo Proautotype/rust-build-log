@@ -27,7 +27,7 @@ import { ShareButton } from "@/components/story/ShareButton";
 import { WriterCard, type WriterInfo } from "@/components/story/WriterCard";
 import { AdSlot } from "@/components/ads/AdSlot";
 import { formatDateLong } from "@/lib/format";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/backend/client";
 import { useAuth } from "@/hooks/useAuth";
 import { getMyCoinState, unlockStory, tipStory } from "@/lib/coins.functions";
 

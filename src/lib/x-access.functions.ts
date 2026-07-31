@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireSupabaseAuth } from "@/integrations/backend/auth-middleware";
 import { assertRole } from "@/lib/roles";
 
 export interface XAccessState {
@@ -19,7 +19,7 @@ export interface XAccessState {
 }
 
 async function priceCoins(): Promise<number> {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { supabaseAdmin } = await import("@/integrations/backend/client.server");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data } = await (supabaseAdmin as any)
     .from("site_settings")
@@ -93,7 +93,7 @@ export const requestXSetup = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { supabaseAdmin } = await import("@/integrations/backend/client.server");
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: open } = await (supabaseAdmin as any)
@@ -149,7 +149,7 @@ export const listXSetupRequests = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertRole(context.supabase, context.userId, ["admin", "manager"]);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { supabaseAdmin } = await import("@/integrations/backend/client.server");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabaseAdmin as any)
       .from("x_setup_requests")
@@ -191,7 +191,7 @@ export const resolveXSetupRequest = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertRole(context.supabase, context.userId, ["admin", "manager"]);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { supabaseAdmin } = await import("@/integrations/backend/client.server");
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: req, error: rerr } = await (supabaseAdmin as any)

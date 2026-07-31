@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { FileUp, Loader2 } from "lucide-react";
 import type { ContentBlock } from "@/data/stories";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/backend/client";
 import { useAuth } from "@/hooks/useAuth";
 import {
   blocksToMarkdownSource,

@@ -74,7 +74,7 @@ export const getHomeXTrends = createServerFn({ method: "GET" }).handler(async ()
     }
 
     // Writers who opted into showing their keywords publicly.
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { supabaseAdmin } = await import("@/integrations/backend/client.server");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: settings } = await (supabaseAdmin as any)
       .from("writer_x_settings")

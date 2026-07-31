@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireSupabaseAuth } from "@/integrations/backend/auth-middleware";
 import type { Json } from "@/integrations/supabase/types";
 
 const templateInput = z.object({
@@ -120,7 +120,7 @@ export const acquireTemplate = createServerFn({ method: "POST" })
     if (tpl.creator_id === context.userId) return { template: tpl, charged: 0 };
     if (tpl.visibility !== "public") throw new Error("This template is not shared");
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { supabaseAdmin } = await import("@/integrations/backend/client.server");
 
     const { data: existing } = await context.supabase
       .from("template_unlocks")

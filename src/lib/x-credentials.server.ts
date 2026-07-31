@@ -56,7 +56,7 @@ export async function verifyXToken(token: string): Promise<{ username: string | 
 }
 
 export async function saveWriterXToken(creatorId: string, token: string) {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { supabaseAdmin } = await import("@/integrations/backend/client.server");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabaseAdmin as any).from("writer_x_credentials").upsert(
     {
@@ -73,13 +73,13 @@ export async function saveWriterXToken(creatorId: string, token: string) {
 }
 
 export async function deleteWriterXToken(creatorId: string) {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { supabaseAdmin } = await import("@/integrations/backend/client.server");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (supabaseAdmin as any).from("writer_x_credentials").delete().eq("creator_id", creatorId);
 }
 
 export async function getWriterXStatus(creatorId: string): Promise<XCredentialStatus> {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { supabaseAdmin } = await import("@/integrations/backend/client.server");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data } = await (supabaseAdmin as any)
     .from("writer_x_credentials")
@@ -97,7 +97,7 @@ export async function getWriterXStatus(creatorId: string): Promise<XCredentialSt
 
 /** Decrypted token for a writer, or null when they have not connected X. */
 export async function getWriterXToken(creatorId: string): Promise<string | null> {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { supabaseAdmin } = await import("@/integrations/backend/client.server");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data } = await (supabaseAdmin as any)
     .from("writer_x_credentials")
@@ -113,7 +113,7 @@ export async function getWriterXToken(creatorId: string): Promise<string | null>
 }
 
 export async function markWriterXInvalid(creatorId: string) {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { supabaseAdmin } = await import("@/integrations/backend/client.server");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (supabaseAdmin as any)
     .from("writer_x_credentials")

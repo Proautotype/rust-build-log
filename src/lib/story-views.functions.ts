@@ -16,7 +16,7 @@ export const recordStoryView = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { supabaseAdmin } = await import("@/integrations/backend/client.server");
     const { error: incrementError } = await supabaseAdmin.rpc("increment_story_view", {
       _story_id: data.storyId,
       _session_key: data.sessionKey,

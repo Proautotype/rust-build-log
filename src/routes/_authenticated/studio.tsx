@@ -68,7 +68,7 @@ import { getMyXSettings, publishStoryFromTrend } from "@/lib/x-settings.function
 import { DEFAULT_X_SETTINGS } from "@/lib/x-settings";
 
 import { Bot } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/backend/client";
 import { useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/_authenticated/studio")({
