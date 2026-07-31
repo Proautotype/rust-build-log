@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { SUPABASE_PUBLISHABLE_KEY } from "@/integrations/backend/config";
 
 /**
  * Scheduled runner: generates + posts a story for every enabled agent that is due.
@@ -9,7 +10,7 @@ export const Route = createFileRoute("/api/public/agents/run")({
     handlers: {
       POST: async ({ request }) => {
         const apiKey = request.headers.get("apikey");
-        if (!apiKey || apiKey !== process.env.SUPABASE_PUBLISHABLE_KEY) {
+        if (!apiKey || apiKey !== SUPABASE_PUBLISHABLE_KEY) {
           return new Response(JSON.stringify({ error: "Unauthorized" }), {
             status: 401,
             headers: { "Content-Type": "application/json" },

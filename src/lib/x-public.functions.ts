@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
+import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from "@/integrations/backend/config";
 
 export interface HomeTrend {
   key: string;
@@ -23,15 +24,8 @@ let cache: { at: number; trends: HomeTrend[] } | null = null;
 const CACHE_MS = 15 * 60 * 1000;
 
 function publicClient() {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_PUBLISHABLE_KEY;
-  if (!url || !key) {
-    const missing = [
-      ...(!url ? ["SUPABASE_URL"] : []),
-      ...(!key ? ["SUPABASE_PUBLISHABLE_KEY"] : []),
-    ];
-    throw new Error(`Missing Supabase environment variable(s): ${missing.join(", ")}`);
-  }
+  const url = SUPABASE_URL;
+  const key = SUPABASE_PUBLISHABLE_KEY;
   return createClient<Database>(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
     global: {
