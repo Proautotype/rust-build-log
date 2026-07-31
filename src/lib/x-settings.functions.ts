@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireSupabaseAuth } from "@/integrations/backend/auth-middleware";
 import { DEFAULT_X_SETTINGS, type WriterXSettings } from "./x-settings";
 
 export { DEFAULT_X_SETTINGS };

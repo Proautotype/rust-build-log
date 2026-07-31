@@ -45,9 +45,28 @@ export class XNotConnectedError extends Error {
   }
 }
 
+/** R2R's own X app-only bearer token, when configured. */
+function houseXToken(): string | null {
+  const raw = process.env.X_APP_TOKEN;
+  if (!raw) return null;
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
+}
+
+/** House X credentials: R2R's own app token, else a workspace connector. */
+export function houseXAuth(): XAuth | null {
+  const token = houseXToken();
+  if (token) return { mode: "token", token };
+  if (process.env.LOVABLE_API_KEY && process.env.X_API_KEY) return { mode: "gateway" };
+  return null;
+}
+
 /** True when a house (workspace-level) X connection exists. */
 export function isHouseXConnected() {
-  return Boolean(process.env.LOVABLE_API_KEY && process.env.X_API_KEY);
+  return houseXAuth() !== null;
 }
 
 /** Back-compat alias. */
@@ -60,8 +79,7 @@ export async function resolveXAuthForCreator(creatorId: string): Promise<XAuth |
   const { getWriterXToken } = await import("./x-credentials.server");
   const token = await getWriterXToken(creatorId);
   if (token) return { mode: "token", token, creatorId };
-  if (isHouseXConnected()) return { mode: "gateway" };
-  return null;
+  return houseXAuth();
 }
 
 

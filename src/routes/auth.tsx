@@ -1,7 +1,8 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Terminal, Loader2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/backend/client";
+import { EMAIL_REDIRECT_URL } from "@/integrations/backend/config";
 import { lovable } from "@/integrations/lovable/index";
 import { TopicPicker } from "@/components/feed/TopicPicker";
 
@@ -57,7 +58,7 @@ function AuthPage() {
           email,
           password,
           options: {
-            emailRedirectTo: import.meta.env.VITE_EMAIL_REDIRECT || window.location.origin,
+            emailRedirectTo: EMAIL_REDIRECT_URL || window.location.origin,
             data: { display_name: displayName || email.split("@")[0] },
           },
         });

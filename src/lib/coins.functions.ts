@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireSupabaseAuth } from "@/integrations/backend/auth-middleware";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function addCoins(supabase: any, userId: string, delta: number) {
@@ -22,7 +22,7 @@ async function addCoins(supabase: any, userId: string, delta: number) {
 export const getMyCoinState = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { supabaseAdmin: admin } = await import("@/integrations/supabase/client.server");
+    const { supabaseAdmin: admin } = await import("@/integrations/backend/client.server");
     const [{ data: profile }, { data: unlocks }, { data: tx }] = await Promise.all([
       admin.from("profiles").select("coin_balance").eq("id", context.userId).maybeSingle(),
       context.supabase.from("story_unlocks").select("story_id").eq("user_id", context.userId),
@@ -46,7 +46,7 @@ export const purchaseCoins = createServerFn({ method: "POST" })
     z.object({ amount: z.number().int().min(50).max(10000) }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { supabaseAdmin } = await import("@/integrations/backend/client.server");
     const balance = await addCoins(supabaseAdmin, context.userId, data.amount);
     await supabaseAdmin.from("coin_transactions").insert({
       user_id: context.userId,
@@ -61,7 +61,7 @@ export const unlockStory = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ storyId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { supabaseAdmin } = await import("@/integrations/backend/client.server");
     const { data: story, error } = await context.supabase
       .from("stories")
       .select("id, creator_id, monetization, unlock_price, title")
@@ -139,7 +139,7 @@ export const tipStory = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { supabaseAdmin } = await import("@/integrations/backend/client.server");
     const { data: story, error } = await context.supabase
       .from("stories")
       .select("id, creator_id, tip_enabled, monetization, title")

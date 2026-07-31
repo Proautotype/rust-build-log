@@ -71,7 +71,7 @@ async function uniqueSlug(supabaseAdmin: any, base: string): Promise<string> {
 
 /** Insert a story on behalf of a creator. Caller MUST have verified the creator. */
 export async function postStoryAsCreator(input: PostStoryInput) {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { supabaseAdmin } = await import("@/integrations/backend/client.server");
 
   const content =
     input.content && input.content.length > 0
@@ -119,7 +119,7 @@ async function logRun(entry: {
   story_id?: string | null;
   message?: string | null;
 }) {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { supabaseAdmin } = await import("@/integrations/backend/client.server");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (supabaseAdmin as any).from("agent_runs").insert(entry);
 }
@@ -160,7 +160,7 @@ export async function runAgent(agent: AgentRow, source: "schedule" | "manual") {
       }
 
 
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { supabaseAdmin } = await import("@/integrations/backend/client.server");
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: used } = await (supabaseAdmin as any)
         .from("agent_trend_sources")
@@ -212,7 +212,7 @@ export async function runAgent(agent: AgentRow, source: "schedule" | "manual") {
 
     });
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { supabaseAdmin } = await import("@/integrations/backend/client.server");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (supabaseAdmin as any)
       .from("creator_agents")
@@ -265,7 +265,7 @@ function isDue(agent: AgentRow) {
 
 /** Run every enabled agent that is due. Used by the scheduled endpoint. */
 export async function runDueAgents() {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { supabaseAdmin } = await import("@/integrations/backend/client.server");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data, error } = await (supabaseAdmin as any)
     .from("creator_agents")

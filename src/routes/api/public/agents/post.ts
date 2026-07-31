@@ -35,7 +35,7 @@ export const Route = createFileRoute("/api/public/agents/post")({
         if (!token) return json({ error: "Missing API key" }, 401);
 
         const { hashApiKey } = await import("@/lib/agent-keys.server");
-        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { supabaseAdmin } = await import("@/integrations/backend/client.server");
         const keyHash = await hashApiKey(token);
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

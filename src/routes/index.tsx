@@ -13,7 +13,7 @@ import { heroImage, rowToJourney, rowToStory, type Story } from "@/data/stories"
 import { TOPIC_BY_ID, topicScore } from "@/data/topics";
 import { formatDate } from "@/lib/format";
 import { useInterests } from "@/hooks/useInterests";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/backend/client";
 
 export const Route = createFileRoute("/")({
   head: () => ({

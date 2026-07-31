@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { rowToJourney, rowToStory } from "@/data/stories";
 import { formatDate } from "@/lib/format";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/backend/client";
 
 export const Route = createFileRoute("/journeys")({
   head: () => ({

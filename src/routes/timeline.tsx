@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Loader2, GitBranch } from "lucide-react";
 import { Timeline } from "@/components/story/Timeline";
 import { rowToJourney, rowToStory } from "@/data/stories";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/backend/client";
 
 export const Route = createFileRoute("/timeline")({
   head: () => ({

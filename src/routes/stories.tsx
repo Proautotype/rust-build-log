@@ -10,7 +10,7 @@ import {
   type Difficulty,
 } from "@/data/stories";
 import { StoryCard } from "@/components/story/StoryCard";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/backend/client";
 import { useWriterNames } from "@/hooks/useWriterNames";
 
 export const Route = createFileRoute("/stories")({

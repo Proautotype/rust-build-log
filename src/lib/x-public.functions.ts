@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
+import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from "@/integrations/backend/config";
 
 export interface HomeTrend {
   key: string;
@@ -23,15 +24,8 @@ let cache: { at: number; trends: HomeTrend[] } | null = null;
 const CACHE_MS = 15 * 60 * 1000;
 
 function publicClient() {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_PUBLISHABLE_KEY;
-  if (!url || !key) {
-    const missing = [
-      ...(!url ? ["SUPABASE_URL"] : []),
-      ...(!key ? ["SUPABASE_PUBLISHABLE_KEY"] : []),
-    ];
-    throw new Error(`Missing Supabase environment variable(s): ${missing.join(", ")}`);
-  }
+  const url = SUPABASE_URL;
+  const key = SUPABASE_PUBLISHABLE_KEY;
   return createClient<Database>(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
     global: {
@@ -65,7 +59,7 @@ export const getHomeXTrends = createServerFn({ method: "GET" }).handler(async ()
 
     const stories = (storyRows ?? []) as HomeTrendStory[];
 
-    const { isHouseXConnected, fetchTrends, resolveXAuthForCreator } = await import(
+    const { houseXAuth, fetchTrends, resolveXAuthForCreator } = await import(
       "./x-trends.server"
     );
 
@@ -74,7 +68,7 @@ export const getHomeXTrends = createServerFn({ method: "GET" }).handler(async ()
     }
 
     // Writers who opted into showing their keywords publicly.
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { supabaseAdmin } = await import("@/integrations/backend/client.server");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: settings } = await (supabaseAdmin as any)
       .from("writer_x_settings")
@@ -95,9 +89,7 @@ export const getHomeXTrends = createServerFn({ method: "GET" }).handler(async ()
 
     // Use the house connection when one exists, otherwise borrow the token of an
     // opted-in writer so the public row still has a source.
-    let auth: import("./x-trends.server").XAuth | null = isHouseXConnected()
-      ? { mode: "gateway" }
-      : null;
+    let auth: import("./x-trends.server").XAuth | null = houseXAuth();
     if (!auth) {
       for (const row of rows) {
         const resolved = await resolveXAuthForCreator(row.creator_id);
