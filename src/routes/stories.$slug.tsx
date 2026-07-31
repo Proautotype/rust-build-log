@@ -451,9 +451,17 @@ function StoryDetail() {
               </div>
             )}
 
+            {!locked && <ListenBar storyId={story.id} storyTitle={story.title} />}
+
+            <StoryActions
+              storyId={story.id}
+              initialLikeCount={(story as unknown as { likeCount?: number }).likeCount ?? 0}
+            />
+
             <AdSlot className="mt-12" />
 
             {writer && <WriterCard writer={writer} />}
+
 
             <div className="mt-16 grid gap-3 md:grid-cols-2 border-t border-border pt-8">
               {prev ? (
