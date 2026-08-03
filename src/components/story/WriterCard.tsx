@@ -1,4 +1,5 @@
 import { User as UserIcon } from "lucide-react";
+import { FollowButton } from "./FollowButton";
 
 export interface WriterInfo {
   display_name: string | null;
@@ -6,7 +7,13 @@ export interface WriterInfo {
   bio: string | null;
 }
 
-export function WriterCard({ writer }: { writer: WriterInfo }) {
+export function WriterCard({
+  writer,
+  writerId,
+}: {
+  writer: WriterInfo;
+  writerId?: string | null;
+}) {
   return (
     <div className="mt-12 rounded-xl border border-border bg-card/40 p-5 flex items-start gap-4">
       {writer.avatar_url ? (
@@ -20,7 +27,7 @@ export function WriterCard({ writer }: { writer: WriterInfo }) {
           <UserIcon className="h-5 w-5" />
         </div>
       )}
-      <div className="min-w-0">
+      <div className="min-w-0 flex-1">
         <div className="text-mono text-[10px] uppercase tracking-widest text-muted-foreground">
           Written by
         </div>
@@ -31,6 +38,7 @@ export function WriterCard({ writer }: { writer: WriterInfo }) {
           <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{writer.bio}</p>
         )}
       </div>
+      {writerId ? <FollowButton writerId={writerId} /> : null}
     </div>
   );
 }

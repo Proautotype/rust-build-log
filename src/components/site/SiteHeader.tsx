@@ -18,6 +18,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRole } from "@/hooks/useRole";
 import { supabase } from "@/integrations/backend/client";
 import { R2RLogo } from "./R2RLogo";
+import { NotificationsBell } from "./NotificationsBell";
 
 type NavItem = {
   to: "/" | "/stories" | "/journeys" | "/timeline";
@@ -138,6 +139,8 @@ export function SiteHeader() {
               )}
             </>
           )}
+
+          {!loading && user && <NotificationsBell />}
 
           {!loading && user && (
             <Link

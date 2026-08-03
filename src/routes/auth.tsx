@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/backend/client";
 import { EMAIL_REDIRECT_URL } from "@/integrations/backend/config";
 import { lovable } from "@/integrations/lovable/index";
 import { TopicPicker } from "@/components/feed/TopicPicker";
+import { subscribeToNewsletter } from "@/lib/newsletter.functions";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -63,7 +64,15 @@ function AuthPage() {
           },
         });
         if (error) throw error;
-        // Keep the picks locally; they sync to the profile on first sign-in.
+        // Signed-up readers get the new-story newsletter by default.
+        try {
+          await subscribeToNewsletter({
+            data: { email, topics: picked, source: "signup" },
+          });
+        } catch {
+          /* newsletter signup is best-effort */
+        }
+
         if (picked.length) {
           try {
             localStorage.setItem("r2r.interests", JSON.stringify(picked));

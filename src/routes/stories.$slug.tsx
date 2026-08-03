@@ -462,7 +462,7 @@ function StoryDetail() {
 
             <AdSlot className="mt-12" />
 
-            {writer && <WriterCard writer={writer} />}
+            {writer && <WriterCard writer={writer} writerId={story.creatorId} />}
 
 
             <div className="mt-16 grid gap-3 md:grid-cols-2 border-t border-border pt-8">
