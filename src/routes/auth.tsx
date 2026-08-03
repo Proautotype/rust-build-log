@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/backend/client";
 import { EMAIL_REDIRECT_URL } from "@/integrations/backend/config";
 import { lovable } from "@/integrations/lovable/index";
 import { TopicPicker } from "@/components/feed/TopicPicker";
+import { subscribeToNewsletter } from "@/lib/newsletter.functions";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (search: Record<string, unknown>) => ({
