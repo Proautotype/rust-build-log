@@ -63,7 +63,15 @@ function AuthPage() {
           },
         });
         if (error) throw error;
-        // Keep the picks locally; they sync to the profile on first sign-in.
+        // Signed-up readers get the new-story newsletter by default.
+        try {
+          await subscribeToNewsletter({
+            data: { email, topics: picked, source: "signup" },
+          });
+        } catch {
+          /* newsletter signup is best-effort */
+        }
+
         if (picked.length) {
           try {
             localStorage.setItem("r2r.interests", JSON.stringify(picked));
