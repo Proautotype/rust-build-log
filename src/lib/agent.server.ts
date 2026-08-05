@@ -29,6 +29,26 @@ export function slugify(input: string) {
   );
 }
 
+/** Models often wrap JSON in ``` fences or add prose around it. Pull the object out. */
+function extractJsonObject(text: string): unknown {
+  const cleaned = text
+    .replace(/^\s*```(?:json)?/i, "")
+    .replace(/```\s*$/, "")
+    .trim();
+  const candidates = [cleaned];
+  const first = cleaned.indexOf("{");
+  const last = cleaned.lastIndexOf("}");
+  if (first !== -1 && last > first) candidates.push(cleaned.slice(first, last + 1));
+  for (const candidate of candidates) {
+    try {
+      return JSON.parse(candidate);
+    } catch {
+      /* try next */
+    }
+  }
+  throw new Error("No JSON object found");
+}
+
 function clampStory(raw: z.infer<typeof schema>): GeneratedStory {
   const title = raw.title.trim().slice(0, 120) || "Untitled story";
   return {
@@ -40,6 +60,7 @@ function clampStory(raw: z.infer<typeof schema>): GeneratedStory {
     markdown: raw.markdown.trim(),
   };
 }
+
 
 export async function generateStory(opts: {
   topic: string;
