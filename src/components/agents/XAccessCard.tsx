@@ -33,12 +33,16 @@ export function XAccessCard() {
 
   const connect = useMutation({
     mutationFn: () => connectFn({ data: { token: token.trim() } }),
-    onSuccess: () => {
+    onSuccess: (a) => {
+      console.log("X, Connected ", a);
       setToken("");
       setError(null);
       refresh();
     },
-    onError: (e: unknown) => setError(e instanceof Error ? e.message : "Could not save token"),
+    onError: (e: unknown) => {
+      console.log("X, Connection error ", e);
+      return setError(e instanceof Error ? e.message : "Could not save token");
+    },
   });
 
   const disconnect = useMutation({
@@ -48,7 +52,9 @@ export function XAccessCard() {
 
   const concierge = useMutation({
     mutationFn: () =>
-      requestFn({ data: { contactEmail: email.trim(), xHandle: handle.trim(), notes: notes.trim() } }),
+      requestFn({
+        data: { contactEmail: email.trim(), xHandle: handle.trim(), notes: notes.trim() },
+      }),
     onSuccess: () => {
       setShowConcierge(false);
       setNotes("");
@@ -152,7 +158,11 @@ export function XAccessCard() {
               <div className="mt-3 grid gap-3 md:grid-cols-2">
                 <label className="block">
                   <span className={label}>Contact email</span>
-                  <input value={email} onChange={(e) => setEmail(e.target.value)} className={input} />
+                  <input
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className={input}
+                  />
                 </label>
                 <label className="block">
                   <span className={label}>Your X handle</span>

@@ -5,7 +5,7 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 
 function key(): Buffer {
-  const raw = process.env.WRITER_X_TOKEN_SECRET;
+  const raw = import.meta.env.VITE_WRITER_X_TOKEN_SECRET || process.env.WRITER_X_TOKEN_SECRET;
   if (!raw) throw new Error("WRITER_X_TOKEN_SECRET is not set");
   // Secret is a random alphanumeric string; derive a stable 32-byte key from it.
   return createHash("sha256").update(raw).digest();
@@ -48,6 +48,7 @@ export async function verifyXToken(token: string): Promise<{ username: string | 
     throw new Error(`X rejected this token [${probe.status}]: ${body.slice(0, 300)}`);
   }
   if (!res.ok) {
+    console.log("X rejected this token", { status: res.status, body: await res.text() });
     const body = await res.text();
     throw new Error(`X rejected this token [${res.status}]: ${body.slice(0, 300)}`);
   }

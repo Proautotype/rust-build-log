@@ -59,9 +59,7 @@ export const getMyXAccess = createServerFn({ method: "GET" })
 /** Verify a token against X, then store it encrypted for this writer. */
 export const connectMyXToken = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) =>
-    z.object({ token: z.string().trim().min(20).max(2000) }).parse(input),
-  )
+  .inputValidator((input) => z.object({ token: z.string().trim().min(20).max(2000) }).parse(input))
   .handler(async ({ data, context }) => {
     const { verifyXToken, saveWriterXToken } = await import("./x-credentials.server");
     const { username } = await verifyXToken(data.token);
@@ -153,7 +151,9 @@ export const listXSetupRequests = createServerFn({ method: "GET" })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabaseAdmin as any)
       .from("x_setup_requests")
-      .select("id, user_id, contact_email, x_handle, notes, status, price_coins, admin_note, created_at")
+      .select(
+        "id, user_id, contact_email, x_handle, notes, status, price_coins, admin_note, created_at",
+      )
       .order("created_at", { ascending: false })
       .limit(100);
     if (error) throw new Error(error.message);
