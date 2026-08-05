@@ -89,26 +89,19 @@ export async function generateStory(opts: {
     `- markdown: the full article in GitHub-flavoured Markdown. Use ## subheadings,`,
     `  short paragraphs, bullet lists and fenced code blocks with a language tag`,
     `  where code helps. Do NOT repeat the title as an H1. Aim for 600-1200 words.`,
+    `- Respond with ONLY a single JSON object with keys: title, summary, tags, reading_minutes, markdown. No commentary, no code fences.`,
   ]
     .filter(Boolean)
     .join("\n");
 
+  // The model reliably returns JSON but often wraps it in ``` fences, which the
+  // SDK's strict object mode rejects — so take the raw text and parse it here.
+  const { text } = await generateText({ model, prompt });
+
   try {
-    const { output } = await generateText({
-      model,
-      output: Output.object({ schema }),
-      prompt,
-    });
-    return clampStory(output);
-  } catch (error) {
-    if (NoObjectGeneratedError.isInstance(error)) {
-      try {
-        const parsed = schema.parse(JSON.parse(error.text ?? "{}"));
-        return clampStory(parsed);
-      } catch {
-        throw new Error("The AI response could not be parsed. Try again.");
-      }
-    }
-    throw error;
+    return clampStory(schema.parse(extractJsonObject(text)));
+  } catch {
+    throw new Error("The AI response could not be parsed. Try again.");
   }
 }
+
