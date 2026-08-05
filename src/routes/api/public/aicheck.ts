@@ -4,10 +4,18 @@ export const Route = createFileRoute("/api/public/aicheck")({
   server: {
     handlers: {
       GET: async () => {
-        const key = process.env.LOVABLE_API_KEY;
-        return new Response(JSON.stringify({ hasKey: Boolean(key), len: key?.length ?? 0 }), {
-          headers: { "Content-Type": "application/json" },
-        });
+        try {
+          const { generateStory } = await import("@/lib/agent.server");
+          const out = await generateStory({ topic: "Testing the AI pipeline", tone: "brief" });
+          return new Response(JSON.stringify({ ok: true, title: out.title }), {
+            headers: { "Content-Type": "application/json" },
+          });
+        } catch (e) {
+          return new Response(
+            JSON.stringify({ ok: false, error: e instanceof Error ? e.message : String(e) }),
+            { headers: { "Content-Type": "application/json" } },
+          );
+        }
       },
     },
   },
