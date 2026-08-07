@@ -35,6 +35,7 @@ export function useRole() {
   const isAdmin = roles.includes("admin");
   const isManager = roles.includes("manager");
   const isWriter = roles.includes("writer") || isAdmin;
+  const isSupport = roles.includes("support");
   return {
     roles,
     loading: authLoading || loading,
@@ -42,7 +43,11 @@ export function useRole() {
     isWriter,
     isManager,
     isAdmin,
+    /** Customer service agent. */
+    isSupport,
     /** Staff = admin or manager. Can view dashboard & approve requests. */
     isStaff: isAdmin || isManager,
+    /** Can read & answer the customer service inbox. */
+    canHandleSupport: isSupport || isAdmin || isManager,
   };
 }
