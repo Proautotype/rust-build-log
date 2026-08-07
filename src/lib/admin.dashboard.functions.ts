@@ -93,7 +93,7 @@ export const setUserRole = createServerFn({ method: "POST" })
     z
       .object({
         userId: z.string().uuid(),
-        role: z.enum(["reader", "writer", "manager", "admin"]),
+        role: z.enum(["reader", "writer", "manager", "admin", "support"]),
         grant: z.boolean(),
       })
       .parse(input),
