@@ -12,6 +12,7 @@ import {
   BarChart3,
   Bot,
   LayoutTemplate,
+  LifeBuoy,
 
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -34,7 +35,7 @@ const nav: NavItem[] = [
 
 export function SiteHeader() {
   const { user, profile, loading } = useAuth();
-  const { isWriter, isAdmin, isStaff } = useRole();
+  const { isWriter, isAdmin, isStaff, canHandleSupport } = useRole();
   const navigate = useNavigate();
 
   async function signOut() {
@@ -138,6 +139,16 @@ export function SiteHeader() {
                 </Link>
               )}
             </>
+          )}
+
+          {!loading && user && canHandleSupport && (
+            <Link
+              to="/admin/support"
+              title="Customer service inbox"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background text-muted-foreground hover:text-foreground"
+            >
+              <LifeBuoy className="h-3.5 w-3.5" />
+            </Link>
           )}
 
           {!loading && user && <NotificationsBell />}

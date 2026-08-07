@@ -176,7 +176,7 @@ function UsersTab() {
   const invalidate = () => qc.invalidateQueries({ queryKey: ["admin-users"] });
 
   const roleMut = useMutation({
-    mutationFn: (v: { userId: string; role: "reader" | "writer" | "manager" | "admin"; grant: boolean }) =>
+    mutationFn: (v: { userId: string; role: "reader" | "writer" | "manager" | "admin" | "support"; grant: boolean }) =>
       roleFn({ data: v }),
     onSuccess: invalidate,
   });
@@ -242,7 +242,7 @@ function UsersTab() {
               </div>
 
               <div className="flex flex-wrap items-center gap-1.5">
-                {(["reader", "writer", "manager", "admin"] as const).map((r) => {
+                {(["reader", "writer", "manager", "admin", "support"] as const).map((r) => {
                   const has = u.roles.includes(r);
                   const disabled = !isAdmin && (r === "admin" || r === "manager");
                   return (

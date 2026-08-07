@@ -9,7 +9,7 @@
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SupabaseLike = any;
 
-export type AppRole = "reader" | "writer" | "manager" | "admin";
+export type AppRole = "reader" | "writer" | "manager" | "admin" | "support";
 
 export async function getMyRoles(supabase: SupabaseLike, userId: string): Promise<AppRole[]> {
   const { data } = await supabase.from("user_roles").select("role").eq("user_id", userId);
