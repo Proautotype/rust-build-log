@@ -140,6 +140,16 @@ export function SiteHeader() {
             </>
           )}
 
+          {!loading && user && canHandleSupport && (
+            <Link
+              to="/admin/support"
+              title="Customer service inbox"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background text-muted-foreground hover:text-foreground"
+            >
+              <LifeBuoy className="h-3.5 w-3.5" />
+            </Link>
+          )}
+
           {!loading && user && <NotificationsBell />}
 
           {!loading && user && (
