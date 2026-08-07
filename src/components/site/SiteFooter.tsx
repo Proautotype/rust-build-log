@@ -12,6 +12,9 @@ export function SiteFooter() {
             <span className="opacity-60">// every reader has the right to a good story.</span>
           </div>
           <nav className="flex items-center gap-4 text-mono text-xs text-muted-foreground">
+            <Link to="/support" className="hover:text-foreground transition-colors">
+              Support
+            </Link>
             <Link to="/privacy" className="hover:text-foreground transition-colors">
               Privacy
             </Link>
@@ -19,6 +22,12 @@ export function SiteFooter() {
               Terms
             </Link>
           </nav>
+          <a
+            href="mailto:right2read.net@gmail.com"
+            className="text-mono text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            right2read.net@gmail.com
+          </a>
           <div className="text-mono text-xs text-muted-foreground">
             © {new Date().getFullYear()} Right2Read — Built in public.
           </div>
