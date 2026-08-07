@@ -12,6 +12,7 @@ import {
   BarChart3,
   Bot,
   LayoutTemplate,
+  LifeBuoy,
 
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -34,7 +35,7 @@ const nav: NavItem[] = [
 
 export function SiteHeader() {
   const { user, profile, loading } = useAuth();
-  const { isWriter, isAdmin, isStaff } = useRole();
+  const { isWriter, isAdmin, isStaff, canHandleSupport } = useRole();
   const navigate = useNavigate();
 
   async function signOut() {
