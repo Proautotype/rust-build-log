@@ -114,7 +114,13 @@ export const updateMyProfile = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const payload: Record<string, unknown> = {
+    const payload: {
+      display_name: string;
+      bio: string | null;
+      avatar_url: string | null;
+      socials?: Record<string, { url: string; visible: boolean }>;
+      show_socials?: boolean;
+    } = {
       display_name: data.display_name,
       bio: data.bio ?? null,
       avatar_url: data.avatar_url ? data.avatar_url : null,
