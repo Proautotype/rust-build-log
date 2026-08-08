@@ -389,6 +389,8 @@ export type Database = {
           interests: string[]
           is_pro: boolean
           onboarded: boolean
+          show_socials: boolean
+          socials: Json
           updated_at: string
         }
         Insert: {
@@ -402,6 +404,8 @@ export type Database = {
           interests?: string[]
           is_pro?: boolean
           onboarded?: boolean
+          show_socials?: boolean
+          socials?: Json
           updated_at?: string
         }
         Update: {
@@ -415,6 +419,8 @@ export type Database = {
           interests?: string[]
           is_pro?: boolean
           onboarded?: boolean
+          show_socials?: boolean
+          socials?: Json
           updated_at?: string
         }
         Relationships: []
