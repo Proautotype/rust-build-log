@@ -1,6 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
-  Github,
   LogOut,
   User as UserIcon,
   PenSquare,
@@ -68,15 +67,18 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <a
-            href="https://github.com"
-            target="_blank"
-            rel="noreferrer"
-            aria-label="GitHub"
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent/60 transition"
-          >
-            <Github className="h-4 w-4" />
-          </a>
+          {!loading && !isWriter && (
+            <Link
+              to={user ? "/profile" : "/auth"}
+              search={user ? undefined : { redirect: "/profile" }}
+              hash={user ? "become-a-writer" : undefined}
+              className="inline-flex h-8 items-center gap-1.5 rounded-md border border-primary/40 bg-primary/10 px-2.5 text-xs font-medium text-primary hover:bg-primary/20"
+              title="Become a writer on Right2Read"
+            >
+              <PenSquare className="h-3.5 w-3.5" />
+              <span className="hidden xs:inline sm:inline">Become a writer</span>
+            </Link>
+          )}
 
           {!loading && user && isWriter && (
             <>
@@ -270,6 +272,16 @@ export function SiteHeader() {
               className="px-3 py-1.5 rounded-md text-sm text-muted-foreground whitespace-nowrap"
             >
               Profile
+            </Link>
+          )}
+          {!isWriter && (
+            <Link
+              to={user ? "/profile" : "/auth"}
+              search={user ? undefined : { redirect: "/profile" }}
+              hash={user ? "become-a-writer" : undefined}
+              className="px-3 py-1.5 rounded-md text-sm text-primary whitespace-nowrap"
+            >
+              Become a writer
             </Link>
           )}
           {user && !profile?.is_pro && (
