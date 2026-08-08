@@ -76,7 +76,7 @@ export function SiteHeader() {
               title="Become a writer on Right2Read"
             >
               <PenSquare className="h-3.5 w-3.5" />
-              <span className="hidden xs:inline sm:inline">Become a writer</span>
+              <span className="hidden sm:inline">Become a writer</span>
             </Link>
           )}
 

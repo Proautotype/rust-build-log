@@ -2,11 +2,20 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Save, PenSquare, ShieldCheck, User as UserIcon, XCircle } from "lucide-react";
+import {
+  Loader2,
+  Save,
+  PenSquare,
+  ShieldCheck,
+  User as UserIcon,
+  XCircle,
+  Link2 as LinkIcon,
+} from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useInterests } from "@/hooks/useInterests";
 import { TopicPicker } from "@/components/feed/TopicPicker";
 import { useRole } from "@/hooks/useRole";
+import { SOCIAL_PLATFORMS, parseSocials, type SocialMap } from "@/lib/socials";
 import {
   getMyWriterRequest,
   submitWriterRequest,
@@ -44,6 +53,8 @@ function ProfilePage() {
   const [displayName, setDisplayName] = useState("");
   const [bio, setBio] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
+  const [socials, setSocials] = useState<SocialMap>({});
+  const [showSocials, setShowSocials] = useState(true);
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState<string | null>(null);
 
@@ -52,6 +63,8 @@ function ProfilePage() {
       setDisplayName(profile.display_name ?? "");
       setBio(profile.bio ?? "");
       setAvatarUrl(profile.avatar_url ?? "");
+      setSocials(parseSocials(profile.socials));
+      setShowSocials(profile.show_socials !== false);
     }
   }, [profile]);
 
@@ -62,6 +75,16 @@ function ProfilePage() {
           display_name: displayName.trim(),
           bio: bio.trim() || null,
           avatar_url: avatarUrl.trim() || null,
+          show_socials: showSocials,
+          socials: Object.fromEntries(
+            SOCIAL_PLATFORMS.map((p) => [
+              p.key,
+              {
+                url: socials[p.key]?.url?.trim() ?? "",
+                visible: socials[p.key]?.visible !== false,
+              },
+            ]),
+          ),
         },
       }),
     onSuccess: () => {
@@ -206,9 +229,91 @@ function ProfilePage() {
         </div>
       </section>
 
+      {/* Socials */}
+      <section className="mt-8 rounded-xl border border-border bg-card/40 p-6">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-semibold inline-flex items-center gap-2">
+              <LinkIcon className="h-4 w-4 text-primary" />
+              Your socials
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Add your links, then toggle which ones appear on your published stories.
+            </p>
+          </div>
+          <label className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={showSocials}
+              onChange={(e) => setShowSocials(e.target.checked)}
+              className="h-4 w-4 accent-[hsl(var(--primary))]"
+            />
+            Show socials on my stories
+          </label>
+        </div>
+
+        <div className="mt-6 space-y-3">
+          {SOCIAL_PLATFORMS.map((p) => {
+            const entry = socials[p.key];
+            return (
+              <div key={p.key} className="flex flex-wrap items-center gap-3">
+                <div className="w-28 shrink-0 text-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+                  {p.label}
+                </div>
+                <input
+                  value={entry?.url ?? ""}
+                  onChange={(e) =>
+                    setSocials((prev) => ({
+                      ...prev,
+                      [p.key]: { url: e.target.value, visible: prev[p.key]?.visible !== false },
+                    }))
+                  }
+                  placeholder={p.placeholder}
+                  className="min-w-0 flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-primary"
+                />
+                <label
+                  className={`inline-flex items-center gap-1.5 text-xs ${
+                    entry?.url ? "text-muted-foreground" : "text-muted-foreground/50"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    disabled={!entry?.url}
+                    checked={entry?.visible !== false && !!entry?.url}
+                    onChange={(e) =>
+                      setSocials((prev) => ({
+                        ...prev,
+                        [p.key]: { url: prev[p.key]?.url ?? "", visible: e.target.checked },
+                      }))
+                    }
+                    className="h-4 w-4 accent-[hsl(var(--primary))]"
+                  />
+                  Show
+                </label>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="mt-5 flex items-center gap-3">
+          <button
+            onClick={() => saveProfile.mutate()}
+            disabled={saveProfile.isPending || !displayName.trim()}
+            className="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+          >
+            {saveProfile.isPending ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Save className="h-3.5 w-3.5" />
+            )}
+            Save socials
+          </button>
+        </div>
+      </section>
+
       {/* Writer request */}
       {!isWriter && (
-        <section className="mt-8 rounded-xl border border-border bg-card/40 p-6">
+        <section id="become-a-writer" className="mt-8 rounded-xl border border-border bg-card/40 p-6">
           <h2 className="text-lg font-semibold inline-flex items-center gap-2">
             <PenSquare className="h-4 w-4 text-primary" />
             Become a writer
