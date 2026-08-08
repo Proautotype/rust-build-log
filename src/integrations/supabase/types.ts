@@ -389,6 +389,8 @@ export type Database = {
           interests: string[]
           is_pro: boolean
           onboarded: boolean
+          show_socials: boolean
+          socials: Json
           updated_at: string
         }
         Insert: {
@@ -402,6 +404,8 @@ export type Database = {
           interests?: string[]
           is_pro?: boolean
           onboarded?: boolean
+          show_socials?: boolean
+          socials?: Json
           updated_at?: string
         }
         Update: {
@@ -415,6 +419,8 @@ export type Database = {
           interests?: string[]
           is_pro?: boolean
           onboarded?: boolean
+          show_socials?: boolean
+          socials?: Json
           updated_at?: string
         }
         Relationships: []
@@ -1001,7 +1007,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "reader" | "writer" | "admin" | "manager"
+      app_role: "reader" | "writer" | "admin" | "manager" | "support"
       story_monetization: "free" | "tips" | "locked"
     }
     CompositeTypes: {
@@ -1130,7 +1136,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["reader", "writer", "admin", "manager"],
+      app_role: ["reader", "writer", "admin", "manager", "support"],
       story_monetization: ["free", "tips", "locked"],
     },
   },

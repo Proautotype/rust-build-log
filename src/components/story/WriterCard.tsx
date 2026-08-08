@@ -1,10 +1,13 @@
 import { User as UserIcon } from "lucide-react";
 import { FollowButton } from "./FollowButton";
+import { WriterSocials } from "./WriterSocials";
 
 export interface WriterInfo {
   display_name: string | null;
   avatar_url: string | null;
   bio: string | null;
+  socials?: unknown;
+  show_socials?: boolean | null;
 }
 
 export function WriterCard({
@@ -37,8 +40,14 @@ export function WriterCard({
         {writer.bio && (
           <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{writer.bio}</p>
         )}
+        <WriterSocials
+          socials={writer.socials}
+          showSocials={writer.show_socials}
+          className="mt-3"
+        />
       </div>
       {writerId ? <FollowButton writerId={writerId} /> : null}
     </div>
   );
 }
+

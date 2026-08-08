@@ -103,15 +103,38 @@ export const updateMyProfile = createServerFn({ method: "POST" })
         display_name: z.string().min(1).max(80),
         bio: z.string().max(1000).nullable().optional(),
         avatar_url: z.string().url().nullable().optional().or(z.literal("")),
+        show_socials: z.boolean().optional(),
+        socials: z
+          .record(
+            z.string(),
+            z.object({ url: z.string().max(300), visible: z.boolean() }),
+          )
+          .optional(),
       })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const payload = {
+    const payload: {
+      display_name: string;
+      bio: string | null;
+      avatar_url: string | null;
+      socials?: Record<string, { url: string; visible: boolean }>;
+      show_socials?: boolean;
+    } = {
       display_name: data.display_name,
       bio: data.bio ?? null,
       avatar_url: data.avatar_url ? data.avatar_url : null,
     };
+    if (data.socials !== undefined) {
+      const cleaned: Record<string, { url: string; visible: boolean }> = {};
+      for (const [key, value] of Object.entries(data.socials)) {
+        const url = value.url.trim();
+        if (url) cleaned[key] = { url, visible: value.visible };
+      }
+      payload.socials = cleaned;
+    }
+    if (data.show_socials !== undefined) payload.show_socials = data.show_socials;
+
     const { data: row, error } = await context.supabase
       .from("profiles")
       .update(payload)
@@ -121,3 +144,4 @@ export const updateMyProfile = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return row;
   });
+

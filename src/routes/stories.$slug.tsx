@@ -81,7 +81,7 @@ export const Route = createFileRoute("/stories/$slug")({
     if (story.creatorId) {
       const { data: p } = await supabase
         .from("profiles")
-        .select("display_name, avatar_url, bio")
+        .select("display_name, avatar_url, bio, socials, show_socials")
         .eq("id", story.creatorId)
         .maybeSingle();
       if (p) writer = p as WriterInfo;

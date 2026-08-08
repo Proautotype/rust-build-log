@@ -11,6 +11,8 @@ export interface Profile {
   is_pro: boolean;
   coin_balance: number;
   banned: boolean;
+  socials?: unknown;
+  show_socials?: boolean | null;
 }
 
 export function useAuth() {
@@ -49,7 +51,7 @@ export function useAuth() {
       const [{ data }, coins] = await Promise.all([
         supabase
           .from("profiles")
-          .select("id, display_name, avatar_url, bio, is_pro")
+          .select("id, display_name, avatar_url, bio, is_pro, socials, show_socials")
           .eq("id", user.id)
           .maybeSingle(),
         getMyCoinState().catch(() => null),
